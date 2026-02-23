@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+
+{% import "_macros.html" as ui%}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Flask</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/output.css') }}">
+</head>
+
+<body class="bg-gray-100">
+
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- SIDEBAR -->
+        <aside class="flex flex-col w-72 bg-zinc-800 text-zinc-100 shrink-0">
+
+            <!-- Header -->
+            <div class="flex items-center h-16 px-6 bg-zinc-900">
+                <span class="font-semibold tracking-wide text-sm">
+                    La RESpuesta
+                </span>
+            </div>
+
+            <!-- NAVIGATION -->
+            <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+
+                <!-- Dashboard -->
+                <div>
+                    <a href="{{ url_for('admin') }}" class="flex items-center gap-3 px-4 h-11 rounded-lg
+                      text-zinc-300 hover:text-white
+                      hover:bg-zinc-900 transition-colors group">
+
+                        <svg class="text-themeColor-100 w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+
+                        <span class="text-sm font-medium">
+                            Dashboard
+                        </span>
+                    </a>
+                </div>
+
+                <!-- DESPLEGABLE DE OPERACIONES -->
+                <div>
+                    <!-- Collapsible -->
+                    {% call ui.sidebar_section("Operaciones", "operaciones", "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2
+                    0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3
+                    4h3m-6-4h.01M9 16h.01") %}
+                    {{ ui.sidebar_item("Compras", "/compras") }}
+                    {{ ui.sidebar_item("Materia Prima", "/materia") }}
+                    {{ ui.sidebar_item("Recetas", "/recetas") }}
+                    {{ ui.sidebar_item("Producción", "/produccion") }}
+                    {{ ui.sidebar_item("Solicitudes de Producción", "/produccion") }}
+                    {{ ui.sidebar_item("Producto Terminado", "/productoTerminado") }}
+                    {{ ui.sidebar_item("Ventas", "/ventas") }}
+                    {% endcall %}
+                </div>
+
+                <!-- DESPLEGABLE DE FINANZAS -->
+                <div>
+                    <div>
+                        <!-- Collapsible -->
+                        {% call ui.sidebar_section("Finanzas", "finanzas", "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895
+                        3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21
+                        12a9 9 0 11-18 0 9 9 0 0118 0z") %}
+                        {{ ui.sidebar_item("Pagos a Proveedores", "/pagoProveedores") }}
+                        {{ ui.sidebar_item("Corte Diario", "/corteDiario") }}
+                        {{ ui.sidebar_item("Utilidad Diaria", "/utilidadDiaria") }}
+                        {{ ui.sidebar_item("Reportes", "/reportes") }}
+                        {% endcall %}
+                    </div>
+                </div>
+
+                <!-- DESPLEGABLE DE ADMINISTRACION -->
+                <div>
+                    <div>
+                        <!-- Collapsible -->
+                        {% call ui.sidebar_section("Administración", "administracion", "M16 7a4 4 0 11-8 0 4 4 0 018
+                        0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z") %}
+                        {{ ui.sidebar_item("Usuarios", "/usuarios") }}
+                        {{ ui.sidebar_item("Roles y Permisos", "/roles") }}
+                        {{ ui.sidebar_item("Logs del Sistema", "/logs") }}
+                        {% endcall %}
+                    </div>
+                </div>
+            </nav>
+
+            <!-- FOOTER -->
+            <div class="px-4 py-4 border-t border-zinc-700">
+                <a href="#" class="flex items-center gap-3 px-4 h-11 rounded-lg
+                      text-zinc-300 hover:text-white
+                      hover:bg-zinc-900 transition-colors group">
+
+                    <svg class="text-themeColor-100 w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" />
+                        <path
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <span class="text-sm font-medium">
+                        Ajustes
+                    </span>
+                </a>
+            </div>
+        </aside>
+    </div>
+
+    <!-- SCRIPT DESPLEGAR / COLAPSAR -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const triggers = document.querySelectorAll("[data-collapse]");
+
+            triggers.forEach(trigger => {
+
+                const key = trigger.dataset.collapse;
+                const container = trigger.parentElement;
+                const menu = container.querySelector(`[data-menu="${key}"]`);
+                const arrow = trigger.querySelector(`[data-arrow="${key}"]`);
+
+                // Restaurar estado
+                if (localStorage.getItem("menu-" + key) === "open") {
+                    menu.style.maxHeight = menu.scrollHeight + "px";
+                    menu.style.opacity = "1";
+                    arrow.classList.add("rotate-180");
+                }
+
+                trigger.addEventListener("click", () => {
+
+                    const isOpen = menu.style.maxHeight && menu.style.maxHeight !== "0px";
+
+                    if (isOpen) {
+                        menu.style.maxHeight = "0px";
+                        menu.style.opacity = "0";
+                        arrow.classList.remove("rotate-180");
+                        localStorage.removeItem("menu-" + key);
+                    } else {
+                        menu.style.maxHeight = menu.scrollHeight + "px";
+                        menu.style.opacity = "1";
+                        arrow.classList.add("rotate-180");
+                        localStorage.setItem("menu-" + key, "open");
+                    }
+
+                });
+
+            });
+
+        });
+    </script>
+
+</body>
+
+</html>

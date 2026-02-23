@@ -1,0 +1,60 @@
+{% macro sidebar_section(title, key, link) %}
+<div>
+
+    <button data-collapse="{{ key }}" class="flex items-center w-full gap-3 px-4 h-11 rounded-lg
+                               text-zinc-300 hover:text-white
+                               hover:bg-zinc-900 transition-colors group">
+
+        <svg class="text-themeColor-100 w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="{{ link }}" />
+        </svg>
+
+        <span class="flex-1 text-left text-sm font-medium">
+            {{ title }}
+        </span>
+
+        <svg data-arrow="{{ key }}" class="w-4 h-4 transition-transform duration-300" viewBox="0 0 20 20"
+            fill="currentColor">
+            <path fill-rule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                clip-rule="evenodd" />
+        </svg>
+    </button>
+
+    <div data-menu="{{ key }}" class="overflow-hidden transition-all duration-300 ease-in-out"
+        style="max-height: 0; opacity: 0;">
+
+        <div class="mt-2 space-y-1">
+            {{ caller() }}
+        </div>
+
+    </div>
+
+</div>
+{% endmacro %}
+
+{% macro sidebar_item(text, href="#") %}
+<a href="{{ href }}" class="flex items-center gap-3 px-4 h-10 rounded-lg
+                      text-zinc-400 hover:text-white
+                      hover:bg-zinc-900 transition-colors group">
+
+    <div class="flex items-center justify-center w-8 h-8
+                            rounded-md bg-zinc-700
+                            group-hover:bg-indigo-600
+                            transition-colors">
+
+        <svg class="w-4 h-4 text-zinc-300 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+            stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" />
+        </svg>
+
+    </div>
+
+    <span class="text-sm font-medium">
+        {{ text }}
+    </span>
+
+</a>
+{% endmacro %}
