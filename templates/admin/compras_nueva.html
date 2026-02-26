@@ -1,0 +1,391 @@
+{% extends "admin/_sidebar.html" %}
+
+{% block content %}
+
+<!-- ══════════════════════════════
+     COMPRAS — Nueva orden
+══════════════════════════════ -->
+
+<!-- Header -->
+<div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('compras') }}"
+        class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
+               text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Nueva Orden de Compra</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Registra una nueva compra a proveedor</p>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('compras_nueva') }}">
+    {{ form.hidden_tag() }}
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+
+        <!-- ── Columna izquierda: datos generales (2/3) ── -->
+        <div class="xl:col-span-2 space-y-5">
+
+            <!-- Card: Información general -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Información general</h3>
+                </div>
+                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <!-- Proveedor -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Proveedor <span class="text-red-400">*</span>
+                        </label>
+                        <select name="proveedor_id" required
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                                   transition-all">
+                            <option value="">Selecciona un proveedor activo</option>
+                            <option value="1">Distribuidora Agro S.A.</option>
+                            <option value="2">Forrajes del Norte</option>
+                            <option value="3">Lácteos Premium</option>
+                        </select>
+                    </div>
+
+                    <!-- Fecha de compra -->
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Fecha de compra <span class="text-red-400">*</span>
+                        </label>
+                        <input type="date" name="fecha" required
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                                   transition-all">
+                    </div>
+
+                    <!-- Fecha de entrega estimada -->
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Entrega estimada
+                        </label>
+                        <input type="date" name="fecha_entrega"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                                   transition-all">
+                    </div>
+
+                    <!-- Notas -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Notas u observaciones
+                        </label>
+                        <textarea name="notas" rows="2"
+                            placeholder="Condiciones especiales, instrucciones de entrega..."
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                                   transition-all resize-none placeholder-gray-300"></textarea>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Card: Productos -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <h3 class="text-sm font-semibold text-gray-700">Materias primas</h3>
+                    </div>
+                    <button type="button" id="btn-agregar-producto"
+                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700
+                               bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Agregar producto
+                    </button>
+                </div>
+
+                <!-- Tabla de productos -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm" id="tabla-productos">
+                        <thead>
+                            <tr class="text-left border-b border-gray-100">
+                                <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Materia Prima</th>
+                                <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Cantidad</th>
+                                <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Unidad</th>
+                                <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Conversión</th>
+                                <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Costo unit.</th>
+                                <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Subtotal</th>
+                                <th class="px-4 py-3"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="productos-body" class="divide-y divide-gray-50">
+
+                            <!-- Fila template (se duplica con JS) -->
+                            <tr class="producto-row hover:bg-gray-50/50 transition-colors">
+                                <td class="px-4 py-3">
+                                    <select name="materia_prima[]"
+                                        class="w-full min-w-36 px-2.5 py-2 text-xs text-gray-700 bg-gray-50
+                                               border border-gray-200 rounded-lg outline-none
+                                               focus:border-green-400 focus:ring-1 focus:ring-green-100 transition-all">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="1">Leche entera</option>
+                                        <option value="2">Maíz forrajero</option>
+                                        <option value="3">Sorgo</option>
+                                        <option value="4">Melaza</option>
+                                        <option value="5">Sal mineral</option>
+                                    </select>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <input type="number" name="cantidad[]" min="0.01" step="0.01"
+                                        placeholder="0.00"
+                                        class="w-24 px-2.5 py-2 text-xs text-gray-700 bg-gray-50
+                                               border border-gray-200 rounded-lg outline-none text-right
+                                               focus:border-green-400 focus:ring-1 focus:ring-green-100
+                                               transition-all producto-cantidad">
+                                </td>
+                                <td class="px-4 py-3">
+                                    <select name="unidad[]"
+                                        class="px-2.5 py-2 text-xs text-gray-700 bg-gray-50
+                                               border border-gray-200 rounded-lg outline-none
+                                               focus:border-green-400 focus:ring-1 focus:ring-green-100
+                                               transition-all producto-unidad">
+                                        <option value="kg">kg</option>
+                                        <option value="g">g</option>
+                                        <option value="l">L</option>
+                                        <option value="ml">mL</option>
+                                        <option value="ton">ton</option>
+                                        <option value="pza">pza</option>
+                                    </select>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <!-- RF0203: Conversión de unidades -->
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="number" name="factor_conversion[]" value="1" min="0.0001" step="any"
+                                            class="w-16 px-2 py-2 text-xs text-gray-700 bg-gray-50
+                                                   border border-gray-200 rounded-lg outline-none text-right
+                                                   focus:border-green-400 focus:ring-1 focus:ring-green-100 transition-all"
+                                            title="Factor de conversión a unidad estándar">
+                                        <select name="unidad_estandar[]"
+                                            class="px-2 py-2 text-xs text-gray-500 bg-gray-50
+                                                   border border-gray-200 rounded-lg outline-none
+                                                   focus:border-green-400 transition-all">
+                                            <option value="g">→ g</option>
+                                            <option value="ml">→ mL</option>
+                                            <option value="pza">→ pza</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <!-- RF0204: Costo unitario -->
+                                    <div class="relative">
+                                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">$</span>
+                                        <input type="number" name="costo_unitario[]" min="0" step="0.01"
+                                            placeholder="0.00"
+                                            class="w-28 pl-6 pr-2.5 py-2 text-xs text-gray-700 bg-gray-50
+                                                   border border-gray-200 rounded-lg outline-none text-right
+                                                   focus:border-green-400 focus:ring-1 focus:ring-green-100
+                                                   transition-all producto-costo">
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="text-xs font-semibold text-gray-700 producto-subtotal">$0.00</span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <button type="button"
+                                        class="btn-eliminar w-6 h-6 flex items-center justify-center rounded-md
+                                               text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                        <!-- Footer con total -->
+                        <tfoot>
+                            <tr class="border-t-2 border-gray-100 bg-gray-50/50">
+                                <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Total de la orden
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span id="total-orden" class="text-base font-bold text-gray-800">$0.00</span>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+
+                    </table>
+                </div>
+
+                <!-- Mensaje vacío -->
+                <div id="msg-vacio" class="hidden px-5 py-8 text-center">
+                    <svg class="w-8 h-8 text-gray-200 mx-auto mb-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    <p class="text-xs text-gray-400">Agrega al menos un producto para continuar</p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ── Columna derecha: resumen (1/3) ── -->
+        <div class="space-y-4">
+
+            <!-- Resumen de la orden -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Resumen</h3>
+                </div>
+                <div class="p-5 space-y-3">
+
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">Subtotal</span>
+                        <span id="resumen-subtotal" class="font-medium text-gray-700">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">Productos</span>
+                        <span id="resumen-productos" class="font-medium text-gray-700">0</span>
+                    </div>
+                    <div class="border-t border-gray-100 pt-3 flex justify-between items-center">
+                        <span class="text-sm font-semibold text-gray-700">Total</span>
+                        <span id="resumen-total" class="text-lg font-bold text-green-700">$0.00</span>
+                    </div>
+
+                </div>
+
+                <!-- Estado inicial -->
+                <div class="px-5 pb-4 space-y-2">
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                        Estado inicial
+                    </label>
+                    <div class="flex gap-2">
+                        <label class="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200
+                                      cursor-pointer hover:border-amber-300 hover:bg-amber-50 transition-all
+                                      has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50">
+                            <input type="radio" name="estado" value="pendiente" checked class="accent-amber-500">
+                            <span class="text-xs font-medium text-gray-600">Pendiente</span>
+                        </label>
+                        <label class="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200
+                                      cursor-pointer hover:border-green-300 hover:bg-green-50 transition-all
+                                      has-[:checked]:border-green-400 has-[:checked]:bg-green-50">
+                            <input type="radio" name="estado" value="recibida" class="accent-green-600">
+                            <span class="text-xs font-medium text-gray-600">Recibida</span>
+                        </label>
+                    </div>
+                    <!-- RF0202: Nota sobre actualización de inventario -->
+                    <p class="text-[10px] text-gray-400 leading-relaxed mt-2">
+                        <svg class="w-3 h-3 inline mr-0.5 text-green-500" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Al marcar como <strong>Recibida</strong>, el inventario de materias primas se actualizará automáticamente.
+                    </p>
+                </div>
+
+                <!-- Botones -->
+                <div class="px-5 pb-5 space-y-2">
+                    <button type="submit"
+                        class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
+                               rounded-lg shadow-sm shadow-green-200 transition-all duration-150
+                               hover:-translate-y-px active:translate-y-0">
+                        Registrar orden
+                    </button>
+                    <a href="{{ url_for('compras') }}"
+                        class="block w-full py-2.5 text-center text-sm text-gray-500 hover:text-gray-700
+                               bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
+                        Cancelar
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</form>
+
+<!-- ══ JavaScript: agregar/eliminar filas + calcular totales ══ -->
+<script>
+    const tbody      = document.getElementById('productos-body');
+    const btnAgregar = document.getElementById('btn-agregar-producto');
+    const msgVacio   = document.getElementById('msg-vacio');
+
+    // ── Formatear moneda ──
+    const fmt = n => '$' + parseFloat(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // ── Recalcular totales ──
+    function recalcular() {
+        let total = 0;
+        let filas = 0;
+
+        tbody.querySelectorAll('.producto-row').forEach(row => {
+            const cant  = parseFloat(row.querySelector('.producto-cantidad')?.value) || 0;
+            const costo = parseFloat(row.querySelector('.producto-costo')?.value) || 0;
+            const sub   = cant * costo;
+            row.querySelector('.producto-subtotal').textContent = fmt(sub);
+            total += sub;
+            filas++;
+        });
+
+        document.getElementById('total-orden').textContent        = fmt(total);
+        document.getElementById('resumen-subtotal').textContent   = fmt(total);
+        document.getElementById('resumen-total').textContent      = fmt(total);
+        document.getElementById('resumen-productos').textContent  = filas;
+    }
+
+    // ── Agregar fila nueva ──
+    btnAgregar.addEventListener('click', () => {
+        const primera = tbody.querySelector('.producto-row');
+        if (!primera) return;
+        const nueva = primera.cloneNode(true);
+        // Limpiar valores
+        nueva.querySelectorAll('input').forEach(i => {
+            if (i.name?.includes('factor')) i.value = '1';
+            else i.value = '';
+        });
+        nueva.querySelector('.producto-subtotal').textContent = '$0.00';
+        nueva.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+        tbody.appendChild(nueva);
+        attachListeners(nueva);
+        recalcular();
+    });
+
+    // ── Escuchar cambios en una fila ──
+    function attachListeners(row) {
+        row.querySelector('.btn-eliminar').addEventListener('click', () => {
+            if (tbody.querySelectorAll('.producto-row').length > 1) {
+                row.remove();
+                recalcular();
+            }
+        });
+        row.querySelectorAll('input').forEach(i => i.addEventListener('input', recalcular));
+    }
+
+    // ── Inicializar primera fila ──
+    tbody.querySelectorAll('.producto-row').forEach(attachListeners);
+</script>
+
+{% endblock %}

@@ -20,3 +20,11 @@ class LoginForm(FlaskForm):
     )
     remember = BooleanField('Recordarme')
     submit   = SubmitField('Ingresar')
+
+class ComprasForm(FlaskForm):
+    proveedor = StringField(
+        'Proveedor',
+        validators= [
+            DataRequired(message='El proveedor es obligatorio'),
+        ]
+    )
