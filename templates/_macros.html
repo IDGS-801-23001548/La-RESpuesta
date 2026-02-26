@@ -1,60 +1,109 @@
-{% macro sidebar_section(title, key, link) %}
-<div>
+{# ═══════════════════════════════════════════════════
+   _macros.html — Sidebar blanco con acentos verdes
+═══════════════════════════════════════════════════ #}
 
-    <button data-collapse="{{ key }}" class="flex items-center w-full gap-3 px-4 h-11 rounded-lg
-                               text-zinc-300 hover:text-white
-                               hover:bg-zinc-900 transition-colors group">
 
-        <svg class="text-themeColor-100 w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="{{ link }}" />
+{# ── Sección colapsable ── #}
+{% macro sidebar_section(title, key, icon_path, child_endpoints=[]) %}
+{% set section_active = (current_endpoint in child_endpoints) %}
+<div class="mb-0.5">
+
+    <button
+        data-collapse="{{ key }}"
+        data-auto-open="{{ 'true' if section_active else 'false' }}"
+        class="flex items-center w-full gap-2.5 px-3 h-9 rounded-lg
+               transition-all duration-200 group
+               {% if section_active %}
+                   text-green-700 bg-green-50/60
+               {% else %}
+                   text-gray-500 hover:text-gray-900 hover:bg-gray-100
+               {% endif %}"
+    >
+        {# Ícono #}
+        <svg class="w-4 h-4 shrink-0 transition-colors
+                    {% if section_active %}text-green-600{% else %}text-gray-400 group-hover:text-green-600{% endif %}"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="{{ icon_path }}"/>
         </svg>
 
-        <span class="flex-1 text-left text-sm font-medium">
+        {# Label #}
+        <span class="flex-1 text-left text-xs font-semibold tracking-widest uppercase transition-colors
+                     {% if section_active %}text-green-700{% else %}text-gray-400 group-hover:text-gray-600{% endif %}">
             {{ title }}
         </span>
 
-        <svg data-arrow="{{ key }}" class="w-4 h-4 transition-transform duration-300" viewBox="0 0 20 20"
-            fill="currentColor">
+        {# Flecha #}
+        <svg data-arrow="{{ key }}"
+            class="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-all duration-300 shrink-0"
+            viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd"
                 d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                clip-rule="evenodd" />
+                clip-rule="evenodd"/>
         </svg>
     </button>
 
-    <div data-menu="{{ key }}" class="overflow-hidden transition-all duration-300 ease-in-out"
-        style="max-height: 0; opacity: 0;">
-
-        <div class="mt-2 space-y-1">
+    {# Contenido colapsable #}
+    <div
+        data-menu="{{ key }}"
+        class="overflow-hidden transition-all duration-300 ease-in-out"
+        style="max-height: 0; opacity: 0;"
+    >
+        <div class="mt-0.5 ml-4 pl-3 border-l-2 border-gray-100 space-y-0.5 py-0.5">
             {{ caller() }}
         </div>
-
     </div>
 
 </div>
 {% endmacro %}
 
-{% macro sidebar_item(text, href="#") %}
-<a href="{{ href }}" class="flex items-center gap-3 px-4 h-10 rounded-lg
-                      text-zinc-400 hover:text-white
-                      hover:bg-zinc-900 transition-colors group">
-
-    <div class="flex items-center justify-center w-8 h-8
-                            rounded-md bg-zinc-700
-                            group-hover:bg-indigo-600
-                            transition-colors">
-
-        <svg class="w-4 h-4 text-zinc-300 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-            stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4" />
-        </svg>
-
-    </div>
-
-    <span class="text-sm font-medium">
-        {{ text }}
+{# ── Item individual del menú ── #}
+{% macro sidebar_item(text, href="#", endpoint="") %}
+{% set active = (current_endpoint == endpoint) %}
+<a
+    href="{{ href }}"
+    class="flex items-center gap-2.5 px-3 h-8 rounded-lg text-sm
+           transition-all duration-150 group
+           {% if active %}
+               bg-green-50 text-green-700 font-medium
+           {% else %}
+               text-gray-500 hover:text-gray-900 hover:bg-gray-100
+           {% endif %}"
+>
+    {# Dot #}
+    <span class="w-1.5 h-1.5 rounded-full shrink-0 transition-colors
+                 {% if active %}
+                     bg-green-500
+                 {% else %}
+                     bg-gray-300 group-hover:bg-green-400
+                 {% endif %}">
     </span>
 
+    <span class="truncate leading-none">{{ text }}</span>
+</a>
+{% endmacro %}
+
+{# ── Link principal sin submenú ── #}
+{% macro sidebar_link(text, href, icon_path, endpoint="") %}
+{% set active = (current_endpoint == endpoint) %}
+<a
+    href="{{ href }}"
+    class="flex items-center gap-2.5 px-3 h-9 rounded-lg mb-0.5
+           transition-all duration-150 group
+           {% if active %}
+               bg-green-50 text-green-700
+           {% else %}
+               text-gray-600 hover:text-gray-900 hover:bg-gray-100
+           {% endif %}"
+>
+    {# Ícono #}
+    <svg class="w-4 h-4 shrink-0 transition-colors
+                {% if active %}text-green-600{% else %}text-gray-400 group-hover:text-green-600{% endif %}"
+        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="{{ icon_path }}"/>
+    </svg>
+
+    <span class="text-sm font-medium">{{ text }}</span>
 </a>
 {% endmacro %}
