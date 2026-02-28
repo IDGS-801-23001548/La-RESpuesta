@@ -1,0 +1,213 @@
+{% extends "admin/_sidebar.html" %}
+
+{% block content %}
+
+<!-- ══════════════════════════════
+     USUARIOS — Nuevo / Editar
+══════════════════════════════ -->
+
+<!-- Header -->
+<div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('usuarios') }}"
+        class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
+               text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">
+            {% if usuario %}Editar usuario{% else %}Nuevo usuario{% endif %}
+        </h2>
+        <p class="text-xs text-gray-400 mt-0.5">
+            {% if usuario %}Modifica los datos de acceso{% else %}Registra un nuevo acceso al sistema{% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="max-w-2xl">
+    <form action="{{ url_for('usuarios_nuevo') }}" method="POST" class="space-y-4" id="form-usuario">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Card: Datos de acceso -->
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <h3 class="text-sm font-semibold text-gray-700">Datos de acceso</h3>
+            </div>
+            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <!-- Nombre de usuario -->
+                <div class="sm:col-span-2">
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                        Nombre de usuario <span class="text-red-400">*</span>
+                    </label>
+                    <input type="text" name="username" required
+                        value="{{ usuario.nombre_usuario if usuario else '' }}"
+                        placeholder="Ej. juan.perez"
+                        autocomplete="off"
+                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                               transition-all placeholder-gray-300">
+                </div>
+
+                <!-- Contraseña -->
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                        Contraseña {% if not usuario %}<span class="text-red-400">*</span>{% endif %}
+                    </label>
+                    <div class="relative">
+                        <input type="password" name="password" id="input-password"
+                            {% if not usuario %}required{% endif %}
+                            placeholder="{% if usuario %}Dejar vacío para no cambiar{% else %}Mínimo 8 caracteres{% endif %}"
+                            autocomplete="new-password"
+                            oninput="validarPassword(this.value)"
+                            class="w-full px-3 py-2.5 pr-10 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                                   transition-all placeholder-gray-300">
+                        <button type="button" onclick="togglePassword()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <svg id="ico-ojo" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Indicador de fortaleza OWASP A07 -->
+                    <div id="password-checker" class="mt-2 space-y-1 hidden">
+                        {% for id, texto in [
+                            ('req-len',    'Mínimo 8 caracteres'),
+                            ('req-upper',  'Al menos 1 mayúscula'),
+                            ('req-lower',  'Al menos 1 minúscula'),
+                            ('req-num',    'Al menos 1 número'),
+                            ('req-special','Al menos 1 carácter especial (!@#$%...)'),
+                        ] %}
+                        <div class="flex items-center gap-1.5" id="{{ id }}">
+                            <svg class="w-3 h-3 text-gray-300 req-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            <span class="text-[10px] text-gray-400 req-txt">{{ texto }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Rol -->
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                        Rol del sistema <span class="text-red-400">*</span>
+                    </label>
+                    {{ form.id_rol(
+                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all",
+                        required=True
+                    ) }}
+                    {% if form.id_rol.errors %}
+                    <p class="text-red-500 text-[10px] mt-1">{{ form.id_rol.errors[0] }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Estado -->
+                <div class="sm:col-span-2 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-700">Estado del usuario</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Los usuarios inactivos no podrán iniciar sesión</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="estatus" class="sr-only peer"
+                            {% if not usuario or usuario.estatus == 'Activo' %}checked{% endif %}>
+                        <div class="w-10 h-5 bg-gray-200 rounded-full peer
+                                    peer-checked:bg-green-600
+                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                    after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all
+                                    peer-checked:after:translate-x-5">
+                        </div>
+                        <span class="ml-2 text-xs font-medium text-gray-600 peer-checked:text-green-700"
+                              id="label-estatus">
+                            {% if not usuario or usuario.estatus == 'Activo' %}Activo{% else %}Inactivo{% endif %}
+                        </span>
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Nota de seguridad OWASP -->
+        <div class="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+            <svg class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <div class="text-[10px] text-blue-700 space-y-0.5">
+                <p class="font-semibold">Política de contraseñas seguras (OWASP A07)</p>
+                <p>La cuenta se bloqueará automáticamente tras <strong>3 intentos fallidos</strong>. La sesión expira a los <strong>10 minutos</strong> de inactividad.</p>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex items-center justify-end gap-3 pt-1">
+            <a href="{{ url_for('usuarios') }}"
+                class="px-5 py-2.5 text-sm text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100
+                       border border-gray-200 rounded-lg transition-colors">
+                Cancelar
+            </a>
+            <button type="submit" id="btn-submit"
+                class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
+                       rounded-lg shadow-sm shadow-green-200 transition-all hover:-translate-y-px active:translate-y-0">
+                {% if usuario %}Guardar cambios{% else %}Crear usuario{% endif %}
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    // ── Toggle mostrar/ocultar contraseña ──
+    function togglePassword() {
+        const input = document.getElementById('input-password');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    // ── Toggle label de estado ──
+    document.querySelector('input[name="estatus"]')?.addEventListener('change', function() {
+        document.getElementById('label-estatus').textContent = this.checked ? 'Activo' : 'Inactivo';
+    });
+
+    // ── Validador de contraseña OWASP A07 ──
+    function validarPassword(val) {
+        const checker = document.getElementById('password-checker');
+        if (val.length === 0) { checker.classList.add('hidden'); return; }
+        checker.classList.remove('hidden');
+
+        const reglas = [
+            { id: 'req-len',     ok: val.length >= 8 },
+            { id: 'req-upper',   ok: /[A-Z]/.test(val) },
+            { id: 'req-lower',   ok: /[a-z]/.test(val) },
+            { id: 'req-num',     ok: /[0-9]/.test(val) },
+            { id: 'req-special', ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val) },
+        ];
+
+        reglas.forEach(({ id, ok }) => {
+            const row = document.getElementById(id);
+            const ico = row.querySelector('.req-ico');
+            const txt = row.querySelector('.req-txt');
+
+            if (ok) {
+                ico.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
+                ico.classList.remove('text-gray-300');
+                ico.classList.add('text-green-500');
+                txt.classList.remove('text-gray-400');
+                txt.classList.add('text-green-600');
+            } else {
+                ico.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>';
+                ico.classList.remove('text-green-500');
+                ico.classList.add('text-gray-300');
+                txt.classList.remove('text-green-600');
+                txt.classList.add('text-gray-400');
+            }
+        });
+    }
+</script>
+
+{% endblock %}
