@@ -76,10 +76,10 @@
                 {# Dashboard #}
                 {{ ui.sidebar_link(
                 "Dashboard",
-                url_for('admin'),
+                url_for('admin.dashboard'),
                 "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0
                 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-                endpoint = "admin"
+                endpoint_prefix = "admin"
                 ) }}
 
                 {# Separador #}
@@ -93,13 +93,17 @@
                 "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2
                 2 0 012-2h2a2 2 0 012 2"
                 ) %}
-                {{ ui.sidebar_item("Compras", url_for('compras'), endpoint="#") }}
-                {{ ui.sidebar_item("Materia Prima", "#", endpoint="#") }}
-                {{ ui.sidebar_item("Recetas", "#", endpoint="#") }}
-                {{ ui.sidebar_item("Producción", "#", endpoint="#") }}
-                {{ ui.sidebar_item("Solicitudes de Producción", "#", endpoint="#") }}
-                {{ ui.sidebar_item("Producto Terminado", "#", endpoint="#") }}
-                {{ ui.sidebar_item("Ventas", "#", endpoint="#") }}
+
+                {{ ui.sidebar_item( "Compras", url_for('admin.compras'), endpoint_prefix="admin.compras") }}
+                {{ ui.sidebar_item( "Materia Prima", url_for('admin.materia'), endpoint_prefix="admin.materia") }}
+                {{ ui.sidebar_item( "Recetas", url_for('admin.recetas'), endpoint_prefix="admin.recetas") }}
+                {{ ui.sidebar_item( "Producción", url_for('admin.produccion'), endpoint_prefix="admin.produccion") }}
+                {{ ui.sidebar_item( "Solicitudes de Producción", url_for('admin.solicitud'),
+                endpoint_prefix="admin.solicitud") }}
+                {{ ui.sidebar_item( "Producto Terminado", url_for('admin.productos'), endpoint_prefix="admin.productos")
+                }}
+                {{ ui.sidebar_item( "Ventas", url_for('admin.ventas'), endpoint_prefix="admin.ventas") }}
+
                 {% endcall %}
 
                 {# Finanzas #}
@@ -108,10 +112,12 @@
                 "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0
                 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 ) %}
-                {{ ui.sidebar_item("Pagos a Proveedores", "#", endpoint="#") }}
-                {{ ui.sidebar_item("Corte Diario", "#", endpoint="#") }}
-                {{ ui.sidebar_item("Utilidad Diaria", "#", endpoint="#") }}
-                {{ ui.sidebar_item("Reportes", "#", endpoint="#") }}
+
+                {{ ui.sidebar_item( "Pagos a Proveedores", url_for('admin.pago'), endpoint_prefix="admin.pago") }}
+                {{ ui.sidebar_item( "Corte Diario", url_for('admin.corte'), endpoint_prefix="admin.corte") }}
+                {{ ui.sidebar_item( "Utilidad Diaria", url_for('admin.utilidad'), endpoint_prefix="admin.utilidad") }}
+                {{ ui.sidebar_item( "Reportes", url_for('admin.reportes'), endpoint_prefix="admin.reportes") }}
+
                 {% endcall %}
 
                 {# Administración #}
@@ -119,8 +125,10 @@
                 "Administración", "administracion",
                 "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 ) %}
-                {{ ui.sidebar_item("Usuarios y Roles", url_for('usuarios'), endpoint="usuarios") }}
-                {{ ui.sidebar_item("Logs del Sistema", "#", endpoint="#") }}
+
+                {{ ui.sidebar_item( "Usuarios y Roles", url_for('admin.usuarios'), endpoint_prefix="admin.usuarios") }}
+                {{ ui.sidebar_item( "Logs del Sistema", url_for('admin.logs'), endpoint_prefix="admin.logs") }}
+
                 {% endcall %}
 
             </nav>
@@ -129,16 +137,17 @@
             <div class="px-3 py-3 border-t border-gray-100 space-y-0.5 shrink-0">
 
                 {{ ui.sidebar_link(
-                "Ajustes", "#",
+                "Ajustes", url_for('admin.ajustes'),
                 "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37
                 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94
                 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0
                 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924
                 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3
-                3 0 11-6 0 3 3 0 016 0z"
+                3 0 11-6 0 3 3 0 016 0z",
+                endpoint_prefix = "ajustes"
                 ) }}
 
-                <a href="{{ url_for('logout') }}" class="flex items-center gap-2.5 px-3 h-9 rounded-lg
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-2.5 px-3 h-9 rounded-lg
                        text-red-400 hover:text-red-600 hover:bg-red-50
                        transition-all duration-150 group">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"

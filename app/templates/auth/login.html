@@ -92,10 +92,11 @@
             {%- endif %}
             {%- endwith %}
 
-            <form action="{{ url_for('admin') }}" method="POST" autocomplete="off" class="w-full max-w-sm">
+            <form action="{{ url_for('admin.dashboard') }}" method="POST" autocomplete="off" class="w-full max-w-sm">
 
-                {{ form.hidden_tag() }}
-
+                {{form.csrf_token}}
+                <input type="hidden" name="csrf_token" id="{{csrf_token()}}">
+                
                 <!-- Correo / usuario -->
                 <div class="mb-5">
                     {{ form.username.label(class="block text-gray-500 text-[11px] font-semibold uppercase
