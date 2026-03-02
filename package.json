@@ -7,7 +7,7 @@
     "flowbite": "^4.0.1"
   },
   "scripts": {
-    "dev": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --watch",
-    "build": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --minify"
+    "dev": "tailwindcss -i ./app/static/src/input.css -o ./app/static/dist/output.css --watch",
+    "build": "tailwindcss -i ./app/static/src/input.css -o ./app/static/dist/output.css --minify"
   }
 }
