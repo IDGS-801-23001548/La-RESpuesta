@@ -3,6 +3,7 @@ from app.config import DevelopmentConfig
 from app.extensions import db
 from flask_wtf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
+from flask import g
 
 csrf = CSRFProtect()
 
