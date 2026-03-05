@@ -1,0 +1,257 @@
+{% extends "_sidebar.html" %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+        <a href="{{ url_for('admin.pagos') }}"
+            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
+                   text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <div>
+            <h2 class="text-lg font-semibold text-gray-800">{{ proveedor.nombre }}</h2>
+            <p class="text-xs text-gray-400 mt-0.5">RFC: {{ proveedor.rfc }} — Cuenta corriente</p>
+        </div>
+    </div>
+
+    <a href="{{ url_for('admin.pagos_nuevo', proveedor_id=proveedor.id_proveedor) }}"
+        class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
+               text-white text-sm font-medium rounded-lg shadow-sm shadow-green-200
+               transition-all hover:-translate-y-px">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Registrar pago
+    </a>
+</div>
+
+<!-- KPIs del proveedor -->
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total comprado</p>
+            <p class="text-xl font-bold text-gray-800">${{ "%.2f"|format(proveedor.total_comprado) }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-green-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-green-500">Total pagado</p>
+            <p class="text-xl font-bold text-green-700">${{ "%.2f"|format(proveedor.total_pagado) }}</p>
+        </div>
+    </div>
+
+    {% set saldo = proveedor.total_comprado - proveedor.total_pagado %}
+    <div class="bg-white rounded-xl border {{ 'border-red-100' if saldo > 0 else 'border-green-100' }} shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg {{ 'bg-red-50' if saldo > 0 else 'bg-green-50' }} flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 {{ 'text-red-500' if saldo > 0 else 'text-green-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider {{ 'text-red-400' if saldo > 0 else 'text-green-500' }}">Saldo pendiente</p>
+            <p class="text-xl font-bold {{ 'text-red-600' if saldo > 0 else 'text-green-700' }}">${{ "%.2f"|format(saldo) }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg shrink-0">📋</div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Movimientos</p>
+            <p class="text-xl font-bold text-gray-800">{{ movimientos | length }}</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Filtro de período -->
+<div class="flex items-center gap-3 mb-4">
+    <input type="month" id="filtro-mes"
+        class="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg
+               outline-none focus:border-green-400 transition-all shadow-sm">
+    <select id="filtro-tipo"
+        class="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg
+               outline-none focus:border-green-400 transition-all shadow-sm">
+        <option value="">Todos los movimientos</option>
+        <option value="Compra">Compras</option>
+        <option value="Pago">Pagos</option>
+    </select>
+    <p class="ml-auto text-xs text-gray-400" id="contador">{{ movimientos | length }} movimiento(s)</p>
+</div>
+
+<!-- Tabla de cuenta corriente -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+
+    <!-- Cabecera -->
+    <div class="grid grid-cols-12 gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100
+                text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+        <div class="col-span-2">Fecha</div>
+        <div class="col-span-1">Tipo</div>
+        <div class="col-span-4">Concepto</div>
+        <div class="col-span-2 text-right">Cargo</div>
+        <div class="col-span-2 text-right">Abono</div>
+        <div class="col-span-1 text-right">Saldo</div>
+    </div>
+
+    <!-- Saldo inicial -->
+    <div class="grid grid-cols-12 gap-2 px-5 py-3 border-b border-gray-100 bg-gray-50/30">
+        <div class="col-span-2">
+            <span class="text-[10px] font-mono text-gray-400">—</span>
+        </div>
+        <div class="col-span-1"></div>
+        <div class="col-span-4">
+            <span class="text-xs font-semibold text-gray-500">Saldo inicial</span>
+        </div>
+        <div class="col-span-2"></div>
+        <div class="col-span-2"></div>
+        <div class="col-span-1 text-right">
+            <span class="text-xs font-bold text-gray-700">$0.00</span>
+        </div>
+    </div>
+
+    <div id="tabla-movimientos" class="divide-y divide-gray-50">
+        {% set saldo_acumulado = namespace(valor=0) %}
+
+        {% for m in movimientos %}
+        {% if m.tipo == 'Compra' %}
+            {% set saldo_acumulado.valor = saldo_acumulado.valor + m.monto %}
+        {% else %}
+            {% set saldo_acumulado.valor = saldo_acumulado.valor - m.monto %}
+        {% endif %}
+
+        <div class="grid grid-cols-12 gap-2 px-5 py-3 items-center hover:bg-gray-50/50 transition-colors fila-movimiento
+                    {{ 'bg-red-50/30' if m.tipo == 'Compra' else 'bg-green-50/30' }}"
+            data-mes="{{ m.fecha.strftime('%Y-%m') if m.fecha else '' }}"
+            data-tipo="{{ m.tipo }}">
+
+            <!-- Fecha -->
+            <div class="col-span-2">
+                <p class="text-xs font-mono text-gray-600">{{ m.fecha.strftime('%d/%m/%Y') if m.fecha else '—' }}</p>
+                <p class="text-[10px] text-gray-400">{{ m.fecha.strftime('%H:%M') if m.fecha else '' }}</p>
+            </div>
+
+            <!-- Tipo badge -->
+            <div class="col-span-1">
+                {% if m.tipo == 'Compra' %}
+                <span class="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded
+                             bg-red-100 text-red-600 border border-red-200">
+                    CARGO
+                </span>
+                {% else %}
+                <span class="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded
+                             bg-green-100 text-green-700 border border-green-200">
+                    ABONO
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Concepto -->
+            <div class="col-span-4">
+                <p class="text-xs font-medium text-gray-800">{{ m.concepto }}</p>
+                {% if m.referencia %}
+                <p class="text-[10px] font-mono text-gray-400">Ref: {{ m.referencia }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Cargo -->
+            <div class="col-span-2 text-right">
+                {% if m.tipo == 'Compra' %}
+                <span class="text-sm font-bold text-red-600">${{ "%.2f"|format(m.monto) }}</span>
+                {% else %}
+                <span class="text-xs text-gray-300">—</span>
+                {% endif %}
+            </div>
+
+            <!-- Abono -->
+            <div class="col-span-2 text-right">
+                {% if m.tipo == 'Pago' %}
+                <span class="text-sm font-bold text-green-700">${{ "%.2f"|format(m.monto) }}</span>
+                {% else %}
+                <span class="text-xs text-gray-300">—</span>
+                {% endif %}
+            </div>
+
+            <!-- Saldo acumulado -->
+            <div class="col-span-1 text-right">
+                <span class="text-xs font-bold
+                    {% if saldo_acumulado.valor > 0 %}text-red-600
+                    {% elif saldo_acumulado.valor == 0 %}text-green-600
+                    {% else %}text-amber-600{% endif %}">
+                    ${{ "%.2f"|format(saldo_acumulado.valor) }}
+                </span>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="px-5 py-12 text-center text-xs text-gray-400">
+            No hay movimientos registrados para este proveedor
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Footer con saldo final -->
+    {% if movimientos %}
+    <div class="grid grid-cols-12 gap-2 px-5 py-3.5 border-t border-gray-200 bg-gray-50">
+        <div class="col-span-7">
+            <span class="text-xs font-semibold text-gray-600">Totales</span>
+        </div>
+        <div class="col-span-2 text-right">
+            <span class="text-sm font-bold text-red-600">
+                ${{ "%.2f"|format(movimientos | selectattr('tipo', 'equalto', 'Compra') | sum(attribute='monto')) }}
+            </span>
+        </div>
+        <div class="col-span-2 text-right">
+            <span class="text-sm font-bold text-green-700">
+                ${{ "%.2f"|format(movimientos | selectattr('tipo', 'equalto', 'Pago') | sum(attribute='monto')) }}
+            </span>
+        </div>
+        <div class="col-span-1 text-right">
+            {% set saldo_final = proveedor.total_comprado - proveedor.total_pagado %}
+            <span class="text-sm font-bold {{ 'text-red-600' if saldo_final > 0 else 'text-green-700' }}">
+                ${{ "%.2f"|format(saldo_final) }}
+            </span>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    const filtroMes  = document.getElementById('filtro-mes');
+    const filtroTipo = document.getElementById('filtro-tipo');
+    const filas      = document.querySelectorAll('.fila-movimiento');
+    const contador   = document.getElementById('contador');
+
+    function filtrar() {
+        const mes  = filtroMes.value;
+        const tipo = filtroTipo.value;
+        let n = 0;
+        filas.forEach(f => {
+            const ok = (!mes  || f.dataset.mes  === mes)
+                    && (!tipo || f.dataset.tipo  === tipo);
+            f.style.display = ok ? '' : 'none';
+            if (ok) n++;
+        });
+        contador.textContent = n + ' movimiento(s)';
+    }
+
+    filtroMes.addEventListener('change', filtrar);
+    filtroTipo.addEventListener('change', filtrar);
+</script>
+
+{% endblock %}
