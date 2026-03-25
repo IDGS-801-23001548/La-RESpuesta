@@ -5,7 +5,7 @@ class Log(db.Model):
     __tablename__ = 'logs_sistema'
 
     id_log        = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_usuario    = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=True)
+    id_usuario    = db.Column(db.Integer, db.ForeignKey('user.id_usuario'), nullable=True)
     tipo_evento   = db.Column(
                         db.Enum('Seguridad', 'Inventario', 'Ventas', 'Configuracion'),
                         nullable=False
