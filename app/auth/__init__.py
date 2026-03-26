@@ -1,9 +1,10 @@
 from flask import Blueprint
 
-auth_bp = Blueprint(
+auth = Blueprint(
     'auth',
     __name__,
-    template_folder='../templates/auth'
+    url_prefix='/security',
+    template_folder='../templates/security'
 )
 
 from . import routes

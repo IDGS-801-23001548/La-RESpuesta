@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La RESpuesta · Iniciar sesión</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/output.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/vaca-favicon.svg') }}">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="h-screen w-screen flex overflow-hidden">
+
+    <!-- ══════════════════════════════
+         IZQUIERDA — imagen + overlay
+    ══════════════════════════════ -->
+    <div class="relative hidden lg:flex lg:w-1/2 xl:w-3/5 h-full overflow-hidden flex-shrink-0">
+        <img src="{{ url_for('static', filename='img/vaca-bw.jpg') }}" alt="La RESpuesta"
+            class="absolute inset-0 w-full h-full object-cover object-center">
+
+        <div class="absolute inset-0 bg-gradient-to-br from-green-900/85 via-green-800/55 to-transparent"></div>
+
+        <!-- Barra superior: logo + etiqueta -->
+        <div class="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-6 z-10">
+            <img src="{{ url_for('static', filename='img/logo-blanco.svg') }}" alt="Logo" class="h-12 w-auto">
+            <span class="text-white/75 text-xs font-semibold tracking-widest uppercase">
+                La RESpuesta
+            </span>
+        </div>
+
+        <div class="relative z-10 flex flex-col justify-end pb-20 px-10 w-full">
+            <h2 class="text-white font-bold text-4xl xl:text-5xl leading-tight drop-shadow-lg">
+                Bienvenidos<br>a la plataforma<br>de <span class="text-green-300">La RESpuesta</span>
+            </h2>
+            <p class="mt-4 text-white/55 text-sm font-light tracking-wide">Gestión · Control · Inventario · Ventas</p>
+        </div>
+    </div>
+
+    <div class="w-full lg:w-1/2 xl:w-2/5 h-full overflow-y-auto">
+        <div class="min-h-full flex flex-col justify-center items-center px-10 py-12">
+
+            <div class="mb-8 w-full max-w-sm">
+                <h1 class="text-gray-900 font-bold text-2xl">Inicia sesión</h1>
+                <p class="text-gray-400 text-sm mt-1.5 font-light">Ingresa tus credenciales para continuar</p>
+            </div>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div
+                class="w-full max-w-sm flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 mb-5 text-red-600 text-sm">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {{ messages[0] }}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('auth.login_post') }}" method="POST" autocomplete="off" class="w-full max-w-sm">
+
+                <div class="mb-5">
+                    <label class="block text-gray-500 text-[11px] font-semibold uppercase tracking-widest mb-2">Correo
+                        Electrónico</label>
+                    <input type="email" name="email" placeholder="tucorreo@email.com" required autofocus
+                        class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-800 focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all">
+                </div>
+
+                <div class="mb-4">
+                    <label
+                        class="block text-gray-500 text-[11px] font-semibold uppercase tracking-widest mb-2">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" name="password" id="password" placeholder="••••••••" required
+                            class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-800 focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all">
+                        <button type="button" onclick="togglePwd()"
+                            class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300">
+                            <svg id="eye-svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 mb-7">
+                    <input type="checkbox" name="remember" id="remember" class="w-4 h-4 accent-green-600 rounded">
+                    <label for="remember" class="text-gray-400 text-sm cursor-pointer select-none">Recordarme</label>
+                </div>
+
+                <button type="submit" class="w-full bg-green-500 hover:bg-green-700 active:scale-[0.99] text-white font-semibold
+                text-sm py-3 rounded-xl shadow-lg shadow-green-200 hover:shadow-green-300 transition-all duration-200
+                cursor-pointer">
+                    Ingresar
+                </button>
+            </form>
+
+            <div class="mt-16 w-full max-w-sm text-center text-gray-300 text-xs">
+                by <span class="font-semibold text-gray-400">CODATECH</span><br>
+                &copy; Copyright 2026 &mdash; Versión 1.0
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        function togglePwd() {
+            const inp = document.getElementById('password');
+            const svg = document.getElementById('eye-svg');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                svg.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12 a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4 c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+            } else {
+                inp.type = 'password';
+                svg.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+            }
+        }
+    </script>
+
+</body>
+
+</html>
