@@ -1,10 +1,10 @@
 from flask import Blueprint
 
-admin = Blueprint(
-    "admin",                  
+user = Blueprint(
+    "user",                  
     __name__,
     url_prefix="/admin",
-    template_folder='../templates/admin'
+    template_folder='../templates/user'
 )
 
 from . import routes

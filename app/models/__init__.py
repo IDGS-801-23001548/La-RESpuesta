@@ -1,4 +1,4 @@
-from .log import Log
 from .permisos import ModuloPermisos
-from .rol import Rol
-from .usuarios import Usuario
+from .rol import Role
+from .usuarios import User
+from .users_roles import users_roles

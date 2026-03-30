@@ -4,7 +4,7 @@ class ModuloPermisos(db.Model):
     __tablename__ = 'permisos_modulos'
 
     id_permiso      = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_rol          = db.Column(db.Integer, db.ForeignKey('role.id_rol'), nullable=False)
+    id              = db.Column(db.Integer, db.ForeignKey('role'), nullable=False)
     modulo          = db.Column(db.String(50), nullable=False)
     l_lectura       = db.Column(db.Boolean, default=False)
     a_alta          = db.Column(db.Boolean, default=False)
