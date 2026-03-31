@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request
 from . import admin
 from app.extensions import db
 from app.models import User
-from app.admin.forms import ComprasForm
+from app.modules.admin.forms import ComprasForm
 from flask_security import login_required, current_user
 from flask_security.decorators import roles_required
 
@@ -15,19 +15,6 @@ def index():
 @roles_required('admin')
 def dashboard():
     return render_template("admin/dashboard.html")
-
-@admin.route("/compras", methods=['GET', 'POST'])
-def compras():
-    return render_template("admin/compras.html")
-
-@admin.route("/compras/detalle", methods=['GET', 'POST'])
-def compras_detalle():
-    return render_template("admin/compras.html")
-
-@admin.route("/compras/nueva", methods=['GET', 'POST'])
-def compras_nueva():
-    form = ComprasForm()
-    return render_template("admin/compras_nueva.html", form = form)
 
 @admin.route('/materia-prima')
 def materia():
@@ -51,7 +38,7 @@ def proveedores():
 
 @admin.route('/proveedores/nuevo')
 def proveedores_nuevo():
-    form = UserForm()
+    form = User()
     return render_template('admin/proveedores_form.html', proveedor=None, form = form)
 
 @admin.route('/proveedores/detalle')

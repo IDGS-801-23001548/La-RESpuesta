@@ -2,7 +2,7 @@
 #Importamos el módulo os
 import os
 #Importamos la clase Flask del módulo flask
-from flask import Flask, session, render_template
+from flask import Flask, session, render_template, current_app
 #Importamos la clase Security y SQLAlchemyUserDatastore de flask-security
 from flask_security import Security, SQLAlchemyUserDatastore
 #Importamos la función generate_password_hash de werkzeug.security
@@ -14,15 +14,14 @@ from flask_login import LoginManager
 from dotenv import load_dotenv
 from datetime import timedelta
 import os
-from app.extensions import db
-from flask_security import SQLAlchemyUserDatastore
-from .extensions import db
 from .models import User, Role
+from app.extensions import db
+from flask_wtf import CSRFProtect
+from flask_migrate import Migrate
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-
 load_dotenv()
- 
+
 #Creamos el objeto SQLAlchemyUserDatastore con base a los modelos User y Role.
 from .models import User, Role
   
@@ -30,6 +29,7 @@ from .models import User, Role
 def create_app():
     #Creamos una instancia de Flask
     app = Flask(__name__)
+    migrate = Migrate(app, db)
     # Nivel mínimo de logs (DEBUG, INFO, WARNING, ERROR)
     app.logger.setLevel(logging.DEBUG)
 
@@ -46,23 +46,23 @@ def create_app():
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
+    login_manager.login_message = "Inicia sesión primero."
+    login_manager.login_message_category = "warning"
     login_manager.init_app(app)
 
     #Definimos a donde redirigir cuando no hay sesión y el tiempo de vida de la sesión
     app.config['SECURITY_LOGIN_URL'] = '/login'
-    app.config['SECURITY_UNAUTHORIZED_VIEW'] = '/login'
+    app.config['SECURITY_UNAUTHORIZED_VIEW'] = 'auth.login'
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=10)
 
     #Configuramos los mensajes de errores controlados
-    app.config['SECURITY_MSG_UNAUTHORIZED'] = ("Inicia sesión primero.", "warning")
-    app.config['SECURITY_MSG_LOGIN_REQUIRED'] = ("Necesitas autenticarte.", "warning")
-
-    #Primer log de la aplicación en ejecución
-    app.logger.debug("La aplicación ha iniciado correctamente")
-   
+    app.config['SECURITY_MSG_UNAUTHENTICATED'] = ("Inicia sesión primero.", "warning")
+    app.config['SECURITY_MSG_UNAUTHORIZED'] = ("No tienes permisos para acceder.", "danger")
+ 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     #Generamos la clave aleatoria de sesión Flask para crear una cookie con la inf. de la sesión
     app.config['SECRET_KEY'] = os.urandom(24)
+    csrf = CSRFProtect(app)
     #Definimos la ruta a la BD: mysql://user:password@localhost/bd'
     db_user = os.getenv('DB_USER')
     db_password = os.getenv('DB_PASSWORD')
@@ -85,13 +85,15 @@ def create_app():
     # ==============================
     # BLUEPRINTS
     # ==============================
-    from .auth import auth
-    from .admin import admin
-    from .user import user
+    from .modules.auth import auth
+    from .modules.admin import admin
+    from .modules.user import user
+    from .modules.compras import compras
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
     app.register_blueprint(user)
+    app.register_blueprint(compras)
 
     # ==============================
     # ERROR 404

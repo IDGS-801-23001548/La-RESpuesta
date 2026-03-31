@@ -3,23 +3,42 @@
 {% block content %}
 
 <!-- Header -->
-<div class="flex items-center gap-3 mb-6">
-    <a href="{{ url_for('user.usuarios') }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
-               text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-    </a>
-    <div>
-        <h2 class="text-lg font-semibold text-gray-800">Nuevo usuario</h2>
-        <p class="text-xs text-gray-400 mt-0.5">Registra un nuevo acceso al sistema</p>
+<div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+        <a href="{{ url_for('user.usuarios_detalles', id=usuario.id) }}"
+            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
+                   text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+        </a>
+        <div>
+            <h2 class="text-lg font-semibold text-gray-800">Editar usuario</h2>
+            <p class="text-xs text-gray-400 mt-0.5">
+                Modificando acceso de
+                <span class="font-medium text-gray-500">{{ usuario.email }}</span>
+            </p>
+        </div>
     </div>
+
+    <!-- Badge estado actual -->
+    {% if usuario.active %}
+    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
+                 bg-green-50 text-green-700 border border-green-200">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Activo
+    </span>
+    {% else %}
+    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
+                 bg-red-50 text-red-500 border border-red-200">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Inactivo
+    </span>
+    {% endif %}
 </div>
 
 <!-- Flash messages -->
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-<div class="max-w-2xl mb-4 space-y-2">
+<div class="mb-4 space-y-2">
     {% for category, message in messages %}
     {% if category == 'error' %}
     <div class="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
@@ -30,8 +49,7 @@
         {{ message }}
     </div>
     {% elif category == 'success' %}
-    <div
-        class="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs">
+    <div class="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs">
         <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
         </svg>
@@ -44,18 +62,15 @@
 {% endwith %}
 
 <div class="w-full">
-    <form action="{{ url_for('user.usuarios_nuevo') }}" method="POST" class="space-y-4">
+    <form action="{{ url_for('user.usuarios_editar', id=usuario.id) }}" method="POST" class="space-y-4">
 
         {{ form.hidden_tag() }}
 
-        <!-- ══════════════════════════════
-             GRID: dos columnas
-        ══════════════════════════════ -->
         <div class="grid grid-cols-1 gap-4 items-start">
 
             <!-- ══════════════════════════════
-             CARD: Datos de persona
-        ══════════════════════════════ -->
+                 CARD: Datos de persona
+            ══════════════════════════════ -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -68,17 +83,17 @@
 
                 <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    <!-- Nombre — ocupa ambas columnas -->
+                    <!-- Nombre -->
                     <div class="col-span-2">
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Nombre <span class="text-red-400">*</span>
                         </label>
                         {{ form.nombre(
-                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                        rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                        transition-all",
-                        placeholder="Ej. María",
-                        autocomplete="off"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                            transition-all",
+                            placeholder="Ej. María",
+                            autocomplete="off"
                         ) }}
                     </div>
 
@@ -88,25 +103,25 @@
                             Apellido Paterno <span class="text-red-400">*</span>
                         </label>
                         {{ form.apellido_paterno(
-                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                        rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                        transition-all",
-                        placeholder="Ej. González",
-                        autocomplete="off"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                            transition-all",
+                            placeholder="Ej. González",
+                            autocomplete="off"
                         ) }}
                     </div>
 
                     <!-- Apellido Materno -->
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Apellido Materno <span class="text-red-400">*</span>
+                            Apellido Materno
                         </label>
                         {{ form.apellido_materno(
-                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                        rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                        transition-all",
-                        placeholder="Ej. Reyes",
-                        autocomplete="off"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                            transition-all",
+                            placeholder="Ej. Reyes",
+                            autocomplete="off"
                         ) }}
                     </div>
 
@@ -116,11 +131,11 @@
                             Teléfono
                         </label>
                         {{ form.telefono(
-                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                        rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                        transition-all",
-                        placeholder="Ej. 477 123 4567",
-                        autocomplete="off"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                            transition-all",
+                            placeholder="Ej. 477 123 4567",
+                            autocomplete="off"
                         ) }}
                     </div>
 
@@ -130,11 +145,11 @@
                             Dirección
                         </label>
                         {{ form.direccion(
-                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                        rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                        transition-all",
-                        placeholder="Calle, número, colonia…",
-                        autocomplete="off"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                            transition-all",
+                            placeholder="Calle, número, colonia…",
+                            autocomplete="off"
                         ) }}
                     </div>
 
@@ -142,8 +157,8 @@
             </div>
 
             <!-- ══════════════════════════════
-             CARD: Datos de acceso
-        ══════════════════════════════ -->
+                 CARD: Datos de acceso
+            ══════════════════════════════ -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -156,46 +171,44 @@
 
                 <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    <!-- Nombre de usuario -->
+                    <!-- Correo -->
                     <div class="sm:col-span-2">
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Correo electrónico <span class="text-red-400">*</span>
                         </label>
                         {{ form.email(
-                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                        rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                        transition-all",
-                        placeholder="ejemplo@correo.com",
-                        autocomplete="off",
-                        type="email"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                            transition-all",
+                            placeholder="ejemplo@correo.com",
+                            autocomplete="off",
+                            type="email"
                         ) }}
                     </div>
 
-                    <!-- Contraseña -->
+                    <!-- Nueva contraseña (opcional) -->
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Contraseña <span class="text-red-400">*</span>
+                            Nueva contraseña
+                            <span class="normal-case tracking-normal font-normal text-gray-300 ml-1">(dejar vacío para no cambiar)</span>
                         </label>
                         <div class="relative">
                             {{ form.password(
-                            class="w-full pl-3 pr-9 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                            transition-all placeholder-gray-300",
-                            placeholder="Mínimo 8 caracteres",
-                            autocomplete="new-password"
+                                class="w-full pl-3 pr-9 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                                transition-all placeholder-gray-300",
+                                placeholder="Mínimo 8 caracteres",
+                                autocomplete="new-password"
                             ) }}
                             <button type="button" onclick="togglePwd()"
                                 class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors"
                                 aria-label="Mostrar/ocultar contraseña">
-                                <svg id="eye-svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round">
+                                <svg id="eye-svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                                     <circle cx="12" cy="12" r="3" />
                                 </svg>
                             </button>
-                        </div>
-                        <div id="modal-password" class="hidden mt-2 px-3 py-2 bg-gray-900 text-green-400 text-sm font-mono
-                               rounded-lg border border-gray-700 break-all select-all tracking-wide shadow-lg">
                         </div>
                     </div>
 
@@ -205,32 +218,28 @@
                             Rol del sistema <span class="text-red-400">*</span>
                         </label>
                         {{ form.id_rol(
-                        id="select-rol",
-                        class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                        rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                        transition-all"
+                            id="select-rol",
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                            transition-all"
                         ) }}
                     </div>
 
                     <!-- Estado -->
-                    <div
-                        class="sm:col-span-2 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="sm:col-span-2 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                         <div>
                             <p class="text-xs font-semibold text-gray-700">Estado del usuario</p>
-                            <p class="text-[10px] text-gray-400 mt-0.5">Los usuarios inactivos no podrán iniciar
-                                sesión
-                            </p>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Los usuarios inactivos no podrán iniciar sesión</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             {{ form.active(class="sr-only peer") }}
                             <div class="w-10 h-5 bg-gray-200 rounded-full peer
-                                    peer-checked:bg-green-600
-                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px]
-                                    after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all
-                                    peer-checked:after:translate-x-5">
+                                        peer-checked:bg-green-600
+                                        after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                        after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all
+                                        peer-checked:after:translate-x-5">
                             </div>
-                            <span
-                                class="ml-2 text-xs font-medium text-gray-600 peer-checked:text-green-700">Activo</span>
+                            <span class="ml-2 text-xs font-medium text-gray-600 peer-checked:text-green-700">Activo</span>
                         </label>
                     </div>
 
@@ -253,24 +262,20 @@
                         <div id="password-checker" class="mt-3 space-y-1 hidden">
                             <div class="flex items-center gap-2 mb-2">
                                 <div class="flex gap-1 flex-1">
-                                    <div id="bar-1" class="h-1.5 flex-1 rounded-full bg-gray-200 duration-300">
-                                    </div>
-                                    <div id="bar-2" class="h-1.5 flex-1 rounded-full bg-gray-200 duration-300">
-                                    </div>
-                                    <div id="bar-3" class="h-1.5 flex-1 rounded-full bg-gray-200 duration-300">
-                                    </div>
-                                    <div id="bar-4" class="h-1.5 flex-1 rounded-full bg-gray-200 duration-300">
-                                    </div>
+                                    <div id="bar-1" class="h-1.5 flex-1 rounded-full bg-gray-200 duration-300"></div>
+                                    <div id="bar-2" class="h-1.5 flex-1 rounded-full bg-gray-200 duration-300"></div>
+                                    <div id="bar-3" class="h-1.5 flex-1 rounded-full bg-gray-200 duration-300"></div>
+                                    <div id="bar-4" class="h-1.5 flex-1 rounded-full bg-gray-200 duration-300"></div>
                                 </div>
                                 <span id="nivel-texto" class="text-[10px] font-semibold w-14 text-right"></span>
                             </div>
 
                             {% for req_id, texto in [
-                            ('req-len', 'Mínimo 8 caracteres'),
-                            ('req-upper', 'Al menos 1 mayúscula'),
-                            ('req-lower', 'Al menos 1 minúscula'),
-                            ('req-num', 'Al menos 1 número'),
-                            ('req-special', 'Al menos 1 carácter especial (!@#$%...)'),
+                                ('req-len',     'Mínimo 8 caracteres'),
+                                ('req-upper',   'Al menos 1 mayúscula'),
+                                ('req-lower',   'Al menos 1 minúscula'),
+                                ('req-num',     'Al menos 1 número'),
+                                ('req-special', 'Al menos 1 carácter especial (!@#$%...)'),
                             ] %}
                             <div class="flex items-center gap-1.5" id="{{ req_id }}">
                                 <svg class="w-3 h-3 req-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -285,18 +290,19 @@
                 </div>
             </div>
 
-        </div><!-- /grid dos columnas -->
+        </div><!-- /grid -->
 
         <!-- Botones -->
         <div class="flex items-center justify-end gap-3 pt-1">
-            <a href="{{ url_for('user.usuarios') }}" class="px-5 py-2.5 text-sm text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100
+            <a href="{{ url_for('user.usuarios_detalles', id=usuario.id) }}"
+                class="px-5 py-2.5 text-sm text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100
                        border border-gray-200 rounded-lg transition-colors">
                 Cancelar
             </a>
             <button type="submit"
                 class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
                        rounded-lg shadow-sm shadow-green-200 transition-all hover:-translate-y-px active:translate-y-0">
-                Crear usuario
+                Guardar cambios
             </button>
         </div>
 
@@ -325,17 +331,16 @@
         }
     }
 
-
     // ─────────────────────────────────────────────
     //  Validador de fortaleza de contraseña
     // ─────────────────────────────────────────────
     const NIVELES = [
-        { color: null, texto: '', barras: 0 },
-        { color: 'bg-red-400', texto: 'Débil', barras: 1 },
-        { color: 'bg-red-400', texto: 'Débil', barras: 1 },
+        { color: null,            texto: '',        barras: 0 },
+        { color: 'bg-red-400',    texto: 'Débil',   barras: 1 },
+        { color: 'bg-red-400',    texto: 'Débil',   barras: 1 },
         { color: 'bg-yellow-400', texto: 'Regular', barras: 2 },
-        { color: 'bg-blue-400', texto: 'Buena', barras: 3 },
-        { color: 'bg-green-500', texto: 'Fuerte', barras: 4 },
+        { color: 'bg-blue-400',   texto: 'Buena',   barras: 3 },
+        { color: 'bg-green-500',  texto: 'Fuerte',  barras: 4 },
     ];
 
     const TEXTO_COLORES = [
@@ -344,18 +349,17 @@
     ];
 
     const REGLAS = [
-        { id: 'req-len', test: v => v.length >= 8 },
-        { id: 'req-upper', test: v => /[A-Z]/.test(v) },
-        { id: 'req-lower', test: v => /[a-z]/.test(v) },
-        { id: 'req-num', test: v => /[0-9]/.test(v) },
+        { id: 'req-len',     test: v => v.length >= 8 },
+        { id: 'req-upper',   test: v => /[A-Z]/.test(v) },
+        { id: 'req-lower',   test: v => /[a-z]/.test(v) },
+        { id: 'req-num',     test: v => /[0-9]/.test(v) },
         { id: 'req-special', test: v => /[!@#$%^&*()\-_=+\[\]{};:'",.<>/?\\|`~]/.test(v) },
     ];
 
-    const checker = document.getElementById('password-checker');
+    const checker    = document.getElementById('password-checker');
     const nivelTexto = document.getElementById('nivel-texto');
-    const barEls = [1, 2, 3, 4].map(i => document.getElementById(`bar-${i}`));
-    const reglaEls = REGLAS.map(r => ({
-        row: document.getElementById(r.id),
+    const barEls     = [1, 2, 3, 4].map(i => document.getElementById(`bar-${i}`));
+    const reglaEls   = REGLAS.map(r => ({
         ico: document.querySelector(`#${r.id} .req-ico`),
         txt: document.querySelector(`#${r.id} .req-txt`),
     }));
@@ -366,7 +370,7 @@
         checker.classList.remove('hidden');
 
         const resultados = REGLAS.map(r => r.test(val));
-        const cumplidas = resultados.filter(Boolean).length;
+        const cumplidas  = resultados.filter(Boolean).length;
 
         resultados.forEach((ok, i) => {
             const { ico, txt } = reglaEls[i];
@@ -392,7 +396,6 @@
             `text-[10px] font-semibold w-14 text-right ${TEXTO_COLORES[cumplidas]}`
         );
     });
-
 </script>
 
 {% endblock %}

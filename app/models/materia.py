@@ -2,7 +2,7 @@ from app.extensions import db
 from datetime import datetime
 
 class MateriaPrima(db.Model):
-    __tablename__ = 'materias_primas'
+    __tablename__   = 'materias_primas'
 
     id_materia      = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nombre          = db.Column(db.String(100), nullable=False)
