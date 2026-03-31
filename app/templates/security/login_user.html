@@ -56,11 +56,16 @@
             {% if messages %}
             <div
                 class="w-full max-w-sm flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 mb-5 text-red-600 text-sm">
-                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
+
+                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="7" x2="12" y2="13"></line>
+                    <circle cx="12" cy="17" r="1"></circle>
+
                 </svg>
+
                 {{ messages[0] }}
             </div>
             {% endif %}
@@ -68,6 +73,7 @@
 
             <form action="{{ url_for('auth.login_post') }}" method="POST" autocomplete="off" class="w-full max-w-sm">
 
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="mb-5">
                     <label class="block text-gray-500 text-[11px] font-semibold uppercase tracking-widest mb-2">Correo
                         Electrónico</label>
