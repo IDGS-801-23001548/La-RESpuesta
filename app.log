@@ -498,3 +498,144 @@
 2026-03-30 21:53:19,498 - DEBUG - La aplicación ha iniciado correctamente
 2026-03-30 21:53:26,200 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
 2026-03-30 21:54:30,590 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-30 21:54:39,801 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-30 21:54:52,141 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-30 21:55:04,745 - INFO - Login exitoso | email=jemanu@gmail.com | ip=127.0.0.1
+2026-03-30 21:55:24,498 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-30 21:55:43,305 - INFO - Usuario jmreyes@liverpool.com.mx actualizado por admin@example.com
+2026-03-30 21:55:56,175 - INFO - Login exitoso | email=jmreyes@liverpool.com.mx | ip=127.0.0.1
+2026-03-30 22:04:37,431 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-30 22:04:44,470 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:03:45,278 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:03:45,902 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:04:43,285 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:04:43,923 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:04:54,322 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:09:54,975 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:10:31,407 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:11:39,283 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:11:39,936 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:12:21,821 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:14:37,606 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:15:43,417 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:15:58,865 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:17:21,445 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:19:15,998 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:19:16,012 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:19:16,636 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:19:16,650 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:19:57,260 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:19:57,275 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:19:59,389 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:19:59,404 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:20:00,027 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:20:00,041 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:20:25,918 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:20:25,932 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:22:14,644 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:22:14,659 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:27:15,369 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:27:15,385 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:39:07,502 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:43:10,645 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:43:10,659 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:43:33,461 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:43:33,477 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:43:46,253 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:44:09,000 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:48:17,778 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:48:47,889 - INFO - Usuario emmanuelortizreyes3@gmail.com actualizado por admin@example.com
+2026-03-31 18:50:22,753 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:50:22,770 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:50:32,042 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:53:02,852 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:53:02,866 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:53:20,924 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:53:41,375 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:53:41,390 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:53:47,259 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:54:06,144 - WARNING - Sesión inválida | user=1
+2026-03-31 18:54:36,668 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:54:36,690 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:54:38,550 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:54:38,565 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:55:44,220 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 18:55:44,234 - DEBUG - Tokens de sesión eliminados
+2026-03-31 18:59:28,396 - WARNING - Intento fallido | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:59:39,996 - WARNING - Intento fallido | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:59:44,247 - WARNING - Intento fallido | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:59:47,228 - WARNING - Intento fallido | email=admin@example.com | ip=127.0.0.1
+2026-03-31 18:59:54,033 - WARNING - Usuario bloqueado por intentos | email=admin@example.com
+2026-03-31 18:59:54,041 - WARNING - Intento fallido | email=admin@example.com | ip=127.0.0.1
+2026-03-31 19:02:50,952 - INFO - Login exitoso | email=emmanuelortizreyes3@gmail.com | ip=127.0.0.1
+2026-03-31 19:03:11,752 - WARNING - Intento fallido | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:03:16,665 - INFO - Login exitoso | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:04:34,716 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:04:34,742 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:05:55,094 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:05:55,108 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:06:17,923 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:06:17,937 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:09:09,235 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:09:09,250 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:09:45,648 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:09:45,662 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:10:20,959 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:10:20,973 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:12:06,440 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:12:06,454 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:12:59,700 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:12:59,714 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:15:59,573 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:15:59,587 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:17:27,686 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 19:17:55,954 - INFO - Login exitoso | email=emmanuelortizreyes3@gmail.com | ip=127.0.0.1
+2026-03-31 19:18:38,890 - WARNING - Intento fallido | email=admon@example.com | ip=127.0.0.1
+2026-03-31 19:18:58,667 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 19:19:01,273 - WARNING - Sesión inválida | user=1
+2026-03-31 19:19:24,965 - INFO - Login exitoso | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:19:36,154 - WARNING - Intento fallido | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:19:44,069 - WARNING - Intento fallido | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:19:51,695 - WARNING - Intento fallido | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:19:54,763 - WARNING - Intento fallido | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:19:57,471 - WARNING - Usuario bloqueado por intentos | email=emmanuel@example.com
+2026-03-31 19:19:57,478 - WARNING - Intento fallido | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:20:00,583 - WARNING - Intento en cuenta bloqueada | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:20:13,849 - INFO - user = Emmanuel Ortiz Reyes emmanuel@example.com estado: False -> True desbloqueado=True cambiado por: admin@example.com
+2026-03-31 19:20:27,359 - INFO - Login exitoso | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:43:09,573 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:43:09,596 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:43:57,727 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 19:44:15,210 - INFO - user = Emmanuel Ortiz Reyes emmanuelortizreyes3@gmail.com estado: True -> False desbloqueado=False cambiado por: admin@example.com
+2026-03-31 19:44:40,039 - INFO - Usuario emmanuelortizreyes3@gmail.com actualizado por admin@example.com
+2026-03-31 19:46:18,324 - INFO - user = Emmanuel Ortiz Reyes emmanuelortizreyes3@gmail.com estado: False -> True desbloqueado=True cambiado por: admin@example.com
+2026-03-31 19:49:40,041 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:49:40,057 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:49:40,733 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:49:40,749 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:51:14,066 - INFO - Login exitoso | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:51:24,951 - INFO - Login exitoso | email=emmanuel@example.com | ip=127.0.0.1
+2026-03-31 19:51:48,203 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:51:48,215 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:51:48,847 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 19:51:48,862 - DEBUG - Tokens de sesión eliminados
+2026-03-31 19:51:53,665 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 20:01:20,525 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 20:01:20,541 - DEBUG - Tokens de sesión eliminados
+2026-03-31 20:04:36,184 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 20:04:36,207 - DEBUG - Tokens de sesión eliminados
+2026-03-31 20:04:36,838 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 20:04:36,852 - DEBUG - Tokens de sesión eliminados
+2026-03-31 20:04:39,679 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 20:05:54,109 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 20:05:54,124 - DEBUG - Tokens de sesión eliminados
+2026-03-31 20:05:58,842 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 20:06:41,012 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 20:06:41,027 - DEBUG - Tokens de sesión eliminados
+2026-03-31 20:06:43,551 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 20:06:57,537 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 20:06:57,553 - DEBUG - Tokens de sesión eliminados
+2026-03-31 20:06:59,832 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 20:08:45,289 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 20:08:45,305 - DEBUG - Tokens de sesión eliminados
+2026-03-31 20:08:48,406 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1

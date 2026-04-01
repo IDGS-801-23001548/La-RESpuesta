@@ -82,13 +82,24 @@ def usuarios_toggle_estatus(id):
         return redirect(url_for("user.usuarios"))
 
     anterior = usuario.active
+
     usuario.active = not usuario.active
+
+    if usuario.active:
+        usuario.intentos_fallidos = 0
+        usuario.bloqueado_hasta = None
+
     db.session.commit()
 
     flash("Estatus actualizado correctamente", "success")
-    current_app.logger.info(f"user = {usuario.name} {usuario.email} " 
-                            f"estado: {anterior} -> {usuario.active} "
-                            f"cambiado por: {current_user.email}")
+
+    current_app.logger.info(
+        f"user = {usuario.name} {usuario.email} "
+        f"estado: {anterior} -> {usuario.active} "
+        f"desbloqueado={usuario.active} "
+        f"cambiado por: {current_user.email}"
+    )
+
     return redirect(url_for("user.usuarios"))
 
 @user.route("/usuarios/<int:id>/eliminar", methods=["POST"])

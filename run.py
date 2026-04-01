@@ -6,12 +6,26 @@ from flask import session, redirect, url_for
 from flask_login import current_user, logout_user
 from app.models import Persona
 from app import create_app, user_datastore
+from datetime import datetime
+from app.models import User
 
 if __name__ == '__main__':
     app = create_app()
     with app.app_context():
         #Primer log de la aplicación en ejecución
         app.logger.debug("La aplicación ha iniciado correctamente")
+
+        expired_users = User.query.filter(
+            User.session_expiration < datetime.now()
+        ).all()
+
+        for user in expired_users:
+            user.session_token = None
+            user.session_expiration = None
+
+        db.session.commit()
+        app.logger.debug("Tokens de sesión eliminados")
+
         db.create_all()
 
         user_datastore.find_or_create_role(name='admin', description='Administrator')
@@ -82,11 +96,14 @@ if __name__ == '__main__':
         if current_user.is_authenticated:
             token_db = current_user.session_token
             token_session = session.get("session_token")
+            expiration = current_user.session_expiration
 
-            if not token_db or not token_session or token_db != token_session:
+            if not token_db or not token_session or token_db != token_session or not expiration or expiration < datetime.now():
                 app.logger.warning(
                     f"Sesión inválida | user={current_user.id}"
                 )
+                current_user.session_token = None
+                current_user.session_expiration = None
                 logout_user()
                 session.clear()
                 return redirect(url_for("auth.login"))
