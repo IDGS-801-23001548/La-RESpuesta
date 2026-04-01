@@ -3,18 +3,29 @@ from app.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class Usuario(db.Model):
+<<<<<<< HEAD
     __tablename__ = 'usuarios'
+=======
+    __tablename__ = 'user'
+>>>>>>> develop
 
     id_usuario          = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nombre_usuario      = db.Column(db.String(50), unique=True, nullable=False)
     password_hash       = db.Column(db.String(255), nullable=False)
 
     # ── FK obligatoria para que SQLAlchemy pueda hacer el JOIN ──
+<<<<<<< HEAD
     id_rol              = db.Column(db.Integer, db.ForeignKey('roles.id_rol'), nullable=True)
 
     # back_populates apunta al atributo 'usuarios' en Rol
     rol                 = db.relationship('Rol', back_populates='usuarios')
 
+=======
+    id_rol              = db.Column(db.Integer, db.ForeignKey('role.id_rol'), nullable=True)
+
+    # back_populates apunta al atributo 'usuarios' en Rol
+    role                = db.relationship('Rol', back_populates='usuarios')
+>>>>>>> develop
     estatus             = db.Column(db.Enum('Activo', 'Inactivo'), default='Activo')
     intentos_fallidos   = db.Column(db.Integer, default=0)
     fecha_bloqueo       = db.Column(db.DateTime, nullable=True)

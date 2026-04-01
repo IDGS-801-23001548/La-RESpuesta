@@ -1,0 +1,292 @@
+{% extends "_sidebar.html" %}
+
+{% block content %}
+
+<!-- ══════════════════════════════
+     PROVEEDORES — Lista
+══════════════════════════════ -->
+
+<!-- Header -->
+<div class="flex items-start justify-between mb-5">
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Proveedores</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Gestión de proveedores activos e inactivos</p>
+    </div>
+    <a href="{{ url_for('admin.proveedores_nuevo') }}"
+        class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
+               text-white text-sm font-medium rounded-lg shadow-sm shadow-green-200
+               transition-all duration-150 hover:-translate-y-px active:translate-y-0">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Nuevo proveedor
+    </a>
+</div>
+
+<!-- Tarjetas resumen -->
+<div class="grid grid-cols-3 gap-4 mb-5">
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-green-50 border border-green-100 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total</p>
+            <p class="text-xl font-bold text-gray-800">8</p>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl border border-green-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-green-50 border border-green-100 flex items-center justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-green-500"></span>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-green-500">Activos</p>
+            <p class="text-xl font-bold text-green-700">6</p>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-red-400">Inactivos</p>
+            <p class="text-xl font-bold text-red-500">2</p>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla principal -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+
+    <!-- Filtros -->
+    <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-100">
+        <div class="relative flex-1 min-w-48">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" placeholder="Buscar por nombre, RFC o contacto..."
+                class="w-full pl-9 pr-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                       placeholder-gray-300 transition-all">
+        </div>
+        <!-- Filtro estatus (RDF1402) -->
+        <select class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg
+                       outline-none focus:border-green-400 transition-all">
+            <option value="">Todos los estatus</option>
+            <option value="activo">Activos</option>
+            <option value="inactivo">Inactivos</option>
+        </select>
+        <!-- Filtro producto -->
+        <select class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg
+                       outline-none focus:border-green-400 transition-all">
+            <option value="">Todos los productos</option>
+            <option>Res</option>
+            <option>Cerdo</option>
+            <option>Pollo</option>
+        </select>
+    </div>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left border-b border-gray-100">
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Proveedor</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">RFC</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Contacto</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Provee</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Pago</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Estatus</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+
+                {% set proveedores = [
+                    ("Rastro Municipal del Norte",  "RMN850312AB1", "Carlos Mendoza",   "555-1234", "Res, Cerdo",       "Crédito 15 días", "activo",   "Lun, Mié, Vie"),
+                    ("Avícola San Isidro",          "ASI920801CD2", "Patricia Ruiz",    "555-5678", "Pollo",             "Contado",         "activo",   "Mar, Jue, Sáb"),
+                    ("Carnes Selectas del Bajío",   "CSB780415EF3", "Roberto García",   "555-9012", "Res",               "Crédito 30 días", "activo",   "Lun, Vie"),
+                    ("Distribuidora Porcina GDL",   "DPG011220GH4", "Ana Flores",       "555-3456", "Cerdo",             "Contado",         "activo",   "Mié, Sáb"),
+                    ("Ganadería La Esperanza",      "GLE651108IJ5", "Miguel Torres",    "555-7890", "Res, Cerdo, Pollo", "Crédito 15 días", "activo",   "Lun a Vie"),
+                    ("Avicultores Unidos SA",       "AUS990304KL6", "Diana López",      "555-2345", "Pollo",             "Contado",         "activo",   "Lun, Mié, Vie"),
+                    ("Rastro El Potrero",           "REP730620MN7", "José Hernández",   "555-6789", "Res",               "Crédito 8 días",  "inactivo", "Vie"),
+                    ("Granjas del Valle SA",        "GVS880915OP8", "Lucía Martínez",   "555-0123", "Cerdo, Pollo",      "Contado",         "inactivo", "Jue"),
+                ] %}
+
+                {% for nombre, rfc, contacto, tel, provee, pago, estatus, dias in proveedores %}
+                <tr class="hover:bg-gray-50/70 transition-colors group
+                           {% if estatus == 'inactivo' %}opacity-60{% endif %}">
+
+                    <!-- Proveedor -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs
+                                {% if estatus == 'activo' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-400{% endif %}">
+                                {{ nombre[0] }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-800 leading-tight">{{ nombre }}</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5">{{ dias }}</p>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- RFC -->
+                    <td class="px-4 py-3">
+                        <span class="font-mono text-xs text-gray-600">{{ rfc }}</span>
+                    </td>
+
+                    <!-- Contacto -->
+                    <td class="px-4 py-3">
+                        <p class="text-xs font-medium text-gray-700">{{ contacto }}</p>
+                        <p class="text-[10px] text-gray-400">{{ tel }}</p>
+                    </td>
+
+                    <!-- Productos que provee -->
+                    <td class="px-4 py-3">
+                        <div class="flex flex-wrap gap-1">
+                            {% for p in provee.split(', ') %}
+                            <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full
+                                {% if p == 'Res' %}bg-red-50 text-red-600 border border-red-200
+                                {% elif p == 'Cerdo' %}bg-pink-50 text-pink-600 border border-pink-200
+                                {% else %}bg-amber-50 text-amber-600 border border-amber-200{% endif %}">
+                                {{ p }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </td>
+
+                    <!-- Condición de pago -->
+                    <td class="px-4 py-3">
+                        <span class="text-xs text-gray-600">{{ pago }}</span>
+                    </td>
+
+                    <!-- Estatus (RDF1402) -->
+                    <td class="px-4 py-3">
+                        {% if estatus == 'activo' %}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                     bg-green-50 text-green-700 border border-green-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Activo
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                     bg-red-50 text-red-500 border border-red-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Inactivo
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Acciones -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <!-- Ver detalle -->
+                            <a href="{{ url_for('admin.proveedores_detalle', id=loop.index) }}"
+                                class="w-7 h-7 flex items-center justify-center rounded-md
+                                       text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
+                                title="Ver detalle">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
+                            <!-- Editar -->
+                            <a href="{{ url_for('admin.proveedores_editar', id=loop.index) }}"
+                                class="w-7 h-7 flex items-center justify-center rounded-md
+                                       text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Editar">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+                            <!-- Toggle estatus (RDF1402) -->
+                            <button
+                                class="w-7 h-7 flex items-center justify-center rounded-md transition-colors
+                                       {% if estatus == 'activo' %}text-gray-400 hover:text-amber-600 hover:bg-amber-50
+                                       {% else %}text-gray-400 hover:text-green-600 hover:bg-green-50{% endif %}"
+                                title="{{ 'Desactivar' if estatus == 'activo' else 'Activar' }}">
+                                {% if estatus == 'activo' %}
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                </svg>
+                                {% else %}
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {% endif %}
+                            </button>
+                            <!-- Eliminar -->
+                            <button
+                                class="w-7 h-7 flex items-center justify-center rounded-md
+                                       text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                title="Eliminar"
+                                onclick="confirmarEliminar(this)">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        <p class="text-xs text-gray-400">Mostrando 8 de 8 proveedores</p>
+        <div class="flex items-center gap-1">
+            <button disabled class="w-7 h-7 flex items-center justify-center rounded-md text-gray-300">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <button class="w-7 h-7 flex items-center justify-center rounded-md text-xs font-medium bg-green-600 text-white">1</button>
+            <button disabled class="w-7 h-7 flex items-center justify-center rounded-md text-gray-300">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal confirmación eliminar -->
+<div id="modal-eliminar" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="cerrarModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-xl p-6 w-80 z-10">
+        <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
+            <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-gray-800 text-center">¿Eliminar proveedor?</h3>
+        <p class="text-xs text-gray-500 text-center mt-1.5">
+            Esta acción no se puede deshacer. Si el proveedor tiene órdenes de compra asociadas, considera desactivarlo en su lugar.
+        </p>
+        <div class="flex gap-2 mt-5">
+            <button onclick="cerrarModal()"
+                class="flex-1 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                Cancelar
+            </button>
+            <button class="flex-1 py-2 text-sm text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors">
+                Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmarEliminar(btn) {
+        document.getElementById('modal-eliminar').classList.remove('hidden');
+    }
+    function cerrarModal() {
+        document.getElementById('modal-eliminar').classList.add('hidden');
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,294 @@
+{% extends "_sidebar.html" %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="flex items-start justify-between mb-5">
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Producción</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Órdenes de producción — desposte y productos procesados</p>
+    </div>
+    <a href="{{ url_for('admin.produccion_nueva') }}"
+        class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
+               text-white text-sm font-medium rounded-lg shadow-sm shadow-green-200
+               transition-all duration-150 hover:-translate-y-px active:translate-y-0">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Nueva orden
+    </a>
+</div>
+
+<!-- KPIs del día -->
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg shrink-0">⚙️</div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Órdenes hoy</p>
+            <p class="text-xl font-bold text-gray-800">{{ ordenes | length }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-amber-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-amber-500">En proceso</p>
+            <p class="text-xl font-bold text-amber-600">
+                {{ ordenes | selectattr('estatus', 'equalto', 'En proceso') | list | length }}
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-green-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-green-500"></span>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-green-500">Completadas</p>
+            <p class="text-xl font-bold text-green-700">
+                {{ ordenes | selectattr('estatus', 'equalto', 'Completada') | list | length }}
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-blue-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+            </svg>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-blue-500">Kg producidos</p>
+            <p class="text-xl font-bold text-blue-600">{{ kg_producidos | default('0') }} kg</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Solicitudes pendientes de atender -->
+{% if solicitudes_pendientes %}
+<div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+    <div class="flex items-center gap-2 mb-2">
+        <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-xs font-semibold text-amber-700">
+            {{ solicitudes_pendientes | length }} solicitud(es) pendiente(s) de producción
+        </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        {% for s in solicitudes_pendientes %}
+        <a href="{{ url_for('admin.produccion_desde_solicitud', id=s.id_solicitud) }}"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium
+                   bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors">
+            <span class="font-mono">{{ s.folio }}</span> — {{ s.nombre_receta }}
+            {% if s.prioridad == 'Alta' %}
+            <span class="text-red-500 font-bold">↑ Alta</span>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+
+    <!-- Filtros -->
+    <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-100">
+        <div class="relative flex-1 min-w-48">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="buscador" placeholder="Buscar por folio o receta..."
+                class="w-full pl-9 pr-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                       placeholder-gray-300 transition-all">
+        </div>
+        <select id="filtro-estatus"
+            class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg
+                   outline-none focus:border-green-400 transition-all">
+            <option value="">Todos los estatus</option>
+            <option value="En proceso">En proceso</option>
+            <option value="Completada">Completada</option>
+            <option value="Cancelada">Cancelada</option>
+        </select>
+        <select id="filtro-origen"
+            class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg
+                   outline-none focus:border-green-400 transition-all">
+            <option value="">Todos los orígenes</option>
+            <option value="Solicitud">Desde solicitud</option>
+            <option value="Libre">Producción libre</option>
+        </select>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left border-b border-gray-100">
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Folio</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Receta</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Origen</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Operario</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Inicio</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Rendimiento</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Estatus</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+
+                {% for o in ordenes %}
+                <tr class="hover:bg-gray-50/70 transition-colors group fila-orden"
+                    data-folio="{{ o.folio | lower }}"
+                    data-receta="{{ o.nombre_receta | lower }}"
+                    data-estatus="{{ o.estatus }}"
+                    data-origen="{{ o.origen }}">
+
+                    <td class="px-4 py-3">
+                        <span class="font-mono text-xs font-semibold text-gray-700">{{ o.folio }}</span>
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <p class="text-xs font-medium text-gray-800">{{ o.nombre_receta }}</p>
+                        <span class="text-[10px] font-medium
+                            {% if o.tipo_receta == 'Desposte' %}text-red-500{% else %}text-purple-500{% endif %}">
+                            {% if o.tipo_receta == 'Desposte' %}🔪{% else %}⚗️{% endif %} {{ o.tipo_receta }}
+                        </span>
+                    </td>
+
+                    <td class="px-4 py-3">
+                        {% if o.origen == 'Solicitud' %}
+                        <span class="inline-flex items-center gap-1 text-[10px] font-medium
+                                     px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                            📋 {{ o.folio_solicitud }}
+                        </span>
+                        {% else %}
+                        <span class="text-[10px] text-gray-400">Producción libre</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <span class="text-xs text-gray-600">{{ o.operario }}</span>
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <span class="text-xs font-mono text-gray-500">
+                            {{ o.fecha_inicio.strftime('%d/%m %H:%M') if o.fecha_inicio else '—' }}
+                        </span>
+                    </td>
+
+                    <td class="px-4 py-3">
+                        {% if o.rendimiento_real %}
+                        <div>
+                            <span class="text-xs font-semibold text-gray-800">{{ o.rendimiento_real }} kg</span>
+                            {% if o.rendimiento_esperado %}
+                            {% set pct = ((o.rendimiento_real / o.rendimiento_esperado) * 100) | round(0) | int %}
+                            <span class="ml-1 text-[10px]
+                                {% if pct >= 95 %}text-green-600{% elif pct >= 85 %}text-amber-500{% else %}text-red-500{% endif %}">
+                                ({{ pct }}%)
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="text-xs text-gray-300">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        {% set badge = {
+                            'En proceso': 'bg-amber-50 text-amber-600 border-amber-200',
+                            'Completada': 'bg-green-50 text-green-700 border-green-200',
+                            'Cancelada':  'bg-gray-100 text-gray-400 border-gray-200',
+                        } %}
+                        <span class="inline-flex items-center gap-1 text-[10px] font-semibold
+                                     px-2 py-0.5 rounded-full border {{ badge.get(o.estatus, '') }}">
+                            <span class="w-1.5 h-1.5 rounded-full
+                                {% if o.estatus == 'En proceso' %}bg-amber-400
+                                {% elif o.estatus == 'Completada' %}bg-green-500
+                                {% else %}bg-gray-300{% endif %}">
+                            </span>
+                            {{ o.estatus }}
+                        </span>
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <!-- Ver detalle siempre disponible -->
+                            <a href="{{ url_for('admin.produccion_detalle', id=o.id_orden) }}"
+                                class="w-7 h-7 flex items-center justify-center rounded-md
+                                       text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
+                                title="Ver detalle">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
+                            <!-- Completar solo si está En proceso -->
+                            {% if o.estatus == 'En proceso' %}
+                            <a href="{{ url_for('admin.produccion_completar', id=o.id_orden) }}"
+                                class="w-7 h-7 flex items-center justify-center rounded-md
+                                       text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Registrar producción">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="px-4 py-12 text-center">
+                        <p class="text-xs text-gray-400 mb-2">No hay órdenes de producción</p>
+                        <a href="{{ url_for('admin.produccion_nueva') }}"
+                            class="text-xs text-green-600 hover:underline">Crear primera orden →</a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+    <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        <p class="text-[10px] text-gray-400">
+            El rendimiento real se registra al completar la orden. El % muestra eficiencia vs esperado.
+        </p>
+        <p class="text-xs text-gray-400" id="contador">{{ ordenes | length }} orden(es)</p>
+    </div>
+</div>
+
+<script>
+    const buscador      = document.getElementById('buscador');
+    const filtroEstatus = document.getElementById('filtro-estatus');
+    const filtroOrigen  = document.getElementById('filtro-origen');
+    const filas         = document.querySelectorAll('.fila-orden');
+    const contador      = document.getElementById('contador');
+
+    function filtrar() {
+        const txt    = buscador.value.toLowerCase();
+        const est    = filtroEstatus.value;
+        const origen = filtroOrigen.value;
+        let n = 0;
+        filas.forEach(f => {
+            const ok = (f.dataset.folio.includes(txt) || f.dataset.receta.includes(txt))
+                    && (!est    || f.dataset.estatus === est)
+                    && (!origen || f.dataset.origen  === origen);
+            f.style.display = ok ? '' : 'none';
+            if (ok) n++;
+        });
+        contador.textContent = n + ' orden(es)';
+    }
+
+    buscador.addEventListener('input', filtrar);
+    filtroEstatus.addEventListener('change', filtrar);
+    filtroOrigen.addEventListener('change', filtrar);
+</script>
+
+{% endblock %}

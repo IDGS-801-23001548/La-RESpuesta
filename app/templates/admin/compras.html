@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 {% extends "admin/_sidebar.html" %}
+=======
+{% extends "_sidebar.html" %}
+>>>>>>> develop
 
 {% block content %}
 
@@ -12,7 +16,11 @@
         <h2 class="text-lg font-semibold text-gray-800">Órdenes de Compra</h2>
         <p class="text-xs text-gray-400 mt-0.5">Gestión y seguimiento de compras a proveedores</p>
     </div>
+<<<<<<< HEAD
     <a href="{{ url_for('compras_nueva') }}" class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
+=======
+<a href="{{ url_for('admin.compras_nueva') }}" class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
+>>>>>>> develop
                text-white text-sm font-medium rounded-lg shadow-sm shadow-green-200
                transition-all duration-150 hover:-translate-y-px active:translate-y-0">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -186,7 +194,11 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <!-- Ver detalle -->
+<<<<<<< HEAD
                             <a href="{{ url_for('compras_detalle', id=loop.index) }}" class="w-7 h-7 flex items-center justify-center rounded-md
+=======
+                            <a href="{{ url_for('admin.compras', id=loop.index) }}" class="w-7 h-7 flex items-center justify-center rounded-md
+>>>>>>> develop
                                        text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
                                 title="Ver detalle">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"

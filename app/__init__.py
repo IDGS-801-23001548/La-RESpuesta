@@ -18,8 +18,16 @@ def create_app():
     # Registrar blueprints
     from .auth import auth_bp
     from .admin import admin_bp
+<<<<<<< HEAD
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+=======
+    from .entregas import entregas_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(entregas_bp)
+>>>>>>> develop
 
     return app
