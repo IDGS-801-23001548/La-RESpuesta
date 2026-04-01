@@ -7,20 +7,20 @@ from flask_security import login_required, current_user
 from flask_security.decorators import roles_required
 
 @compras.route("/compras", methods=['GET', 'POST'])
-
+@login_required
 @roles_required('admin')
 def compra():
-    return render_template("admin/compras.html")
+    return render_template("admin/compras/compras.html")
 
 @compras.route("/compras/detalle", methods=['GET', 'POST'])
-
+@login_required
 @roles_required('admin')
 def compra_detalle():
-    return render_template("admin/compras.html")
+    return render_template("admin/compras/compras.html")
 
 @compras.route("/compras/nueva", methods=['GET', 'POST'])
-
+@login_required
 @roles_required('admin')
 def compra_nueva():
     form = ComprasForm()
-    return render_template("admin/compras_nueva.html", form = form)
+    return render_template("admin/compras/compras_nueva.html", form = form)

@@ -23,44 +23,6 @@ def index():
 def dashboard():
     return render_template("admin/dashboard.html")
 
-@admin.route('/materia-prima')
-def materia():
-    return render_template('admin/materia.html')
-
-@admin.route('/materia-prima/nueva')
-def materia_nueva():
-    return render_template('admin/materia_form.html', materia=None)
-
-@admin.route('/materia-prima/<int:id>/editar')
-def materia_editar(id):
-    return render_template('admin/materia_form.html', materia=None)
-
-@admin.route('/materia-prima/<int:id>/eliminar', methods=['POST'])
-def materia_eliminar(id):
-    return redirect(url_for('materia'))
-
-@admin.route('/proveedores')
-def proveedores():
-    return render_template('admin/proveedores.html')
-
-@admin.route('/proveedores/nuevo')
-def proveedores_nuevo():
-    form = User()
-    return render_template('admin/proveedores_form.html', proveedor=None, form = form)
-
-@admin.route('/proveedores/detalle')
-def proveedores_detalle():
-    return render_template('admin/proveedores_detalle.html', proveedor=None)
-
-@admin.route('/proveedores/<int:id>/editar')
-def proveedores_editar(id):
-    form = ComprasForm()
-    return render_template('admin/proveedores_form.html', proveedor=None, form = form)
-
-@admin.route('/proveedores/<int:id>/eliminar', methods=['POST'])
-def proveedores_eliminar(id):
-    return redirect(url_for('proveedores'))
-
 @admin.route('/recetas')
 def recetas():
     return render_template('admin/recetas.html', recetas=[])

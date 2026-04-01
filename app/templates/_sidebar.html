@@ -96,7 +96,7 @@
                 ) %}
 
                 {{ ui.sidebar_item( "Compras", url_for('compras.compra'), endpoint_prefix="compras.compra") }}
-                {{ ui.sidebar_item( "Materia Prima", url_for('admin.materia'), endpoint_prefix="admin.materia") }}
+                {{ ui.sidebar_item( "Materia Prima", url_for('materia.materias'), endpoint_prefix="materia.materias") }}
                 {{ ui.sidebar_item( "Recetas", url_for('admin.recetas'), endpoint_prefix="admin.recetas") }}
 
                 {{ ui.sidebar_item( "Solicitudes de Producción",
@@ -133,7 +133,7 @@
                 {{ ui.sidebar_item( "Usuarios y Roles", url_for('user.usuarios'), endpoint_prefix="user.usuarios") }}
                 {{ ui.sidebar_item( "Logs del Sistema", url_for('log.logs'), endpoint_prefix="log.logs") }}
 
-                {{ ui.sidebar_item( "Proveedores", url_for('admin.proveedores'), endpoint_prefix="admin.proveedores") }}
+                {{ ui.sidebar_item( "Proveedores", url_for('proveedor.proveedores'), endpoint_prefix="proveedor.proveedores") }}
 
                 {% endcall %}
 
