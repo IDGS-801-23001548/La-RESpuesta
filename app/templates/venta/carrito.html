@@ -1,0 +1,360 @@
+{% extends "/venta/layout.html" %}
+{% block title %}VentaOnline — Carrito{% endblock %}
+
+{% block styles %}
+<style>
+  .cart-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .cart-layout { grid-template-columns: 1fr; }
+  }
+
+  .panel-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 14px rgba(0,0,0,.06);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: .8rem 1.2rem;
+    border-bottom: 1px solid #f5f5f5;
+    background: #fafafa;
+  }
+  .panel-head h3 { font-size: .82rem; font-weight: 700; color: #374151; margin: 0; }
+  .panel-head svg { width: 16px; height: 16px; stroke: #16a34a; fill: none; }
+  .panel-body { padding: 1.1rem 1.2rem; }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .72rem; color: #9ca3af; font-weight: 600;
+    padding: 0 0 1.25rem;
+  }
+  .breadcrumb a { color: #9ca3af; text-decoration: none; }
+  .breadcrumb a:hover { color: #16a34a; }
+  .breadcrumb .active { color: #16a34a; font-weight: 700; }
+  .breadcrumb svg { width: 11px; height: 11px; stroke: #d1d5db; fill: none; }
+
+  /* Cart items */
+  .cart-item {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: .9rem 1.2rem;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    margin-bottom: .75rem;
+    transition: all .18s;
+  }
+  .item-icon {
+    width: 46px; height: 46px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; flex-shrink: 0;
+  }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name  { font-size: .85rem; font-weight: 800; color: #111827; margin: 0 0 2px; }
+  .item-sub   { font-size: .65rem; color: #9ca3af; font-weight: 600; margin: 0 0 3px; }
+  .item-price { font-size: .72rem; font-weight: 700; color: #16a34a; margin: 0; }
+
+  .qty-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .qty-btn {
+    width: 28px; height: 28px; border-radius: 9px;
+    background: #f0f0f0; border: none; cursor: pointer;
+    font-size: 1rem; font-weight: 700; color: #374151;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .qty-btn:hover { background: #e5e7eb; }
+  .qty-val { width: 40px; text-align: center; font-size: .85rem; font-weight: 800; color: #374151; }
+  .qty-unit { font-size: .68rem; color: #9ca3af; font-weight: 600; }
+
+  .item-total { text-align: right; flex-shrink: 0; min-width: 60px; }
+  .item-subtotal { font-size: .9rem; font-weight: 900; color: #111827; }
+
+  .remove-btn {
+    width: 28px; height: 28px; border-radius: 9px;
+    border: none; background: transparent; cursor: pointer;
+    color: #d1d5db; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .remove-btn:hover { background: #fef2f2; color: #ef4444; }
+  .remove-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; }
+
+  .add-more {
+    display: flex; align-items: center; gap: .85rem;
+    padding: .85rem 1.2rem;
+    background: #fff;
+    border-radius: 16px;
+    border: 2px dashed #e5e7eb;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .18s;
+    margin-bottom: .75rem;
+  }
+  .add-more:hover { border-color: #16a34a; background: #f0fdf4; }
+  .add-more-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: #f5f5f5; display: flex; align-items: center; justify-content: center;
+    transition: background .18s;
+  }
+  .add-more:hover .add-more-icon { background: #dcfce7; }
+  .add-more-icon svg { width: 18px; height: 18px; stroke: #9ca3af; fill: none; transition: stroke .18s; }
+  .add-more:hover .add-more-icon svg { stroke: #16a34a; }
+  .add-more span { font-size: .82rem; font-weight: 700; color: #9ca3af; transition: color .18s; }
+  .add-more:hover span { color: #16a34a; }
+
+  /* Summary */
+  .summary-row {
+    display: flex; justify-content: space-between;
+    font-size: .8rem; padding: .3rem 0;
+  }
+  .summary-row .lbl { color: #6b7280; font-weight: 600; }
+  .summary-row .val { font-weight: 700; color: #374151; }
+  .summary-row .val.green { color: #16a34a; }
+
+  .delivery-box {
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 12px; padding: .75rem 1rem;
+    display: flex; align-items: center; gap: 8px;
+    margin: .75rem 0;
+  }
+  .delivery-box svg { width: 16px; height: 16px; stroke: #16a34a; fill: none; flex-shrink: 0; }
+  .delivery-label { font-size: .68rem; font-weight: 700; color: #15803d; margin: 0 0 1px; }
+  .delivery-value { font-size: .78rem; font-weight: 800; color: #14532d; margin: 0; }
+
+  .btn-checkout {
+    display: block; width: 100%; padding: .85rem;
+    background: #16a34a; color: #fff;
+    font-size: .85rem; font-weight: 800;
+    border-radius: 13px; text-align: center;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(22,163,74,.3);
+    transition: all .2s;
+  }
+  .btn-checkout:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(22,163,74,.35); }
+
+  .btn-keep-shopping {
+    display: block; text-align: center;
+    font-size: .72rem; color: #9ca3af; font-weight: 600;
+    text-decoration: none; padding: .6rem;
+    transition: color .15s;
+  }
+  .btn-keep-shopping:hover { color: #374151; }
+
+  textarea {
+    width: 100%;
+    padding: .6rem .85rem;
+    font-size: .82rem; font-family: 'Nunito', sans-serif;
+    color: #374151;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 11px;
+    outline: none;
+    resize: none;
+    transition: border-color .18s;
+    box-sizing: border-box;
+  }
+  textarea:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
+  textarea::placeholder { color: #d1d5db; }
+</style>
+{% endblock %}
+
+{% block container %}
+<div style="max-width:960px;margin:0 auto;" class="fade-in">
+
+
+  <h2 style="font-size:1.3rem;font-weight:900;color:#111827;margin:0 0 1.5rem;">Tu carrito</h2>
+
+  <div class="cart-layout">
+
+    <!-- LEFT: items -->
+    <div>
+      <div id="cart-items">
+        <div class="cart-item" data-price="280">
+          <div class="item-icon" style="background:#fef2f2;">🥩</div>
+          <div class="item-info">
+            <p class="item-name">Ribeye / Entrecot</p>
+            <p class="item-sub">Res · Corte premium</p>
+            <p class="item-price">$280.00/kg</p>
+          </div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeQty(this,-0.5)">−</button>
+            <span class="qty-val">1.0</span>
+            <span class="qty-unit">kg</span>
+            <button class="qty-btn" onclick="changeQty(this,0.5)">+</button>
+          </div>
+          <div class="item-total"><span class="item-subtotal">$280.00</span></div>
+          <button class="remove-btn" onclick="removeItem(this)">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="cart-item" data-price="180">
+          <div class="item-icon" style="background:#fffbeb;">🥩</div>
+          <div class="item-info">
+            <p class="item-name">Arrachera</p>
+            <p class="item-sub">Res · Corte especial</p>
+            <p class="item-price">$180.00/kg</p>
+          </div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeQty(this,-0.5)">−</button>
+            <span class="qty-val">0.5</span>
+            <span class="qty-unit">kg</span>
+            <button class="qty-btn" onclick="changeQty(this,0.5)">+</button>
+          </div>
+          <div class="item-total"><span class="item-subtotal">$90.00</span></div>
+          <button class="remove-btn" onclick="removeItem(this)">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="cart-item" data-price="95">
+          <div class="item-icon" style="background:#fff7ed;">🦴</div>
+          <div class="item-info">
+            <p class="item-name">Costilla corta</p>
+            <p class="item-sub">Res · Para asado</p>
+            <p class="item-price">$95.00/kg</p>
+          </div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeQty(this,-0.5)">−</button>
+            <span class="qty-val">1.5</span>
+            <span class="qty-unit">kg</span>
+            <button class="qty-btn" onclick="changeQty(this,0.5)">+</button>
+          </div>
+          <div class="item-total"><span class="item-subtotal">$142.50</span></div>
+          <button class="remove-btn" onclick="removeItem(this)">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <a href="{{ url_for('venta.seleccionar_animal') }}" class="add-more">
+        <div class="add-more-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <span>Agregar más productos</span>
+      </a>
+
+      <!-- Dirección -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <h3>Dirección de entrega</h3>
+        </div>
+        <div class="panel-body" style="display:flex;align-items:flex-start;gap:.85rem;">
+          <div style="width:36px;height:36px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg style="width:15px;height:15px;stroke:#16a34a;fill:none;" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div style="flex:1;">
+            <p style="font-size:.85rem;font-weight:700;color:#111827;margin:0 0 3px;">Blvd. Torres Landa 204</p>
+            <p style="font-size:.72rem;color:#9ca3af;font-weight:600;margin:0;">Col. Centro, León, Gto. C.P. 37000</p>
+          </div>
+          <button style="font-size:.72rem;color:#16a34a;font-weight:700;background:none;border:none;cursor:pointer;padding:0;">Cambiar</button>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+          <h3>Notas del pedido</h3>
+        </div>
+        <div class="panel-body">
+          <textarea rows="2" placeholder="Ej: Cortar en porciones de 250g, empacar al vacío..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: summary -->
+    <div>
+      <div class="panel-card" style="position:sticky;top:80px;">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <h3>Resumen</h3>
+        </div>
+        <div class="panel-body">
+          <div class="summary-row">
+            <span class="lbl">Subtotal (<span id="items-count">3</span> productos)</span>
+            <span id="subtotal-val" class="val">$512.50</span>
+          </div>
+          <div class="summary-row">
+            <span class="lbl">Envío</span>
+            <span class="val green">Gratis</span>
+          </div>
+          <div class="summary-row">
+            <span class="lbl">IVA estimado</span>
+            <span id="iva-val" class="val">$82.00</span>
+          </div>
+          <div style="border-top:1px solid #f0f0f0;padding-top:.7rem;margin-top:.4rem;" class="summary-row">
+            <span class="lbl" style="font-weight:800;color:#374151;">Total estimado</span>
+            <span id="total-val" style="font-size:1.1rem;font-weight:900;color:#16a34a;">$594.50</span>
+          </div>
+
+          <div class="delivery-box">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+              <p class="delivery-label">Entrega estimada</p>
+              <p class="delivery-value">Mañana antes de las 2pm</p>
+            </div>
+          </div>
+
+          <a href="{{ url_for('venta.pago') }}" class="btn-checkout">Proceder al pago →</a>
+          <a href="{{ url_for('venta.seleccionar_animal') }}" class="btn-keep-shopping">Seguir comprando</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function changeQty(btn, delta) {
+  const item = btn.closest('.cart-item');
+  const qtyEl = item.querySelector('.qty-val');
+  const subtotalEl = item.querySelector('.item-subtotal');
+  const pricePerKg = parseFloat(item.dataset.price);
+  let qty = parseFloat(qtyEl.textContent);
+  qty = Math.max(0.5, parseFloat((qty + delta).toFixed(1)));
+  qtyEl.textContent = qty.toFixed(1);
+  subtotalEl.textContent = '$' + (qty * pricePerKg).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  recalcTotal();
+}
+function removeItem(btn) {
+  const item = btn.closest('.cart-item');
+  item.style.transition = 'all .2s';
+  item.style.opacity = '0';
+  item.style.transform = 'translateX(20px)';
+  setTimeout(() => { item.remove(); recalcTotal(); }, 200);
+}
+function recalcTotal() {
+  let sub = 0, count = 0;
+  document.querySelectorAll('.cart-item').forEach(item => {
+    sub += parseFloat(item.querySelector('.qty-val').textContent) * parseFloat(item.dataset.price);
+    count++;
+  });
+  const iva = sub * 0.16;
+  document.getElementById('subtotal-val').textContent = '$' + sub.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('iva-val').textContent = '$' + iva.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('total-val').textContent = '$' + (sub+iva).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('items-count').textContent = count;
+}
+recalcTotal();
+</script>
+{% endblock %}

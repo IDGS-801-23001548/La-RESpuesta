@@ -1,0 +1,173 @@
+{% extends "/venta/layout.html" %}
+
+{% block title %}VentaOnline — Inicio{% endblock %}
+
+
+{% block container %}
+
+<div class="max-w-5xl mx-auto px-4 py-10 fade-in">
+
+  <div class="text-center mb-10">
+    <p class="text-xs font-semibold text-green-600 uppercase tracking-widest mb-2">Catálogo · Paso 1 de 3</p>
+    <h1 class="text-3xl font-extrabold text-gray-800 mb-2">¿Qué tipo de carne buscas?</h1>
+    <p class="text-sm text-gray-400">Selecciona el animal para ver los cortes disponibles</p>
+  </div>
+
+  <!-- Cards de animales -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+
+    <!-- VACA -->
+    <a href="{{ url_for('venta.catalogo_res') }}" class="animal-card bg-white rounded-3xl border-2 border-gray-100 shadow-sm overflow-hidden group hover:border-amber-300 hover:shadow-amber-100/60 hover:shadow-xl">
+      <div class="bg-gradient-to-b from-amber-50 to-white px-6 pt-8 pb-4 flex flex-col items-center">
+        <div class="animal-silhouette mb-3">
+          <!-- Silueta vaca -->
+          <svg viewBox="0 0 120 80" width="130" height="87">
+            <!-- Cuerpo -->
+            <ellipse cx="60" cy="45" rx="38" ry="22" fill="#2d3748"/>
+            <!-- Cabeza -->
+            <ellipse cx="98" cy="35" rx="14" ry="12" fill="#2d3748"/>
+            <!-- Hocico -->
+            <ellipse cx="110" cy="39" rx="7" ry="5" fill="#4a5568"/>
+            <!-- Ojos -->
+            <circle cx="103" cy="31" r="2" fill="white"/>
+            <circle cx="103" cy="31" r="1" fill="#1a202c"/>
+            <!-- Cuernos -->
+            <path d="M96 24 Q90 15 85 20" stroke="#2d3748" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M100 23 Q98 14 104 18" stroke="#2d3748" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <!-- Orejas -->
+            <ellipse cx="92" cy="28" rx="5" ry="3" fill="#4a5568" transform="rotate(-20,92,28)"/>
+            <!-- Cola -->
+            <path d="M22 45 Q10 40 8 50 Q12 55 18 50" stroke="#2d3748" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <!-- Patas delanteras -->
+            <rect x="82" y="65" width="8" height="18" rx="3" fill="#2d3748"/>
+            <rect x="72" y="65" width="8" height="18" rx="3" fill="#2d3748"/>
+            <!-- Patas traseras -->
+            <rect x="38" y="65" width="8" height="18" rx="3" fill="#2d3748"/>
+            <rect x="28" y="65" width="8" height="18" rx="3" fill="#2d3748"/>
+            <!-- Ubre -->
+            <ellipse cx="52" cy="67" rx="10" ry="5" fill="#f9a8d4"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-extrabold text-gray-800 mb-1">Res</h2>
+        <p class="text-xs text-gray-400 text-center">Ribeye, Filete, Arrachera<br>Brisket, Costilla y más</p>
+      </div>
+      <div class="px-4 py-3 bg-amber-50 border-t border-amber-100 flex items-center justify-between">
+        <span class="text-xs font-semibold text-amber-700">18 cortes disponibles</span>
+        <svg class="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+    </a>
+
+    <!-- POLLO -->
+    <a href="{{ url_for('venta.catalogo_pollo') }}" class="animal-card bg-white rounded-3xl border-2 border-gray-100 shadow-sm overflow-hidden group hover:border-yellow-300 hover:shadow-yellow-100/60 hover:shadow-xl">
+      <div class="bg-gradient-to-b from-yellow-50 to-white px-6 pt-8 pb-4 flex flex-col items-center">
+        <div class="animal-silhouette mb-3">
+          <!-- Silueta pollo -->
+          <svg viewBox="0 0 110 100" width="110" height="100">
+            <!-- Cuerpo -->
+            <ellipse cx="55" cy="58" rx="30" ry="26" fill="#2d3748"/>
+            <!-- Cabeza -->
+            <circle cx="78" cy="30" r="14" fill="#2d3748"/>
+            <!-- Pico -->
+            <path d="M90 28 L98 30 L90 33 Z" fill="#f6ad55"/>
+            <!-- Cresta -->
+            <path d="M74 17 Q70 10 76 14 Q72 6 80 12 Q78 4 85 10" stroke="#e53e3e" stroke-width="2" fill="#e53e3e" stroke-linejoin="round"/>
+            <!-- Ojo -->
+            <circle cx="82" cy="27" r="3" fill="white"/>
+            <circle cx="83" cy="27" r="1.5" fill="#1a202c"/>
+            <!-- Barbilla -->
+            <path d="M88 36 Q90 42 86 40" fill="#e53e3e"/>
+            <!-- Ala -->
+            <ellipse cx="70" cy="52" rx="22" ry="12" fill="#4a5568" transform="rotate(-10,70,52)"/>
+            <!-- Cola plumas -->
+            <path d="M26 55 Q15 45 12 52 Q10 48 8 55 Q12 58 20 56" fill="#2d3748"/>
+            <path d="M26 60 Q13 55 11 62 Q9 60 8 67 Q14 68 22 62" fill="#374151"/>
+            <!-- Patas -->
+            <line x1="48" y1="83" x2="42" y2="97" stroke="#f6ad55" stroke-width="4" stroke-linecap="round"/>
+            <line x1="60" y1="83" x2="65" y2="97" stroke="#f6ad55" stroke-width="4" stroke-linecap="round"/>
+            <!-- Dedos -->
+            <line x1="42" y1="97" x2="36" y2="100" stroke="#f6ad55" stroke-width="3" stroke-linecap="round"/>
+            <line x1="42" y1="97" x2="42" y2="103" stroke="#f6ad55" stroke-width="3" stroke-linecap="round"/>
+            <line x1="42" y1="97" x2="48" y2="100" stroke="#f6ad55" stroke-width="3" stroke-linecap="round"/>
+            <line x1="65" y1="97" x2="60" y2="100" stroke="#f6ad55" stroke-width="3" stroke-linecap="round"/>
+            <line x1="65" y1="97" x2="65" y2="103" stroke="#f6ad55" stroke-width="3" stroke-linecap="round"/>
+            <line x1="65" y1="97" x2="71" y2="100" stroke="#f6ad55" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-extrabold text-gray-800 mb-1">Pollo</h2>
+        <p class="text-xs text-gray-400 text-center">Pechuga, Muslo, Alita<br>Pierna y entero</p>
+      </div>
+      <div class="px-4 py-3 bg-yellow-50 border-t border-yellow-100 flex items-center justify-between">
+        <span class="text-xs font-semibold text-yellow-700">12 cortes disponibles</span>
+        <svg class="w-4 h-4 text-yellow-500 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+    </a>
+
+    <!-- CERDO -->
+    <a href="{{ url_for('venta.catalogo_cerdo') }}" class="animal-card bg-white rounded-3xl border-2 border-gray-100 shadow-sm overflow-hidden group hover:border-pink-300 hover:shadow-pink-100/60 hover:shadow-xl">
+      <div class="bg-gradient-to-b from-pink-50 to-white px-6 pt-8 pb-4 flex flex-col items-center">
+        <div class="animal-silhouette mb-3">
+          <!-- Silueta cerdo -->
+          <svg viewBox="0 0 130 90" width="130" height="90">
+            <!-- Cuerpo -->
+            <ellipse cx="62" cy="52" rx="42" ry="28" fill="#2d3748"/>
+            <!-- Cabeza -->
+            <ellipse cx="102" cy="38" rx="18" ry="16" fill="#2d3748"/>
+            <!-- Hocico redondo -->
+            <ellipse cx="116" cy="42" rx="9" ry="7" fill="#4a5568"/>
+            <circle cx="113" cy="42" r="2.5" fill="#1a202c"/>
+            <circle cx="119" cy="42" r="2.5" fill="#1a202c"/>
+            <!-- Ojos -->
+            <circle cx="107" cy="32" r="2.5" fill="white"/>
+            <circle cx="107" cy="32" r="1.2" fill="#1a202c"/>
+            <!-- Orejas grandes -->
+            <ellipse cx="97" cy="24" rx="7" ry="9" fill="#2d3748" transform="rotate(-15,97,24)"/>
+            <ellipse cx="97" cy="24" rx="4" ry="6" fill="#4a5568" transform="rotate(-15,97,24)"/>
+            <ellipse cx="110" cy="22" rx="6" ry="8" fill="#2d3748" transform="rotate(15,110,22)"/>
+            <ellipse cx="110" cy="22" rx="3.5" ry="5" fill="#4a5568" transform="rotate(15,110,22)"/>
+            <!-- Cola rizada -->
+            <path d="M20 50 Q10 40 14 35 Q18 30 22 36 Q24 40 20 44" stroke="#2d3748" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <!-- Patas -->
+            <rect x="84" y="78" width="9" height="14" rx="4" fill="#2d3748"/>
+            <rect x="73" y="78" width="9" height="14" rx="4" fill="#2d3748"/>
+            <rect x="42" y="78" width="9" height="14" rx="4" fill="#2d3748"/>
+            <rect x="31" y="78" width="9" height="14" rx="4" fill="#2d3748"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-extrabold text-gray-800 mb-1">Cerdo</h2>
+        <p class="text-xs text-gray-400 text-center">Chuleta, Pierna, Lomo<br>Tocino, Costilla y más</p>
+      </div>
+      <div class="px-4 py-3 bg-pink-50 border-t border-pink-100 flex items-center justify-between">
+        <span class="text-xs font-semibold text-pink-700">15 cortes disponibles</span>
+        <svg class="w-4 h-4 text-pink-500 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Info paso a paso -->
+  <div class="mt-10 flex items-center justify-center gap-4 text-xs text-gray-400">
+    <div class="flex items-center gap-1.5">
+      <div class="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center text-[10px] font-bold">1</div>
+      <span class="font-semibold text-green-700">Elige animal</span>
+    </div>
+    <div class="w-8 h-px bg-gray-300"></div>
+    <div class="flex items-center gap-1.5">
+      <div class="w-5 h-5 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-[10px] font-bold">2</div>
+      <span>Selecciona cortes</span>
+    </div>
+    <div class="w-8 h-px bg-gray-300"></div>
+    <div class="flex items-center gap-1.5">
+      <div class="w-5 h-5 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-[10px] font-bold">3</div>
+      <span>Tu carrito</span>
+    </div>
+    <div class="w-8 h-px bg-gray-300"></div>
+    <div class="flex items-center gap-1.5">
+      <div class="w-5 h-5 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-[10px] font-bold">4</div>
+      <span>Pago</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+
+{% endblock %}
