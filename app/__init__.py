@@ -89,11 +89,13 @@ def create_app():
     from .modules.admin import admin
     from .modules.user import user
     from .modules.compras import compras
+    from .modules.venta import venta
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
     app.register_blueprint(user)
     app.register_blueprint(compras)
+    app.register_blueprint(venta)
 
     # ==============================
     # ERROR 404
@@ -101,5 +103,9 @@ def create_app():
     @app.errorhandler(404)
     def page_not_found(e):
         return render_template("404.html"), 404
+    
+    @app.route("/")
+    def index():
+        return render_template("index.html")
 
     return app

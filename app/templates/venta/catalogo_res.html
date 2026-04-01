@@ -1,0 +1,321 @@
+{% extends "/venta/layout.html" %}
+{% block title %}VentaOnline — Cortes de Res{% endblock %}
+
+{% block styles %}
+<style>
+  .catalog-layout {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 1.25rem;
+  }
+  @media (max-width: 860px) {
+    .catalog-layout { grid-template-columns: 1fr; }
+  }
+
+  .panel-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 14px rgba(0,0,0,.06);
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: .85rem 1.25rem;
+    border-bottom: 1px solid #f5f5f5;
+    background: #fafafa;
+  }
+  .panel-head h3 { font-size: .85rem; font-weight: 700; color: #374151; margin: 0; }
+  .panel-head p  { font-size: .72rem; color: #9ca3af; font-weight: 600; margin: .15rem 0 0; }
+  .panel-body { padding: 1.1rem; }
+
+  /* SVG interactive zones */
+  .cut-zone {
+    cursor: pointer;
+    transition: all .18s;
+  }
+  .cut-zone:hover { filter: brightness(.9); }
+  .cut-zone.selected { stroke-width: 2.5; filter: brightness(.85); }
+  .cut-label {
+    font-size: 8px;
+    font-weight: 800;
+    font-family: 'Nunito', sans-serif;
+    letter-spacing: .04em;
+    pointer-events: none;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: .75rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .65rem;
+    color: #6b7280;
+    font-weight: 600;
+  }
+  .legend-dot {
+    width: 14px; height: 8px;
+    border-radius: 3px;
+    opacity: .7;
+  }
+
+  /* Cut tags */
+  .cut-tag {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .6rem .85rem;
+    border-radius: 12px;
+    border: 1.5px solid #f0f0f0;
+    background: #fafafa;
+    cursor: pointer;
+    transition: all .18s;
+    margin-bottom: 6px;
+  }
+  .cut-tag:hover { border-color: #16a34a; background: #f0fdf4; }
+  .cut-tag.selected {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    box-shadow: 0 0 0 3px rgba(22,163,74,.1);
+  }
+  .cut-tag-left { display: flex; align-items: center; gap: 8px; }
+  .cut-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .cut-name { font-size: .78rem; font-weight: 700; color: #374151; }
+  .cut-price { font-size: .65rem; color: #9ca3af; font-weight: 600; }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 600;
+    padding: .65rem 0 1.25rem;
+  }
+  .breadcrumb a { color: #16a34a; font-weight: 700; text-decoration: none; }
+  .breadcrumb svg { width: 12px; height: 12px; stroke: #d1d5db; fill: none; }
+
+  /* Continue button */
+  .btn-continue {
+    width: 100%;
+    padding: .8rem;
+    border: none;
+    border-radius: 13px;
+    font-size: .85rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all .2s;
+    margin-top: .75rem;
+  }
+  .btn-continue.disabled {
+    background: #f0f0f0;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+  .btn-continue.enabled {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(22,163,74,.3);
+  }
+  .btn-continue.enabled:hover {
+    background: #15803d;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(22,163,74,.35);
+  }
+</style>
+{% endblock %}
+
+{% block container %}
+
+<div class="breadcrumb fade-in">
+  <a href="{{ url_for('venta.seleccionar_animal') }}">← Catálogo</a>
+  <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+  <span style="color:#374151;font-weight:700;">🐄 Res — Elige tus cortes</span>
+</div>
+
+<div class="catalog-layout fade-in-2">
+
+  <!-- DIAGRAMA -->
+  <div class="panel-card">
+    <div class="panel-head">
+      <svg style="width:16px;height:16px;stroke:#16a34a;fill:none;" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+      </svg>
+      <div>
+        <h3>Diagrama de cortes</h3>
+        <p>Haz clic en una zona para seleccionar ese corte</p>
+      </div>
+    </div>
+    <div class="panel-body" style="display:flex;flex-direction:column;align-items:center;">
+      <svg viewBox="0 0 500 320" width="100%" style="max-width:520px;" id="cow-diagram">
+        <ellipse cx="250" cy="295" rx="180" ry="12" fill="#e5e7eb" opacity=".5"/>
+        <path id="zone-lomo" class="cut-zone" onclick="toggleCut('lomo','Lomo / Costillar','$185/kg')"
+          d="M 160 100 Q 200 60 280 60 Q 340 62 360 90 Q 370 110 360 130 Q 320 120 280 118 Q 220 118 160 125 Z"
+          fill="#ef4444" fill-opacity=".18" stroke="#ef4444" stroke-width="1.5"/>
+        <text class="cut-label" fill="#b91c1c" x="240" y="92" text-anchor="middle">LOMO / COSTILLAR</text>
+        <path id="zone-ribeye" class="cut-zone" onclick="toggleCut('ribeye','Ribeye / Entrecot','$280/kg')"
+          d="M 280 60 Q 320 55 355 68 Q 370 78 360 90 Q 340 62 280 60 Z"
+          fill="#f97316" fill-opacity=".25" stroke="#ea580c" stroke-width="1.5"/>
+        <text class="cut-label" fill="#c2410c" x="320" y="72" text-anchor="middle">RIBEYE</text>
+        <path id="zone-filete" class="cut-zone" onclick="toggleCut('filete','Filete','$320/kg')"
+          d="M 170 125 Q 220 118 280 118 Q 280 145 270 155 Q 220 152 170 148 Z"
+          fill="#a855f7" fill-opacity=".2" stroke="#7c3aed" stroke-width="1.5"/>
+        <text class="cut-label" fill="#6d28d9" x="225" y="138" text-anchor="middle">FILETE</text>
+        <path id="zone-brisket" class="cut-zone" onclick="toggleCut('brisket','Pecho / Brisket','$120/kg')"
+          d="M 310 140 Q 370 130 400 150 Q 410 175 395 195 Q 360 185 320 180 Q 305 165 310 140 Z"
+          fill="#3b82f6" fill-opacity=".2" stroke="#2563eb" stroke-width="1.5"/>
+        <text class="cut-label" fill="#1d4ed8" x="358" y="162" text-anchor="middle">PECHO / BRISKET</text>
+        <path id="zone-arrachera" class="cut-zone" onclick="toggleCut('arrachera','Arrachera','$180/kg')"
+          d="M 170 148 Q 220 152 270 155 Q 268 190 255 205 Q 215 200 170 195 Z"
+          fill="#f59e0b" fill-opacity=".25" stroke="#d97706" stroke-width="1.5"/>
+        <text class="cut-label" fill="#b45309" x="215" y="177" text-anchor="middle">ARRACHERA</text>
+        <path id="zone-aguayon" class="cut-zone" onclick="toggleCut('aguayon','Aguayón','$150/kg')"
+          d="M 100 100 Q 135 80 160 100 Q 160 125 155 148 Q 130 150 100 140 Z"
+          fill="#10b981" fill-opacity=".22" stroke="#059669" stroke-width="1.5"/>
+        <text class="cut-label" fill="#047857" x="128" y="122" text-anchor="middle">AGUAYÓN</text>
+        <path id="zone-costilla" class="cut-zone" onclick="toggleCut('costilla','Costilla corta','$95/kg')"
+          d="M 290 118 Q 325 115 360 130 Q 360 160 345 175 Q 315 168 290 160 Z"
+          fill="#06b6d4" fill-opacity=".22" stroke="#0891b2" stroke-width="1.5"/>
+        <text class="cut-label" fill="#0e7490" x="325" y="145" text-anchor="middle">COSTILLA</text>
+        <path id="zone-chamorro-d" class="cut-zone" onclick="toggleCut('chamorro-d','Chamorro delantero','$75/kg')"
+          d="M 380 185 Q 408 190 415 215 Q 415 250 400 265 Q 385 260 375 240 Q 368 215 380 185 Z"
+          fill="#8b5cf6" fill-opacity=".2" stroke="#7c3aed" stroke-width="1.5"/>
+        <text class="cut-label" fill="#6d28d9" x="395" y="225" text-anchor="middle">CHAMORRO</text>
+        <path id="zone-chamorro-t" class="cut-zone" onclick="toggleCut('chamorro-t','Chamorro trasero','$75/kg')"
+          d="M 90 158 Q 110 152 130 158 Q 138 185 132 218 Q 115 225 98 218 Q 88 192 90 158 Z"
+          fill="#ec4899" fill-opacity=".2" stroke="#db2777" stroke-width="1.5"/>
+        <text class="cut-label" fill="#9d174d" x="112" y="188" text-anchor="middle">CHAMORRO T.</text>
+        <path d="M 155 100 Q 170 70 250 58 Q 320 52 365 72 Q 415 100 420 155 Q 420 200 400 240 Q 395 270 380 280 Q 355 285 340 265 L 330 245 L 310 265 Q 290 282 270 278 Q 250 282 230 278 L 215 258 L 195 278 Q 175 285 155 278 L 148 258 L 130 265 Q 108 278 95 265 Q 78 245 80 200 Q 80 158 95 140 Q 110 115 130 105 Z"
+          fill="none" stroke="#374151" stroke-width="2.5" stroke-linejoin="round"/>
+        <ellipse cx="440" cy="130" rx="42" ry="35" fill="white" stroke="#374151" stroke-width="2.5"/>
+        <ellipse cx="478" cy="140" rx="14" ry="10" fill="#f3f4f6" stroke="#374151" stroke-width="2"/>
+        <circle cx="474" cy="138" r="3" fill="#374151"/>
+        <circle cx="482" cy="138" r="3" fill="#374151"/>
+        <circle cx="455" cy="118" r="4" fill="white" stroke="#374151" stroke-width="1.5"/>
+        <circle cx="455" cy="118" r="2" fill="#1f2937"/>
+        <path d="M 430 100 Q 420 82 408 88" stroke="#374151" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M 445 97 Q 445 78 455 82" stroke="#374151" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="428" cy="112" rx="8" ry="5" fill="#f3f4f6" stroke="#374151" stroke-width="1.5" transform="rotate(-20,428,112)"/>
+        <path d="M 82 165 Q 55 155 48 170 Q 44 180 55 182 Q 65 184 70 175" stroke="#374151" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <rect x="183" y="278" width="16" height="10" rx="5" fill="#374151"/>
+        <rect x="205" y="278" width="16" height="10" rx="5" fill="#374151"/>
+        <rect x="320" y="265" width="16" height="10" rx="5" fill="#374151"/>
+        <rect x="340" y="265" width="16" height="10" rx="5" fill="#374151"/>
+        <rect x="376" y="278" width="16" height="10" rx="5" fill="#374151"/>
+        <rect x="133" y="265" width="14" height="10" rx="5" fill="#374151"/>
+        <ellipse cx="218" cy="272" rx="20" ry="8" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+        <line x1="160" y1="100" x2="160" y2="200" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="290" y1="90" x2="290" y2="200" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="100" y1="148" x2="400" y2="148" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
+      </svg>
+
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Lomo</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span>Ribeye</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#a855f7"></span>Filete</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Brisket</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Arrachera</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Aguayón</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#06b6d4"></span>Costilla</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL CORTES -->
+  <div style="display:flex;flex-direction:column;gap:.75rem;">
+    <div class="panel-card">
+      <div class="panel-head">
+        <span style="font-size:1.1rem;">🥩</span>
+        <div>
+          <h3>Cortes disponibles</h3>
+          <p>Clic para seleccionar</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="tag-lomo" class="cut-tag" onclick="toggleCut('lomo','Lomo / Costillar','$185/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#ef4444"></span><span class="cut-name">Lomo / Costillar</span></div>
+          <span class="cut-price">$185/kg</span>
+        </div>
+        <div id="tag-ribeye" class="cut-tag" onclick="toggleCut('ribeye','Ribeye / Entrecot','$280/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#f97316"></span><span class="cut-name">Ribeye / Entrecot</span></div>
+          <span class="cut-price">$280/kg</span>
+        </div>
+        <div id="tag-filete" class="cut-tag" onclick="toggleCut('filete','Filete','$320/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#a855f7"></span><span class="cut-name">Filete</span></div>
+          <span class="cut-price">$320/kg</span>
+        </div>
+        <div id="tag-brisket" class="cut-tag" onclick="toggleCut('brisket','Pecho / Brisket','$120/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#3b82f6"></span><span class="cut-name">Pecho / Brisket</span></div>
+          <span class="cut-price">$120/kg</span>
+        </div>
+        <div id="tag-arrachera" class="cut-tag" onclick="toggleCut('arrachera','Arrachera','$180/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#f59e0b"></span><span class="cut-name">Arrachera</span></div>
+          <span class="cut-price">$180/kg</span>
+        </div>
+        <div id="tag-aguayon" class="cut-tag" onclick="toggleCut('aguayon','Aguayón','$150/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#10b981"></span><span class="cut-name">Aguayón</span></div>
+          <span class="cut-price">$150/kg</span>
+        </div>
+        <div id="tag-costilla" class="cut-tag" onclick="toggleCut('costilla','Costilla corta','$95/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#06b6d4"></span><span class="cut-name">Costilla corta</span></div>
+          <span class="cut-price">$95/kg</span>
+        </div>
+        <div id="tag-chamorro-d" class="cut-tag" onclick="toggleCut('chamorro-d','Chamorro delantero','$75/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#8b5cf6"></span><span class="cut-name">Chamorro delantero</span></div>
+          <span class="cut-price">$75/kg</span>
+        </div>
+        <div id="tag-chamorro-t" class="cut-tag" onclick="toggleCut('chamorro-t','Chamorro trasero','$75/kg')">
+          <div class="cut-tag-left"><span class="cut-dot" style="background:#ec4899"></span><span class="cut-name">Chamorro trasero</span></div>
+          <span class="cut-price">$75/kg</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-continuar" class="btn-continue disabled" disabled onclick="window.location.href='{{ url_for('venta.carrito') }}'">
+      Continuar con 0 cortes →
+    </button>
+  </div>
+
+</div>
+
+<script>
+const selected = new Set();
+function toggleCut(id, name, price) {
+  const zoneEl = document.getElementById('zone-' + id);
+  const tagEl  = document.getElementById('tag-' + id);
+  if (selected.has(id)) {
+    selected.delete(id);
+    if (zoneEl) zoneEl.classList.remove('selected');
+    if (tagEl)  tagEl.classList.remove('selected');
+  } else {
+    selected.add(id);
+    if (zoneEl) zoneEl.classList.add('selected');
+    if (tagEl)  tagEl.classList.add('selected');
+  }
+  updateCounter();
+}
+function updateCounter() {
+  const n = selected.size;
+  const btn = document.getElementById('btn-continuar');
+  if (n > 0) {
+    btn.disabled = false;
+    btn.className = 'btn-continue enabled';
+    btn.textContent = `Continuar con ${n} corte${n > 1 ? 's' : ''} →`;
+  } else {
+    btn.disabled = true;
+    btn.className = 'btn-continue disabled';
+    btn.textContent = 'Continuar con 0 cortes →';
+  }
+}
+</script>
+{% endblock %}

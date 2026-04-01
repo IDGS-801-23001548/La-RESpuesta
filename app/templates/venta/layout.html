@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>
+{% block title %}
+VentaOnline
+{% endblock %}
+</title>
+
+<link rel="stylesheet" href="{{ url_for('static',filename='dist/output.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --green-primary: #16a34a;
+    --green-light:   #dcfce7;
+    --green-dark:    #14532d;
+    --amber-primary: #d97706;
+    --amber-light:   #fef3c7;
+    --gray-text:     #1f2937;
+    --gray-muted:    #6b7280;
+    --gray-border:   #f0f0f0;
+    --surface:       #ffffff;
+    --page-bg:       #f8faf8;
+    --nav-h:         60px;
+    --radius-card:   18px;
+    --shadow-card:   0 2px 16px rgba(0,0,0,.07);
+    --shadow-lift:   0 10px 36px rgba(0,0,0,.13);
+    --transition:    all .22s cubic-bezier(.4,0,.2,1);
+  }
+
+  * { font-family: 'Nunito', sans-serif; box-sizing: border-box; }
+
+  body {
+    background: var(--page-bg);
+    /* Subtle dot-grid texture */
+    background-image: radial-gradient(circle, #d1fae5 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* ── NAVBAR ─────────────────────────────── */
+  .vo-nav {
+    height: var(--nav-h);
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--gray-border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 4px 24px rgba(0,0,0,.04);
+  }
+
+  .vo-nav__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .vo-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .vo-logo__icon {
+    width: 36px;
+    height: 36px;
+    background: var(--green-primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(22,163,74,.35);
+    transition: var(--transition);
+  }
+
+  .vo-logo:hover .vo-logo__icon {
+    transform: rotate(-6deg) scale(1.08);
+    box-shadow: 0 6px 18px rgba(22,163,74,.45);
+  }
+
+  .vo-logo__text {
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: var(--gray-text);
+    letter-spacing: -.5px;
+  }
+
+  .vo-logo__text span {
+    color: var(--green-primary);
+  }
+
+  .vo-nav__links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .vo-nav__link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--gray-muted);
+    border-radius: 10px;
+    text-decoration: none;
+    transition: var(--transition);
+    letter-spacing: .1px;
+  }
+
+  .vo-nav__link:hover {
+    color: var(--green-primary);
+    background: var(--green-light);
+  }
+
+  .vo-nav__link.active {
+    color: var(--green-primary);
+    background: var(--green-light);
+  }
+
+  .vo-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--green-primary), #4ade80);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    box-shadow: 0 2px 8px rgba(22,163,74,.35);
+    cursor: pointer;
+    transition: var(--transition);
+    letter-spacing: .5px;
+  }
+
+  .vo-avatar:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 14px rgba(22,163,74,.45);
+  }
+
+  /* ── MAIN ────────────────────────────────── */
+  .vo-main {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* ── FLASH ───────────────────────────────── */
+  .vo-flash {
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    font-size: .85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid transparent;
+  }
+
+  .vo-flash--error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  .vo-flash--warning { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+  .vo-flash--success { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+
+  /* ── CARD ────────────────────────────────── */
+  .card-hover {
+    transition: var(--transition);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--gray-border);
+    background: var(--surface);
+    text-decoration: none;
+    display: block;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lift);
+    border-color: #d1fae5;
+  }
+
+  /* ── FOOTER ──────────────────────────────── */
+  .vo-footer {
+    text-align: center;
+    font-size: .72rem;
+    color: #bbb;
+    padding: 1.5rem 1rem;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+
+  /* ── ANIMATIONS ──────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in   { animation: fadeUp .45s ease both; }
+  .fade-in-2 { animation: fadeUp .45s .10s ease both; }
+  .fade-in-3 { animation: fadeUp .45s .20s ease both; }
+  .fade-in-4 { animation: fadeUp .45s .30s ease both; }
+  .fade-in-5 { animation: fadeUp .45s .40s ease both; }
+
+  /* ── SECTION DIVIDER ─────────────────────── */
+  .vo-section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .vo-section-label__bar {
+    width: 3px;
+    height: 18px;
+    border-radius: 99px;
+  }
+
+  .vo-section-label__text {
+    font-size: .68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--gray-muted);
+  }
+
+  /* ── SCROLLBAR ───────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d1fae5; border-radius: 99px; }
+</style>
+
+{% block styles %}{% endblock %}
+
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+<!-- NAVBAR -->
+{% block navbar %}
+<nav class="vo-nav">
+  <div class="vo-nav__inner">
+
+    <!-- LOGO -->
+    <a href="{{ url_for('venta.inicio') }}" class="vo-logo">
+      <div class="vo-logo__icon">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 6h11"/>
+        </svg>
+      </div>
+      <span class="vo-logo__text">La<span>ResPuesta</span></span>
+    </a>
+
+    <!-- LINKS -->
+    <div class="vo-nav__links">
+
+      <a href="{{ url_for('venta.carrito') }}" class="vo-nav__link">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        Carrito
+      </a>
+
+      <a href="{{ url_for('venta.pedidos') }}" class="vo-nav__link">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        Mis pedidos
+      </a>
+
+      <a href="{{ url_for('venta.ajustes') }}" class="vo-nav__link">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Ajustes
+      </a>
+
+      <div class="vo-avatar">HG</div>
+
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+
+<!-- CONTENIDO -->
+<main class="vo-main">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+    <div class="vo-flash vo-flash--{{ category }}">
+      <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
+      </svg>
+      {{ message }}
+    </div>
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+
+  {% block container %}{% endblock %}
+
+</main>
+
+
+<!-- FOOTER -->
+<footer class="vo-footer">
+  © {{ 2026 }} CodaTech MX &nbsp;·&nbsp; La ResPuesta 🐄
+</footer>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

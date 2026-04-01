@@ -1,0 +1,312 @@
+{% extends "/venta/layout.html" %}
+{% block title %}VentaOnline — Mis Pedidos{% endblock %}
+
+{% block styles %}
+<style>
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .85rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    padding: 1rem 1.1rem;
+  }
+  .stat-label {
+    font-size: .6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin: 0 0 5px;
+  }
+  .stat-num {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin: 0 0 2px;
+    line-height: 1;
+  }
+  .stat-sub {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .panel-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 14px rgba(0,0,0,.06);
+    overflow: hidden;
+  }
+
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: .75rem 1.1rem;
+    border-bottom: 1px solid #f5f5f5;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 5px 14px;
+    font-size: .72rem;
+    font-weight: 700;
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    transition: all .18s;
+    background: transparent;
+    color: #6b7280;
+  }
+  .filter-btn:hover { background: #f5f5f5; }
+  .filter-btn.active { background: #16a34a; color: #fff; }
+
+  .pedido-item { border-top: 1px solid #f9f9f9; }
+  .pedido-item:first-child { border-top: none; }
+
+  .pedido-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: .95rem 1.1rem;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .pedido-link:hover { background: #fafafa; }
+
+  .pedido-icon {
+    width: 42px; height: 42px;
+    border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .pedido-info { flex: 1; min-width: 0; }
+  .pedido-top { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap; }
+  .pedido-num { font-weight: 800; font-size: .82rem; color: #111827; font-family: monospace; }
+  .pedido-desc { font-size: .72rem; color: #6b7280; font-weight: 600; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pedido-date { font-size: .65rem; color: #9ca3af; font-weight: 600; margin: 0; }
+
+  .pedido-total { text-align: right; flex-shrink: 0; }
+  .pedido-total .amount { font-size: .88rem; font-weight: 900; color: #111827; display: block; }
+  .pedido-total .count  { font-size: .62rem; color: #9ca3af; font-weight: 600; }
+
+  .pedido-arrow { width: 16px; height: 16px; stroke: #d1d5db; fill: none; flex-shrink: 0; transition: stroke .15s; }
+  .pedido-link:hover .pedido-arrow { stroke: #16a34a; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 9px; border-radius: 99px;
+    font-size: .62rem; font-weight: 700; border: 1px solid;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-en-curso { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+  .badge-en-curso .badge-dot { background: #fbbf24; }
+  .badge-finalizado { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+  .badge-finalizado .badge-dot { background: #22c55e; }
+  .badge-cancelado { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  .badge-cancelado .badge-dot { background: #f87171; }
+
+  .page-footer-note {
+    padding: .75rem 1.1rem;
+    border-top: 1px solid #f5f5f5;
+    font-size: .68rem;
+    color: #9ca3af;
+    font-weight: 600;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .btn-new {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: .55rem 1.1rem;
+    background: #16a34a; color: #fff;
+    font-size: .78rem; font-weight: 700;
+    border-radius: 11px;
+    text-decoration: none;
+    box-shadow: 0 3px 12px rgba(22,163,74,.28);
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .btn-new:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(22,163,74,.35); }
+  .btn-new svg { width: 15px; height: 15px; stroke: #fff; fill: none; }
+</style>
+{% endblock %}
+
+{% block container %}
+<div style="max-width:860px;margin:0 auto;" class="fade-in">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h2 style="font-size:1.3rem;font-weight:900;color:#111827;margin:0 0 3px;">Mis Pedidos</h2>
+      <p style="font-size:.75rem;color:#9ca3af;font-weight:600;margin:0;">Historial y seguimiento de tus órdenes</p>
+    </div>
+    <a href="{{ url_for('venta.seleccionar_animal') }}" class="btn-new">
+      <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Nuevo pedido
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid fade-in-2">
+    <div class="stat-card">
+      <p class="stat-label" style="color:#9ca3af;">Total</p>
+      <p class="stat-num" style="color:#111827;">8</p>
+      <p class="stat-sub">pedidos</p>
+    </div>
+    <div class="stat-card" style="border-color:#fef3c7;">
+      <p class="stat-label" style="color:#d97706;">En curso</p>
+      <p class="stat-num" style="color:#d97706;">2</p>
+      <p class="stat-sub">activos</p>
+    </div>
+    <div class="stat-card" style="border-color:#dcfce7;">
+      <p class="stat-label" style="color:#16a34a;">Finalizados</p>
+      <p class="stat-num" style="color:#16a34a;">5</p>
+      <p class="stat-sub">completados</p>
+    </div>
+    <div class="stat-card" style="border-color:#fecaca;">
+      <p class="stat-label" style="color:#ef4444;">Cancelados</p>
+      <p class="stat-num" style="color:#ef4444;">1</p>
+      <p class="stat-sub">cancelados</p>
+    </div>
+  </div>
+
+  <!-- Lista -->
+  <div class="panel-card fade-in-3">
+    <div class="filter-bar">
+      <button onclick="filterTab('todos',this)" class="filter-btn active">Todos</button>
+      <button onclick="filterTab('en_curso',this)" class="filter-btn">En curso</button>
+      <button onclick="filterTab('finalizados',this)" class="filter-btn">Finalizados</button>
+      <button onclick="filterTab('cancelados',this)" class="filter-btn">Cancelados</button>
+    </div>
+
+    <div id="pedidos-list">
+
+      <div class="pedido-item" data-status="en_curso">
+        <a href="{{ url_for('venta.pedido_detalle') }}" class="pedido-link">
+          <div class="pedido-icon" style="background:#fffbeb;">🐄</div>
+          <div class="pedido-info">
+            <div class="pedido-top">
+              <span class="pedido-num">#VO-0045</span>
+              <span class="badge badge-en-curso"><span class="badge-dot"></span>En curso</span>
+            </div>
+            <p class="pedido-desc">Ribeye 1kg · Arrachera 0.5kg · Costilla corta 1.5kg</p>
+            <p class="pedido-date">28 Feb 2026 · Entrega estimada: 1 Mar 2026</p>
+          </div>
+          <div class="pedido-total">
+            <span class="amount">$485.00</span>
+            <span class="count">3 productos</span>
+          </div>
+          <svg class="pedido-arrow" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="pedido-item" data-status="en_curso">
+        <a href="{{ url_for('venta.pedido_detalle') }}" class="pedido-link">
+          <div class="pedido-icon" style="background:#fdf2f8;">🐷</div>
+          <div class="pedido-info">
+            <div class="pedido-top">
+              <span class="pedido-num">#VO-0044</span>
+              <span class="badge badge-en-curso"><span class="badge-dot"></span>En curso</span>
+            </div>
+            <p class="pedido-desc">Chuleta ahumada 1kg · Pierna 2kg · Tocino 0.5kg</p>
+            <p class="pedido-date">27 Feb 2026 · Entrega estimada: 28 Feb 2026</p>
+          </div>
+          <div class="pedido-total">
+            <span class="amount">$320.50</span>
+            <span class="count">3 productos</span>
+          </div>
+          <svg class="pedido-arrow" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="pedido-item" data-status="finalizados">
+        <a href="{{ url_for('venta.pedido_detalle') }}" class="pedido-link">
+          <div class="pedido-icon" style="background:#fefce8;">🐔</div>
+          <div class="pedido-info">
+            <div class="pedido-top">
+              <span class="pedido-num">#VO-0043</span>
+              <span class="badge badge-finalizado"><span class="badge-dot"></span>Finalizado</span>
+            </div>
+            <p class="pedido-desc">Pechuga 1.5kg · Muslo 1kg · Alita 2kg</p>
+            <p class="pedido-date">20 Feb 2026 · Entregado: 21 Feb 2026</p>
+          </div>
+          <div class="pedido-total">
+            <span class="amount">$210.00</span>
+            <span class="count">3 productos</span>
+          </div>
+          <svg class="pedido-arrow" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="pedido-item" data-status="finalizados">
+        <a href="{{ url_for('venta.pedido_detalle') }}" class="pedido-link">
+          <div class="pedido-icon" style="background:#fffbeb;">🐄</div>
+          <div class="pedido-info">
+            <div class="pedido-top">
+              <span class="pedido-num">#VO-0042</span>
+              <span class="badge badge-finalizado"><span class="badge-dot"></span>Finalizado</span>
+            </div>
+            <p class="pedido-desc">Filete 1kg · Brisket 2kg</p>
+            <p class="pedido-date">15 Feb 2026 · Entregado: 16 Feb 2026</p>
+          </div>
+          <div class="pedido-total">
+            <span class="amount">$650.00</span>
+            <span class="count">2 productos</span>
+          </div>
+          <svg class="pedido-arrow" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="pedido-item" data-status="cancelados" style="opacity:.6;">
+        <a href="{{ url_for('venta.pedido_detalle') }}" class="pedido-link">
+          <div class="pedido-icon" style="background:#f9fafb;">🐷</div>
+          <div class="pedido-info">
+            <div class="pedido-top">
+              <span class="pedido-num">#VO-0040</span>
+              <span class="badge badge-cancelado"><span class="badge-dot"></span>Cancelado</span>
+            </div>
+            <p class="pedido-desc">Costilla de cerdo 1.5kg</p>
+            <p class="pedido-date">10 Feb 2026 · Cancelado por el cliente</p>
+          </div>
+          <div class="pedido-total">
+            <span class="amount" style="color:#9ca3af;">$180.00</span>
+            <span class="count">1 producto</span>
+          </div>
+          <svg class="pedido-arrow" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+    </div>
+    <div class="page-footer-note">Mostrando 5 pedidos recientes</div>
+  </div>
+
+</div>
+
+<script>
+function filterTab(status, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.pedido-item').forEach(item => {
+    item.style.display = (status === 'todos' || item.dataset.status === status) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}
