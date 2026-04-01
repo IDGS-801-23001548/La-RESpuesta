@@ -24,6 +24,8 @@ dist/
 build/
 app/static/dist/
 
+node_modules/
+
 # Flask
 instance/
 
