@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-green-brand: #2E7D32;
+  --color-green-mid:   #388E3C;
+  --color-green-btn:   #4CAF50;
+  --color-green-hover: #388E3C;
+  --color-green-pale:  #E8F5E9;
+
+  --shadow-card:     0 4px 6px -1px rgba(0,0,0,0.08), 0 20px 50px -8px rgba(0,0,0,0.18);
+  --shadow-btn:      0 2px 10px rgba(76,175,80,0.4);
+  --shadow-btn-hover:0 4px 18px rgba(46,125,50,0.45);
+}
