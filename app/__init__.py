@@ -91,6 +91,8 @@ def create_app():
     from .modules.compras import compras
     from .modules.venta import venta
     from .modules.logs import log
+    from .modules.proveedor import proveedor
+    from .modules.materia import materia
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
@@ -98,6 +100,8 @@ def create_app():
     app.register_blueprint(compras)
     app.register_blueprint(venta)
     app.register_blueprint(log)
+    app.register_blueprint(proveedor)
+    app.register_blueprint(materia)
 
     # ==============================
     # ERROR 404

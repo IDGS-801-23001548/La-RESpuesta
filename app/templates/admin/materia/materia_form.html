@@ -4,7 +4,7 @@
 
 <!-- Header -->
 <div class="flex items-center gap-3 mb-6">
-    <a href="{{ url_for('admin.materia') }}"
+    <a href="{{ url_for('materia.materias') }}"
         class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
                text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -22,7 +22,7 @@
 </div>
 
 <form method="POST"
-      action="{{ url_for('admin.materia_editar', id=materia.id_materia) if materia else url_for('admin.materia_nueva') }}">
+      action="{{ url_for('materia.materia_editar', id=materia.id_materia) if materia else url_for('materia.materia_nueva') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
@@ -334,7 +334,7 @@
                                rounded-lg shadow-sm shadow-green-200 transition-all hover:-translate-y-px">
                         {{ 'Guardar cambios' if materia else 'Registrar materia prima' }}
                     </button>
-                    <a href="{{ url_for('admin.materia') }}"
+                    <a href="{{ url_for('materia.materias') }}"
                         class="block w-full py-2.5 text-center text-sm text-gray-500 hover:text-gray-700
                                bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
                         Cancelar
