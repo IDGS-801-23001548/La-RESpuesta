@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
     confirmed_at        = db.Column(db.DateTime)
     roles               = db.relationship('Role',
                                     secondary=users_roles,
-                                    backref= db.backref('users', lazy='dynamic'))
+                                    backref= db.backref('user', lazy='dynamic'))
     
     intentos_fallidos   = db.Column(db.Integer, default=0, nullable=False)
     bloqueado_hasta     = db.Column(db.DateTime, nullable=True)
