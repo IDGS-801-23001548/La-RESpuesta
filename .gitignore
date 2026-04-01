@@ -1,2 +1,36 @@
-env
+# Entornos virtuales
+env/
+venv/
+.venv/
+
+# Variables de entorno
 .env
+
+# Cache de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Build / compilados (Tailwind, etc.)
+dist/
+build/
+app/static/dist/
+node_modules/
+
+# Flask
+instance/
+
+# IDEs
+.vscode/
+.idea/
+
+# Otros
+*.sqlite3
