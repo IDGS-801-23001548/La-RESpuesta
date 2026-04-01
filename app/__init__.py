@@ -90,12 +90,14 @@ def create_app():
     from .modules.user import user
     from .modules.compras import compras
     from .modules.venta import venta
+    from .modules.logs import log
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
     app.register_blueprint(user)
     app.register_blueprint(compras)
     app.register_blueprint(venta)
+    app.register_blueprint(log)
 
     # ==============================
     # ERROR 404
