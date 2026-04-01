@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "devDependencies": {
+    "tailwindcss": "^4.2.0"
+  },
+  "dependencies": {
+    "flowbite": "^4.0.1"
+  },
+  "scripts": {
+    "dev": "tailwindcss -i ./app/static/src/input.css -o ./app/static/dist/output.css --watch",
+    "build": "tailwindcss -i ./app/static/src/input.css -o ./app/static/dist/output.css --minify"
+  }
+}
