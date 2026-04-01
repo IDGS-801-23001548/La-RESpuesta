@@ -1,0 +1,301 @@
+{% extends "_sidebar.html" %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('admin.pago') }}"
+        class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
+               text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Registrar pago a proveedor</h2>
+        <p class="text-xs text-gray-400 mt-0.5">El pago se abonará al saldo del proveedor</p>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('admin.pagos_nuevo') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+
+        <!-- ── Columna principal (2/3) ── -->
+        <div class="xl:col-span-2 space-y-5">
+
+            <!-- Card: Proveedor -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Proveedor</h3>
+                </div>
+                <div class="p-5 space-y-4">
+
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Proveedor <span class="text-red-400">*</span>
+                        </label>
+                        <select name="id_proveedor" required id="sel-proveedor" onchange="actualizarProveedor()"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                            <option value="">Seleccionar proveedor...</option>
+                            {# En producción: {% for p in proveedores %} #}
+                            <option value="1"
+                                data-saldo="2500.00" data-rfc="PECJ890101ABC"
+                                data-ultima="12/05/2025" data-total-comprado="15000.00"
+                                {% if proveedor_id == '1' %}selected{% endif %}>
+                                Carnes del Norte S.A.
+                            </option>
+                            <option value="2"
+                                data-saldo="0" data-rfc="GAML750301XYZ"
+                                data-ultima="10/05/2025" data-total-comprado="8000.00"
+                                {% if proveedor_id == '2' %}selected{% endif %}>
+                                Rastro Municipal
+                            </option>
+                            <option value="3"
+                                data-saldo="800.00" data-rfc="AVIPA991215DEF"
+                                data-ultima="08/05/2025" data-total-comprado="5200.00"
+                                {% if proveedor_id == '3' %}selected{% endif %}>
+                                Avícola Pérez
+                            </option>
+                            {# {% endfor %} #}
+                        </select>
+                    </div>
+
+                    <!-- Info del proveedor seleccionado -->
+                    <div id="info-proveedor" class="hidden grid grid-cols-3 gap-3">
+                        <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-center">
+                            <p class="text-[9px] font-semibold uppercase tracking-wider text-red-400">Saldo pendiente</p>
+                            <p id="txt-saldo" class="text-lg font-bold text-red-600 mt-0.5">$0.00</p>
+                        </div>
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400">Total comprado</p>
+                            <p id="txt-total" class="text-lg font-bold text-gray-700 mt-0.5">$0.00</p>
+                        </div>
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400">Última compra</p>
+                            <p id="txt-ultima" class="text-sm font-bold text-gray-700 mt-0.5">—</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Card: Detalle del pago -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Detalle del pago</h3>
+                </div>
+                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <!-- Monto -->
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Monto <span class="text-red-400">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                            <input type="number" name="monto" required
+                                min="0.01" step="0.01" placeholder="0.00"
+                                id="inp-monto"
+                                oninput="actualizarSaldoRestante()"
+                                class="w-full pl-7 pr-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                        </div>
+                        <!-- Botón liquidar saldo completo -->
+                        <button type="button" onclick="liquidarSaldo()"
+                            class="mt-1.5 text-[10px] text-green-600 hover:text-green-800 hover:underline transition-colors">
+                            Liquidar saldo completo
+                        </button>
+                    </div>
+
+                    <!-- Saldo restante después del pago -->
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Saldo tras el pago
+                        </label>
+                        <div id="saldo-restante-box"
+                            class="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-right">
+                            <p id="txt-saldo-restante" class="text-sm font-bold text-gray-400">—</p>
+                        </div>
+                    </div>
+
+                    <!-- Forma de pago -->
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
+                            Forma de pago <span class="text-red-400">*</span>
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            {% for forma, icono in [('Efectivo','💵'),('Transferencia','🏦'),('Cheque','📄')] %}
+                            <label class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg border-2 border-gray-200
+                                          cursor-pointer transition-all text-center
+                                          has-[:checked]:border-green-400 has-[:checked]:bg-green-50">
+                                <input type="radio" name="forma_pago" value="{{ forma }}"
+                                    {% if loop.first %}checked{% endif %}
+                                    class="sr-only" onchange="toggleReferencia()">
+                                <span class="text-xl">{{ icono }}</span>
+                                <span class="text-[10px] font-semibold text-gray-600">{{ forma }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Fecha del pago -->
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Fecha del pago <span class="text-red-400">*</span>
+                        </label>
+                        <input type="date" name="fecha_pago" required id="inp-fecha"
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                    </div>
+
+                    <!-- Referencia (solo transferencia/cheque) -->
+                    <div id="campo-referencia" class="sm:col-span-2 hidden">
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Número de referencia / folio
+                        </label>
+                        <input type="text" name="referencia"
+                            placeholder="Ej. SPEI-2024051201, Cheque #1234..."
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                                   transition-all placeholder-gray-300">
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Observaciones
+                        </label>
+                        <textarea name="observaciones" rows="2"
+                            placeholder="Notas del pago, aclaraciones..."
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                                   transition-all resize-none placeholder-gray-300"></textarea>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── Columna lateral (1/3) ── -->
+        <div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Resumen</h3>
+                </div>
+
+                <div class="p-5 space-y-3 text-xs text-gray-500">
+                    <div class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold shrink-0">1.</span>
+                        <p>El pago se <strong>abona al saldo</strong> del proveedor seleccionado</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold shrink-0">2.</span>
+                        <p>Queda registrado en el <strong>historial de pagos</strong> con folio automático</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold shrink-0">3.</span>
+                        <p>Se genera un <strong>log de auditoría</strong> con tu usuario y la fecha</p>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-3 bg-amber-50 rounded-lg p-3 text-[10px] text-amber-700">
+                        <p class="font-semibold mb-0.5">⚠️ El pago no se puede deshacer</p>
+                        <p>Verifica el monto y el proveedor antes de confirmar.</p>
+                    </div>
+                </div>
+
+                <div class="px-5 pb-5 space-y-2">
+                    <button type="submit"
+                        class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
+                               rounded-lg shadow-sm shadow-green-200 transition-all hover:-translate-y-px">
+                        Confirmar pago
+                    </button>
+                    <a href="{{ url_for('admin.pago') }}"
+                        class="block w-full py-2.5 text-center text-sm text-gray-500 hover:text-gray-700
+                               bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+<script>
+    let saldoActual = 0;
+
+    // Precargar fecha hoy
+    const hoy = new Date();
+    hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
+    document.getElementById('inp-fecha').value = hoy.toISOString().slice(0, 10);
+
+    function actualizarProveedor() {
+        const sel  = document.getElementById('sel-proveedor');
+        const opt  = sel.options[sel.selectedIndex];
+        const info = document.getElementById('info-proveedor');
+
+        if (!opt.value) { info.classList.add('hidden'); saldoActual = 0; return; }
+
+        saldoActual = parseFloat(opt.dataset.saldo) || 0;
+        info.classList.remove('hidden');
+
+        document.getElementById('txt-saldo').textContent  = '$' + saldoActual.toFixed(2);
+        document.getElementById('txt-total').textContent  = '$' + parseFloat(opt.dataset.totalComprado || 0).toFixed(2);
+        document.getElementById('txt-ultima').textContent = opt.dataset.ultima || '—';
+
+        actualizarSaldoRestante();
+    }
+
+    function actualizarSaldoRestante() {
+        const monto   = parseFloat(document.getElementById('inp-monto').value) || 0;
+        const restante = saldoActual - monto;
+        const box      = document.getElementById('saldo-restante-box');
+        const txt      = document.getElementById('txt-saldo-restante');
+
+        if (monto <= 0) { txt.textContent = '—'; txt.className = 'text-sm font-bold text-gray-400'; return; }
+
+        txt.textContent = (restante < 0 ? '+' : '') + '$' + Math.abs(restante).toFixed(2)
+            + (restante < 0 ? ' (overpago)' : restante === 0 ? ' ✓ Liquidado' : '');
+
+        if (restante < 0) {
+            txt.className = 'text-sm font-bold text-amber-600';
+            box.className = 'px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-right';
+        } else if (restante === 0) {
+            txt.className = 'text-sm font-bold text-green-700';
+            box.className = 'px-3 py-2.5 bg-green-50 border border-green-200 rounded-lg text-right';
+        } else {
+            txt.className = 'text-sm font-bold text-gray-800';
+            box.className = 'px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-right';
+        }
+    }
+
+    function liquidarSaldo() {
+        if (saldoActual <= 0) return;
+        document.getElementById('inp-monto').value = saldoActual.toFixed(2);
+        actualizarSaldoRestante();
+    }
+
+    function toggleReferencia() {
+        const forma  = document.querySelector('input[name="forma_pago"]:checked')?.value;
+        const campo  = document.getElementById('campo-referencia');
+        campo.classList.toggle('hidden', forma === 'Efectivo');
+    }
+
+    // Inicializar si viene con proveedor preseleccionado
+    actualizarProveedor();
+</script>
+
+{% endblock %}
