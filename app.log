@@ -639,3 +639,13 @@
 2026-03-31 20:08:45,289 - DEBUG - La aplicación ha iniciado correctamente
 2026-03-31 20:08:45,305 - DEBUG - Tokens de sesión eliminados
 2026-03-31 20:08:48,406 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 21:05:26,843 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 21:05:26,857 - DEBUG - Tokens de sesión eliminados
+2026-03-31 21:05:27,511 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 21:05:27,525 - DEBUG - Tokens de sesión eliminados
+2026-03-31 21:05:33,317 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
+2026-03-31 21:16:09,672 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 21:16:09,697 - DEBUG - Tokens de sesión eliminados
+2026-03-31 21:16:10,336 - DEBUG - La aplicación ha iniciado correctamente
+2026-03-31 21:16:10,351 - DEBUG - Tokens de sesión eliminados
+2026-03-31 21:16:13,255 - INFO - Login exitoso | email=admin@example.com | ip=127.0.0.1
