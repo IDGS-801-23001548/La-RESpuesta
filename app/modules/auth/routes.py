@@ -9,7 +9,6 @@ from . import auth
 from datetime import datetime, timedelta
 import uuid
 
-
 @auth.route("/login",)
 def login():
     return render_template("security/login_user.html")
@@ -41,6 +40,7 @@ def login_post():
 
             if user.intentos_fallidos >= 5 and not user.bloqueado_hasta:
                 user.bloqueado_hasta = datetime.now() + timedelta(minutes=10)
+                user.active = 0
 
                 current_app.logger.warning(
                     f"Usuario bloqueado por intentos | email={email}"
@@ -57,6 +57,10 @@ def login_post():
     
     #Logs de auditoria en la base de datos
     user.session_token = str(uuid.uuid4())
+    if remember:
+        user.session_expiration = datetime.now() + timedelta(days=7)
+    else:
+        user.session_expiration = datetime.now() + timedelta(minutes=10) 
     user.ultima_sesion = datetime.now()
     user.ultima_ip = request.remote_addr
 
@@ -82,8 +86,6 @@ def login_post():
         return f"Bienvenido {email}"
     
     return f"Bienvenido {email}"
-
-
 
 @auth.route("/register")
 def register():
@@ -124,6 +126,7 @@ def register_post():
 @login_required
 def logout():
     current_user.session_token = None
+    current_user.session_expiration = None
     db.session.commit()
 
     logout_user()
