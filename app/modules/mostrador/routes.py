@@ -1,12 +1,17 @@
 from flask import render_template, redirect, url_for, flash, request, session
 from . import mostrador
+from datetime import datetime
+import uuid
 from app.extensions import db
 from app.models.producto import Producto
+from app.models.ticket import Ticket
+from app.models.detallesTicket import DetalleTicket
 from .forms import (
     AgregarProductoForm,
     ModificarCantidadForm,
     EliminarProductoForm,
     VaciarCarritoForm,
+    CobrarForm
 )
 
 
@@ -33,20 +38,22 @@ def mostradorVenta():
     productos = Producto.query.order_by(Producto.NombreProducto).all()
     carrito_items, total = _build_carrito()
 
-    agregar_form    = AgregarProductoForm()
-    modificar_form  = ModificarCantidadForm()
-    eliminar_form   = EliminarProductoForm()
-    vaciar_form     = VaciarCarritoForm()
+    agregar_form = AgregarProductoForm()
+    modificar_form = ModificarCantidadForm()
+    eliminar_form = EliminarProductoForm()
+    vaciar_form = VaciarCarritoForm()
+    cobrar_form = CobrarForm()
 
     return render_template(
         "mostrador/mostrador.html",
-        productos      = productos,
-        carrito        = carrito_items,
-        total          = total,
-        agregar_form   = agregar_form,
+        productos = productos,
+        carrito = carrito_items,
+        total = total,
+        agregar_form = agregar_form,
         modificar_form = modificar_form,
-        eliminar_form  = eliminar_form,
-        vaciar_form    = vaciar_form,
+        eliminar_form = eliminar_form,
+        vaciar_form = vaciar_form,
+        cobrar_form = cobrar_form,
     )
 
 
@@ -192,6 +199,54 @@ def vaciarCarrito():
     flash('Carrito vaciado.', 'info')
     return redirect(url_for('mostrador.mostradorVenta'))
 
+
+@mostrador.route("/venta/cobrar", methods=['POST'])
+def cobrar():
+    form = CobrarForm()
+
+    if not form.validate_on_submit():
+        flash('Acción no válida.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    carrito_items, total = _build_carrito()
+
+    if not carrito_items:
+        flash('El carrito está vacío.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    try:
+        # Generar folio único: TK-YYYYMMDD-XXXX
+        folio = f"TK-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+        ticket = Ticket(
+            folioTicket = folio,
+            fechaCompra = datetime.now(),
+            totalCompra = total,
+        )
+        db.session.add(ticket)
+        db.session.flush()
+
+        for item in carrito_items:
+            detalle = DetalleTicket(
+                idTicket = ticket.idTicket,
+                idProducto = item['id_producto'],
+                cantidad = item['cantidad'],
+                subtotal = item['subtotal'],
+            )
+            db.session.add(detalle)
+
+        db.session.commit()
+
+        session.pop('carrito', None)
+        session.modified = True
+
+        flash(f'Venta registrada correctamente. Folio: {folio}', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al registrar la venta: {str(e)}', 'error')
+
+    return redirect(url_for('mostrador.mostradorVenta'))
 
 @mostrador.route("/pedidos", methods=['GET'])
 def mostradorPedido():

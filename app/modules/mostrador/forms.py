@@ -30,3 +30,6 @@ class EliminarProductoForm(FlaskForm):
 
 class VaciarCarritoForm(FlaskForm):
     pass
+
+class CobrarForm(FlaskForm):
+    pass
