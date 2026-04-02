@@ -69,26 +69,56 @@
                             Categoría <span class="text-red-400">*</span>
                         </label>
                         <div class="grid grid-cols-3 gap-2">
-                            {% for cat, emoji, desc in [
-                                ('Canal',   '🥩', 'Res, cerdo, pollo entero'),
-                                ('Insumo',  '🧂', 'Sal, especias, empaque'),
-                                ('Reventa', '🛍️', 'Productos sin transformar'),
-                            ] %}
-                            <label class="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2
-                                          cursor-pointer transition-all
-                                          {% if materia and materia.categoria == cat %}
-                                            {% if cat == 'Canal' %}border-red-400 bg-red-50
-                                            {% elif cat == 'Insumo' %}border-amber-400 bg-amber-50
-                                            {% else %}border-blue-400 bg-blue-50{% endif %}
-                                          {% else %}border-gray-200 hover:border-gray-300{% endif %}">
-                                <input type="radio" name="categoria" value="{{ cat }}"
-                                    {% if (materia and materia.categoria == cat) or (not materia and cat == 'Canal') %}checked{% endif %}
+
+                            <!-- Canal -->
+                            <label id="lbl-Canal"
+                                class="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2
+                                       cursor-pointer transition-all
+                                       {% if materia and materia.categoria == 'Canal' %}border-red-400 bg-red-50
+                                       {% else %}border-gray-200 hover:border-gray-300{% endif %}">
+                                <input type="radio" name="categoria" value="Canal"
+                                    {% if (materia and materia.categoria == 'Canal') or not materia %}checked{% endif %}
                                     class="sr-only" onchange="actualizarCategoria()">
-                                <span class="text-2xl">{{ emoji }}</span>
-                                <span class="text-xs font-semibold text-gray-700">{{ cat }}</span>
-                                <span class="text-[10px] text-gray-400 text-center">{{ desc }}</span>
+                                <svg class="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z"/>
+                                </svg>
+                                <span class="text-xs font-semibold text-gray-700">Canal</span>
+                                <span class="text-[10px] text-gray-400 text-center">Res, cerdo, pollo entero</span>
                             </label>
-                            {% endfor %}
+
+                            <!-- Insumo -->
+                            <label id="lbl-Insumo"
+                                class="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2
+                                       cursor-pointer transition-all
+                                       {% if materia and materia.categoria == 'Insumo' %}border-amber-400 bg-amber-50
+                                       {% else %}border-gray-200 hover:border-gray-300{% endif %}">
+                                <input type="radio" name="categoria" value="Insumo"
+                                    {% if materia and materia.categoria == 'Insumo' %}checked{% endif %}
+                                    class="sr-only" onchange="actualizarCategoria()">
+                                <svg class="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+                                </svg>
+                                <span class="text-xs font-semibold text-gray-700">Insumo</span>
+                                <span class="text-[10px] text-gray-400 text-center">Sal, especias, empaque</span>
+                            </label>
+
+                            <!-- Reventa -->
+                            <label id="lbl-Reventa"
+                                class="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2
+                                       cursor-pointer transition-all
+                                       {% if materia and materia.categoria == 'Reventa' %}border-blue-400 bg-blue-50
+                                       {% else %}border-gray-200 hover:border-gray-300{% endif %}">
+                                <input type="radio" name="categoria" value="Reventa"
+                                    {% if materia and materia.categoria == 'Reventa' %}checked{% endif %}
+                                    class="sr-only" onchange="actualizarCategoria()">
+                                <svg class="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+                                </svg>
+                                <span class="text-xs font-semibold text-gray-700">Reventa</span>
+                                <span class="text-[10px] text-gray-400 text-center">Productos sin transformar</span>
+                            </label>
+
                         </div>
                     </div>
 
@@ -118,22 +148,22 @@
                             onchange="actualizarEjemplo()">
                             <option value="">Seleccionar...</option>
                             <optgroup label="Por pieza/canal">
-                                <option value="canal" {% if materia and materia.unidad_compra == 'canal' %}selected{% endif %}>Canal entera</option>
-                                <option value="media_canal" {% if materia and materia.unidad_compra == 'media_canal' %}selected{% endif %}>Media canal</option>
-                                <option value="pieza" {% if materia and materia.unidad_compra == 'pieza' %}selected{% endif %}>Pieza</option>
+                                <option value="canal"      {% if materia and materia.unidad_compra == 'canal'      %}selected{% endif %}>Canal entera</option>
+                                <option value="media_canal"{% if materia and materia.unidad_compra == 'media_canal'%}selected{% endif %}>Media canal</option>
+                                <option value="pieza"      {% if materia and materia.unidad_compra == 'pieza'      %}selected{% endif %}>Pieza</option>
                             </optgroup>
                             <optgroup label="Por peso">
                                 <option value="kg" {% if materia and materia.unidad_compra == 'kg' %}selected{% endif %}>Kilogramo (kg)</option>
-                                <option value="ton" {% if materia and materia.unidad_compra == 'ton' %}selected{% endif %}>Tonelada (ton)</option>
+                                <option value="ton"{% if materia and materia.unidad_compra == 'ton'%}selected{% endif %}>Tonelada (ton)</option>
                             </optgroup>
                             <optgroup label="Por volumen">
-                                <option value="litro" {% if materia and materia.unidad_compra == 'litro' %}selected{% endif %}>Litro (L)</option>
+                                <option value="litro"{% if materia and materia.unidad_compra == 'litro'%}selected{% endif %}>Litro (L)</option>
                             </optgroup>
                             <optgroup label="Empaque">
-                                <option value="bulto" {% if materia and materia.unidad_compra == 'bulto' %}selected{% endif %}>Bulto</option>
-                                <option value="caja" {% if materia and materia.unidad_compra == 'caja' %}selected{% endif %}>Caja</option>
-                                <option value="bolsa" {% if materia and materia.unidad_compra == 'bolsa' %}selected{% endif %}>Bolsa</option>
-                                <option value="paquete" {% if materia and materia.unidad_compra == 'paquete' %}selected{% endif %}>Paquete</option>
+                                <option value="bulto"  {% if materia and materia.unidad_compra == 'bulto'  %}selected{% endif %}>Bulto</option>
+                                <option value="caja"   {% if materia and materia.unidad_compra == 'caja'   %}selected{% endif %}>Caja</option>
+                                <option value="bolsa"  {% if materia and materia.unidad_compra == 'bolsa'  %}selected{% endif %}>Bolsa</option>
+                                <option value="paquete"{% if materia and materia.unidad_compra == 'paquete'%}selected{% endif %}>Paquete</option>
                             </optgroup>
                         </select>
                     </div>
@@ -147,9 +177,9 @@
                             class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
                                    rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
                             onchange="actualizarEjemplo()">
-                            <option value="g"   {% if not materia or materia.unidad_estandar == 'g'   %}selected{% endif %}>Gramos (g)</option>
-                            <option value="ml"  {% if materia and materia.unidad_estandar == 'ml'  %}selected{% endif %}>Mililitros (mL)</option>
-                            <option value="pza" {% if materia and materia.unidad_estandar == 'pza' %}selected{% endif %}>Piezas (pza)</option>
+                            <option value="g"  {% if not materia or materia.unidad_estandar == 'g'  %}selected{% endif %}>Gramos (g)</option>
+                            <option value="ml" {% if materia and materia.unidad_estandar == 'ml'    %}selected{% endif %}>Mililitros (mL)</option>
+                            <option value="pza"{% if materia and materia.unidad_estandar == 'pza'   %}selected{% endif %}>Piezas (pza)</option>
                         </select>
                     </div>
 
@@ -207,6 +237,7 @@
                             ] %}
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" name="tipo_merma" value="{{ valor }}"
+                                    {% if materia and valor in materia.tipo_merma_lista %}checked{% endif %}
                                     class="w-3.5 h-3.5 accent-green-600">
                                 <span class="text-xs text-gray-600">{{ etiqueta }}</span>
                             </label>
@@ -300,7 +331,13 @@
 
                 <div class="p-5">
                     <div id="guia-Canal" class="space-y-2.5 text-xs text-gray-500">
-                        <p class="font-semibold text-gray-700">Canal 🥩</p>
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z"/>
+                            </svg>
+                            <p class="font-semibold text-gray-700">Canal</p>
+                        </div>
                         <p>Define cómo se convierte la unidad de compra a gramos en inventario y el % de merma por manejo.</p>
                         <div class="bg-gray-50 rounded-lg p-3 text-[10px] space-y-1">
                             <p class="font-semibold text-gray-600">Ejemplo:</p>
@@ -310,7 +347,12 @@
                         </div>
                     </div>
                     <div id="guia-Insumo" class="hidden space-y-2.5 text-xs text-gray-500">
-                        <p class="font-semibold text-gray-700">Insumo 🧂</p>
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+                            </svg>
+                            <p class="font-semibold text-gray-700">Insumo</p>
+                        </div>
                         <p>Conversión de empaque a unidad mínima de almacenamiento.</p>
                         <div class="bg-gray-50 rounded-lg p-3 text-[10px] space-y-1">
                             <p class="font-semibold text-gray-600">Ejemplo:</p>
@@ -320,7 +362,12 @@
                         </div>
                     </div>
                     <div id="guia-Reventa" class="hidden space-y-2.5 text-xs text-gray-500">
-                        <p class="font-semibold text-gray-700">Reventa 🛍️</p>
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+                            </svg>
+                            <p class="font-semibold text-gray-700">Reventa</p>
+                        </div>
                         <p>No se transforma ni tiene merma. Solo define stock mínimo y costo de compra.</p>
                         <div class="bg-blue-50 rounded-lg p-3 text-[10px] text-blue-700">
                             Los campos de conversión y merma quedarán deshabilitados.
@@ -347,11 +394,31 @@
 </form>
 
 <script>
+    const catColors = {
+        Canal:   { border: 'border-red-400',   bg: 'bg-red-50'   },
+        Insumo:  { border: 'border-amber-400',  bg: 'bg-amber-50' },
+        Reventa: { border: 'border-blue-400',   bg: 'bg-blue-50'  },
+    };
+
     function actualizarCategoria() {
         const cat = document.querySelector('input[name="categoria"]:checked')?.value;
         const esReventa = cat === 'Reventa';
 
-        // Deshabilitar visualmente conversion y merma para reventa
+        // Resaltar la tarjeta seleccionada y quitar resaltado de las demás
+        Object.keys(catColors).forEach(c => {
+            const lbl = document.getElementById('lbl-' + c);
+            if (!lbl) return;
+            const { border, bg } = catColors[c];
+            if (c === cat) {
+                lbl.classList.remove('border-gray-200', 'hover:border-gray-300');
+                lbl.classList.add(border, bg);
+            } else {
+                lbl.classList.remove(border, bg);
+                lbl.classList.add('border-gray-200', 'hover:border-gray-300');
+            }
+        });
+
+        // Deshabilitar visualmente conversión y merma para reventa
         ['card-conversion', 'card-merma'].forEach(id => {
             const el = document.getElementById(id);
             el.classList.toggle('opacity-40', esReventa);
@@ -359,7 +426,7 @@
         });
 
         // Guía lateral
-        ['Canal','Insumo','Reventa'].forEach(c => {
+        ['Canal', 'Insumo', 'Reventa'].forEach(c => {
             document.getElementById('guia-' + c).classList.toggle('hidden', c !== cat);
         });
 
@@ -374,7 +441,7 @@
 
     document.getElementById('sel-u-estandar').addEventListener('change', function() {
         const u = this.value;
-        ['lbl-u-estandar','badge-u-min','badge-u-costo'].forEach(id => {
+        ['lbl-u-estandar', 'badge-u-min', 'badge-u-costo'].forEach(id => {
             document.getElementById(id).textContent = u;
         });
         actualizarEjemplo();
@@ -394,7 +461,7 @@
             if (merma > 0) {
                 const neto = factor * (1 - merma / 100);
                 ejMerm.textContent =
-                    `Con ${merma}% de merma → ${neto.toLocaleString('es-MX', {maximumFractionDigits:1})} ${uStd} netos`;
+                    `Con ${merma}% de merma → ${neto.toLocaleString('es-MX', { maximumFractionDigits: 1 })} ${uStd} netos`;
             } else {
                 ejMerm.textContent = '';
             }
