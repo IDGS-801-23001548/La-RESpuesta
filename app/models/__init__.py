@@ -5,3 +5,6 @@ from .users_roles import users_roles
 from .persona import Persona
 from .proveedor import Proveedor
 from .materia import MateriaPrima
+from .compras import OrdenCompra
+from .producto import Producto
+from .producto_unitario import ProductoUnitario
