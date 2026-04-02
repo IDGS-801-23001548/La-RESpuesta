@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>La RESpuesta – Pedidos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* NAV */
+    nav {
+      background: #ffffff;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 64px;
+      border-bottom: 1px solid #e5e7eb; flex-shrink: 0;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-brand-logo {
+      width: 32px; height: 32px; background: #16a34a; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-brand-text { font-size: .875rem; font-weight: 700; color: #111827; }
+    .nav-brand-text span { color: #16a34a; }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      padding: 6px 16px; border-radius: 8px; font-size: .8125rem; font-weight: 500;
+      cursor: pointer; border: 1px solid transparent; transition: all .15s;
+      text-decoration: none; display: flex; align-items: center; gap: 6px; color: #6b7280;
+    }
+    .nav-tab.active { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; font-weight: 600; }
+    .nav-tab:not(.active):hover { background: #f3f4f6; color: #374151; }
+
+    /* MAIN */
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* LEFT */
+    .panel-left {
+      flex: 1; display: flex; flex-direction: column;
+      padding: 20px 20px 20px 24px; gap: 14px; overflow: hidden;
+    }
+
+    /* Search */
+    .search-wrap { position: relative; }
+    .search-wrap input {
+      width: 100%; padding: 9px 14px 9px 38px;
+      border: 1px solid #e5e7eb; border-radius: 8px;
+      font-size: .875rem; font-family: 'Inter', sans-serif;
+      background: #ffffff; color: #111827; outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .search-wrap input::placeholder { color: #d1d5db; }
+    .search-wrap input:focus { border-color: #4ade80; box-shadow: 0 0 0 3px #dcfce7; }
+    .search-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;
+    }
+    .search-icon svg { width: 14px; height: 14px; color: #9ca3af; display: block; }
+
+    /* Sección título */
+    .seccion-titulo {
+      font-size: .6875rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: #9ca3af;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .seccion-titulo::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
+
+    /* Grid pedidos */
+    .pedidos-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px; overflow-y: auto; flex: 1; padding-right: 4px;
+    }
+    .pedidos-grid::-webkit-scrollbar { width: 4px; }
+    .pedidos-grid::-webkit-scrollbar-track { background: transparent; }
+    .pedidos-grid::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+
+    .pedido-card {
+      background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb;
+      padding: 14px; display: flex; flex-direction: column; gap: 10px;
+      transition: box-shadow .2s, transform .15s; cursor: pointer;
+    }
+    .pedido-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-2px); }
+    .pedido-card.selected { border-color: #16a34a; box-shadow: 0 0 0 2px #bbf7d0; }
+
+    .pedido-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .pedido-num { font-size: .875rem; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; }
+    .pedido-badge { font-size: .6875rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+    .badge-pagado   { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .badge-pendiente{ background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+
+    .pedido-cliente { font-size: .8125rem; font-weight: 600; color: #111827; }
+    .pedido-meta    { font-size: .75rem; color: #9ca3af; }
+    .pedido-items-preview {
+      font-size: .75rem; color: #6b7280;
+      border-top: 1px solid #f3f4f6; padding-top: 8px; line-height: 1.7;
+    }
+    .btn-ver {
+      width: 100%; padding: 8px; background: #f3f4f6; color: #374151;
+      border: 1px solid #e5e7eb; border-radius: 8px; font-size: .75rem; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s;
+    }
+    .btn-ver:hover { background: #16a34a; border-color: #16a34a; color: #fff; }
+
+    /* Divider */
+    .divider { width: 1px; background: #e5e7eb; flex-shrink: 0; }
+
+    /* RIGHT - DETALLE */
+    .panel-right {
+      width: 304px; flex-shrink: 0; display: flex; flex-direction: column;
+      background: #ffffff; border-left: 1px solid #e5e7eb;
+    }
+    .detalle-header {
+      padding: 0 18px; height: 56px; display: flex; align-items: center;
+      gap: 8px; border-bottom: 1px solid #f3f4f6;
+    }
+    .detalle-header-icon {
+      width: 32px; height: 32px; background: #f0fdf4; border: 1px solid #bbf7d0;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    .detalle-header h2 { font-size: .875rem; color: #111827; font-weight: 600; }
+    .detalle-header .ped-num {
+      margin-left: auto; background: #f3f4f6; color: #6b7280;
+      border-radius: 6px; padding: 2px 9px; font-size: .75rem; font-weight: 700;
+      border: 1px solid #e5e7eb;
+    }
+
+    .detalle-cliente-info {
+      padding: 12px 14px; background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .det-cliente-nombre { font-size: .875rem; font-weight: 600; color: #111827; }
+    .det-cliente-meta   { font-size: .75rem; color: #9ca3af; }
+
+    .detalle-items {
+      flex: 1; overflow-y: auto; padding: 12px;
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .detalle-items::-webkit-scrollbar { width: 4px; }
+    .detalle-items::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+
+    .det-item {
+      background: #f9fafb; border-radius: 9px; padding: 9px 11px;
+      display: flex; justify-content: space-between; align-items: center;
+      border: 1px solid #e5e7eb;
+    }
+    .det-item-left { display: flex; flex-direction: column; gap: 2px; }
+    .det-item-nombre { font-size: .8rem; font-weight: 600; color: #111827; }
+    .det-item-cant   { font-size: .72rem; color: #9ca3af; }
+    .det-item-precio { font-size: .8125rem; font-weight: 700; color: #16a34a; }
+
+    /* Footer detalle */
+    .detalle-footer {
+      padding: 14px 14px 16px; border-top: 1px solid #e5e7eb;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .total-row { display: flex; justify-content: space-between; align-items: center; }
+    .total-label { font-size: .8125rem; font-weight: 500; color: #6b7280; }
+    .total-monto { font-size: 1.375rem; font-weight: 700; color: #111827; }
+    .estatus-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 10px; border-radius: 8px;
+    }
+    .estatus-row.pagado    { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .estatus-row.pendiente { background: #fffbeb; border: 1px solid #fde68a; }
+    .estatus-label { font-size: .75rem; font-weight: 500; color: #6b7280; }
+    .estatus-valor { font-size: .8rem; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+    .estatus-valor.pagado   { color: #16a34a; }
+    .estatus-valor.pendiente{ color: #d97706; }
+
+    .btn-entregar {
+      width: 100%; padding: 11px; background: #2563eb; color: #fff; border: none;
+      border-radius: 10px; font-size: .875rem; font-weight: 600; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: background .15s, transform .1s;
+      box-shadow: 0 2px 8px rgba(37,99,235,.25);
+    }
+    .btn-entregar:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+    /* Sin pedido */
+    .detalle-empty {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 8px; color: #d1d5db;
+      font-size: .8125rem; text-align: center; padding: 20px;
+    }
+    .detalle-empty span { font-size: 2.5rem; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-brand-logo">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
+    </div>
+    <span class="nav-brand-text">La <span>RESpuesta</span></span>
+  </div>
+  <div class="nav-tabs">
+    <a href="mostrador.html" class="nav-tab">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      Mostrador
+    </a>
+    <a href="pedidos.html" class="nav-tab active">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Pedidos
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT -->
+  <div class="panel-left">
+
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </span>
+      <input type="text" placeholder="Buscar pedido por cliente o número…"/>
+    </div>
+
+    <div class="seccion-titulo">Pedidos pendientes por entregar</div>
+
+    <div class="pedidos-grid">
+
+      <div class="pedido-card selected">
+        <div class="pedido-top">
+          <div class="pedido-num">#0042</div>
+          <span class="pedido-badge badge-pagado">Pagado</span>
+        </div>
+        <div class="pedido-cliente">Martínez, Juan</div>
+        <div class="pedido-meta">Hoy 10:30 am · 3 productos</div>
+        <div class="pedido-items-preview">
+          · Bistec de res — 1.5 kg<br>
+          · Chuleta de cerdo — 2.0 kg<br>
+          · Carne molida — 0.5 kg
+        </div>
+        <button class="btn-ver">Ver pedido</button>
+      </div>
+
+      <div class="pedido-card">
+        <div class="pedido-top">
+          <div class="pedido-num">#0043</div>
+          <span class="pedido-badge badge-pendiente">Por cobrar</span>
+        </div>
+        <div class="pedido-cliente">García, Sofía</div>
+        <div class="pedido-meta">Hoy 11:00 am · 2 productos</div>
+        <div class="pedido-items-preview">
+          · Pechuga entera — 3.0 kg<br>
+          · Muslo de pollo — 1.5 kg
+        </div>
+        <button class="btn-ver">Ver pedido</button>
+      </div>
+
+      <div class="pedido-card">
+        <div class="pedido-top">
+          <div class="pedido-num">#0044</div>
+          <span class="pedido-badge badge-pagado">Pagado</span>
+        </div>
+        <div class="pedido-cliente">López, Karla</div>
+        <div class="pedido-meta">Hoy 11:45 am · 4 productos</div>
+        <div class="pedido-items-preview">
+          · Arrachera — 1.0 kg<br>
+          · Costilla de res — 2.0 kg<br>
+          · Alitas — 1.5 kg<br>
+          · Hígado de res — 0.5 kg
+        </div>
+        <button class="btn-ver">Ver pedido</button>
+      </div>
+
+      <div class="pedido-card">
+        <div class="pedido-top">
+          <div class="pedido-num">#0045</div>
+          <span class="pedido-badge badge-pendiente">Por cobrar</span>
+        </div>
+        <div class="pedido-cliente">Ramírez, Pedro</div>
+        <div class="pedido-meta">Hoy 12:15 pm · 2 productos</div>
+        <div class="pedido-items-preview">
+          · Lomo de cerdo — 2.5 kg<br>
+          · Carne molida — 1.0 kg
+        </div>
+        <button class="btn-ver">Ver pedido</button>
+      </div>
+
+      <div class="pedido-card">
+        <div class="pedido-top">
+          <div class="pedido-num">#0046</div>
+          <span class="pedido-badge badge-pagado">Pagado</span>
+        </div>
+        <div class="pedido-cliente">Torres, Ana</div>
+        <div class="pedido-meta">Hoy 01:00 pm · 1 producto</div>
+        <div class="pedido-items-preview">
+          · Bistec de res — 3.0 kg
+        </div>
+        <button class="btn-ver">Ver pedido</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- DETALLE -->
+  <div class="panel-right">
+
+    <div class="detalle-header">
+      <div class="detalle-header-icon">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <h2>Detalle del pedido</h2>
+      <span class="ped-num">#0042</span>
+    </div>
+
+    <div class="detalle-cliente-info">
+      <div class="det-cliente-nombre">Martínez, Juan</div>
+      <div class="det-cliente-meta">Hoy, 10:30 am · 3 productos</div>
+    </div>
+
+    <div class="detalle-items">
+
+      <div class="det-item">
+        <div class="det-item-left">
+          <div class="det-item-nombre">Bistec de res</div>
+          <div class="det-item-cant">1.5 kg × $180/kg</div>
+        </div>
+        <div class="det-item-precio">$270</div>
+      </div>
+
+      <div class="det-item">
+        <div class="det-item-left">
+          <div class="det-item-nombre">Chuleta de cerdo</div>
+          <div class="det-item-cant">2.0 kg × $130/kg</div>
+        </div>
+        <div class="det-item-precio">$260</div>
+      </div>
+
+      <div class="det-item">
+        <div class="det-item-left">
+          <div class="det-item-nombre">Carne molida</div>
+          <div class="det-item-cant">0.5 kg × $160/kg</div>
+        </div>
+        <div class="det-item-precio">$80</div>
+      </div>
+
+    </div>
+
+    <div class="detalle-footer">
+
+      <div class="total-row">
+        <span class="total-label">Total</span>
+        <span class="total-monto">$610.00</span>
+      </div>
+
+      <div class="estatus-row pagado">
+        <span class="estatus-label">Estatus de pago</span>
+        <span class="estatus-valor pagado">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Pagado
+        </span>
+      </div>
+
+      <button class="btn-entregar">Entregar pedido</button>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
