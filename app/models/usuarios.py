@@ -29,3 +29,7 @@ class User(db.Model, UserMixin):
     persona             = db.relationship('Persona', 
                                     backref='user', 
                                     uselist=False)
+    
+    pedido              = db.relationship('Pedido', 
+                                    backref='userPedido', 
+                                    uselist=False)

@@ -12,6 +12,7 @@ from app.models import User
 if __name__ == '__main__':
     app = create_app()
     with app.app_context():
+        db.create_all()
         #Primer log de la aplicación en ejecución
         app.logger.debug("La aplicación ha iniciado correctamente")
 

@@ -11,6 +11,6 @@ class Producto(db.Model):
     PrecioVentaProducto         = db.Column(db.Float, nullable=False)
     StockProducto               = db.Column(db.Integer, default=0, nullable=False)
 
-    unidades                    = db.relationship('ProductoUnitario',
+    unidadesProducto                    = db.relationship('ProductoUnitario',
                                         backref='producto',
                                         lazy='dynamic')
