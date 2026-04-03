@@ -1,5 +1,5 @@
 {% extends "/venta/layout.html" %}
-{% block title %}VentaOnline — Pedido #VO-0045{% endblock %}
+{% block title %}VentaOnline — Pedido #VO-{{ '%04d'|format(pedido.idPedido) }}{% endblock %}
 
 {% block styles %}
 <style>
@@ -130,12 +130,20 @@
   <div class="page-header">
     <div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-        <h2 style="font-size:1.3rem;font-weight:900;color:#111827;font-family:monospace;margin:0;">#VO-0045</h2>
-        <span class="badge badge-en-curso">
-          <span class="badge-dot badge-pulse"></span>En curso
-        </span>
+        <h2 style="font-size:1.3rem;font-weight:900;color:#111827;font-family:monospace;margin:0;">
+          #VO-{{ '%04d'|format(pedido.idPedido) }}
+        </h2>
+        {% if pedido.Estatus == 'EnCurso' %}
+          <span class="badge badge-en-curso"><span class="badge-dot badge-pulse"></span>En curso</span>
+        {% elif pedido.Estatus == 'Finalizado' %}
+          <span class="badge badge-finalizado"><span class="badge-dot"></span>Finalizado</span>
+        {% else %}
+          <span class="badge badge-cancelado"><span class="badge-dot"></span>Cancelado</span>
+        {% endif %}
       </div>
-      <p style="font-size:.72rem;color:#9ca3af;font-weight:600;margin:0;">Realizado el 28 de febrero de 2026</p>
+      <p style="font-size:.72rem;color:#9ca3af;font-weight:600;margin:0;">
+        Realizado el {{ pedido.fechaCreacion.strftime('%d de %B de %Y') }}
+      </p>
     </div>
     <button class="btn-print" onclick="window.print()">
       <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
@@ -152,35 +160,43 @@
     <div class="panel-body">
       <div class="timeline">
         <div class="tl-step">
-          <div class="tl-circle done">
-            <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div class="tl-circle {{ timeline[0] }}">
+            {% if timeline[0] == 'done' %}
+              <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            {% else %}
+              <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+            {% endif %}
           </div>
-          <span class="tl-label done">Confirmado</span>
-          <span class="tl-sublabel">28 Feb · 10:30</span>
+          <span class="tl-label {{ timeline[0] }}">Confirmado</span>
+          <span class="tl-sublabel">{{ pedido.fechaCreacion.strftime('%d %b · %H:%M') }}</span>
         </div>
-        <div class="tl-line done"></div>
+        <div class="tl-line {{ 'done' if timeline[1] == 'done' else 'pending' }}"></div>
         <div class="tl-step">
-          <div class="tl-circle done">
-            <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div class="tl-circle {{ timeline[1] }}">
+            {% if timeline[1] == 'done' %}
+              <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            {% else %}
+              <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            {% endif %}
           </div>
-          <span class="tl-label done">Preparando</span>
-          <span class="tl-sublabel">28 Feb · 11:00</span>
+          <span class="tl-label {{ timeline[1] }}">Preparando</span>
+          <span class="tl-sublabel">{{ pedido.fechaCreacion.strftime('%d %b') if timeline[1] == 'done' else '—' }}</span>
         </div>
-        <div class="tl-line partial"></div>
+        <div class="tl-line {{ 'done' if timeline[2] == 'done' else ('partial' if timeline[2] == 'active' else 'pending') }}"></div>
         <div class="tl-step">
-          <div class="tl-circle active">
+          <div class="tl-circle {{ timeline[2] }}">
             <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
           </div>
-          <span class="tl-label active">En camino</span>
-          <span class="tl-sublabel">En progreso</span>
+          <span class="tl-label {{ timeline[2] }}">En camino</span>
+          <span class="tl-sublabel">{{ 'En progreso' if timeline[2] == 'active' else ('—' if timeline[2] == 'pending' else 'Completado') }}</span>
         </div>
-        <div class="tl-line pending"></div>
+        <div class="tl-line {{ 'done' if timeline[3] == 'done' else 'pending' }}"></div>
         <div class="tl-step">
-          <div class="tl-circle pending">
+          <div class="tl-circle {{ timeline[3] }}">
             <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
           </div>
-          <span class="tl-label pending">Entregado</span>
-          <span class="tl-sublabel">Pendiente</span>
+          <span class="tl-label {{ timeline[3] }}">Entregado</span>
+          <span class="tl-sublabel">{{ 'Completado' if timeline[3] == 'done' else 'Pendiente' }}</span>
         </div>
       </div>
     </div>
@@ -196,43 +212,23 @@
           <h3>Productos del pedido</h3>
         </div>
         <div>
+          {% for item in items %}
           <div class="product-row">
             <div class="product-icon" style="background:#fffbeb;">🥩</div>
             <div class="product-info">
-              <p class="product-name">Ribeye</p>
-              <p class="product-sub">Res · Corte premium</p>
+              <p class="product-name">{{ item.producto.NombreProducto }}</p>
+              <p class="product-sub">{{ item.producto.DescripcionProducto or '' }}</p>
             </div>
             <div class="product-price">
-              <p class="unit">1.0 kg × $280.00</p>
-              <p class="total">$280.00</p>
+              <p class="unit">{{ item.cantidad }} ud{{ 's' if item.cantidad != 1 }} × ${{ '%.2f'|format(item.producto.PrecioVentaProducto) }}</p>
+              <p class="total">${{ '%.2f'|format(item.subtotal) }}</p>
             </div>
           </div>
-          <div class="product-row">
-            <div class="product-icon" style="background:#fef2f2;">🥩</div>
-            <div class="product-info">
-              <p class="product-name">Arrachera</p>
-              <p class="product-sub">Res · Corte especial</p>
-            </div>
-            <div class="product-price">
-              <p class="unit">0.5 kg × $180.00</p>
-              <p class="total">$90.00</p>
-            </div>
-          </div>
-          <div class="product-row">
-            <div class="product-icon" style="background:#fff7ed;">🦴</div>
-            <div class="product-info">
-              <p class="product-name">Costilla corta</p>
-              <p class="product-sub">Res · Para asado</p>
-            </div>
-            <div class="product-price">
-              <p class="unit">1.5 kg × $76.67</p>
-              <p class="total">$115.00</p>
-            </div>
-          </div>
+          {% endfor %}
         </div>
         <div class="total-row">
           <span class="label">Total del pedido</span>
-          <span class="value">$485.00</span>
+          <span class="value">${{ '%.2f'|format(total) }}</span>
         </div>
       </div>
 
@@ -259,12 +255,13 @@
           <h3>Pago</h3>
         </div>
         <div class="panel-body">
-          <div class="info-row"><span class="lbl">Método</span><span class="val">Tarjeta ····4242</span></div>
-          <div class="info-row"><span class="lbl">Subtotal</span><span class="val">$485.00</span></div>
+          <div class="info-row"><span class="lbl">Método</span><span class="val">{{ pedido.Tipo or '—' }}</span></div>
+          <div class="info-row"><span class="lbl">Subtotal</span><span class="val">${{ '%.2f'|format(subtotal) }}</span></div>
+          <div class="info-row"><span class="lbl">IVA (16%)</span><span class="val">${{ '%.2f'|format(iva) }}</span></div>
           <div class="info-row"><span class="lbl">Envío</span><span class="val green">Gratis</span></div>
           <div style="border-top:1px solid #f0f0f0;padding-top:.6rem;margin-top:.4rem;" class="info-row">
             <span class="lbl" style="font-weight:800;color:#374151;">Total</span>
-            <span class="val" style="color:#16a34a;font-size:.95rem;">$485.00</span>
+            <span class="val" style="color:#16a34a;font-size:.95rem;">${{ '%.2f'|format(total) }}</span>
           </div>
         </div>
       </div>
@@ -276,16 +273,36 @@
           <h3>Entrega</h3>
         </div>
         <div class="panel-body">
-          <p style="font-size:.85rem;font-weight:700;color:#111827;margin:0 0 4px;">Haziel Gutiérrez</p>
-          <p style="font-size:.75rem;color:#9ca3af;font-weight:600;margin:0 0 2px;">Blvd. Torres Landa 204</p>
-          <p style="font-size:.75rem;color:#9ca3af;font-weight:600;margin:0 0 2px;">Col. Centro, León, Gto.</p>
-          <p style="font-size:.75rem;color:#9ca3af;font-weight:600;margin:0 0 .75rem;">C.P. 37000</p>
+          <p style="font-size:.85rem;font-weight:700;color:#111827;margin:0 0 4px;">
+            {{ current_user.persona.nombre if current_user.persona else current_user.name }}
+            {{ current_user.persona.apellido_paterno if current_user.persona else '' }}
+          </p>
+          <p style="font-size:.75rem;color:#9ca3af;font-weight:600;margin:0 0 .75rem;">
+            {{ current_user.persona.direccion if current_user.persona and current_user.persona.direccion else 'Sin dirección registrada' }}
+          </p>
           <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:#d97706;font-weight:700;">
             <svg style="width:14px;height:14px;stroke:#d97706;fill:none;flex-shrink:0;" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Entrega estimada: 1 Mar
+            Modalidad: {{ pedido.Entrega or '—' }}
           </div>
         </div>
       </div>
+
+      <!-- Cancelar (solo si está en curso) -->
+      {% if pedido.Estatus == 'EnCurso' %}
+      <div class="panel-card">
+        <div class="panel-body" style="text-align:center;">
+          <form action="{{ url_for('venta.cancelar_pedido', id_pedido=pedido.idPedido) }}" method="POST"
+                onsubmit="return confirm('¿Seguro que deseas cancelar este pedido? Los productos volverán al inventario.')">
+            <button type="submit" style="
+              width:100%;padding:.65rem;border:1.5px solid #fecaca;border-radius:11px;
+              background:#fef2f2;color:#b91c1c;font-size:.78rem;font-weight:700;
+              cursor:pointer;transition:all .18s;font-family:'Nunito',sans-serif;">
+              Cancelar pedido
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 

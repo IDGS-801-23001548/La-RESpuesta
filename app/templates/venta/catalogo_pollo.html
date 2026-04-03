@@ -288,10 +288,12 @@
       </div>
     </div>
 
-    <button id="btn-continuar" class="btn-continue disabled" disabled
-      onclick="window.location.href='{{ url_for('venta.carrito') }}'">
-      Continuar con 0 piezas →
-    </button>
+    <form id="form-carrito" action="{{ url_for('venta.agregar_cortes') }}" method="POST">
+      <input type="hidden" name="cortes" id="input-cortes" value="">
+      <button id="btn-continuar" type="submit" class="btn-continue disabled" disabled>
+        Continuar con 0 piezas →
+      </button>
+    </form>
   </div>
 
 </div>
@@ -315,6 +317,7 @@ function toggleCut(id, name, price) {
 function updateCounter() {
   const n = selected.size;
   const btn = document.getElementById('btn-continuar');
+  document.getElementById('input-cortes').value = [...selected].join(',');
   if (n > 0) {
     btn.disabled = false;
     btn.className = 'btn-continue enabled';

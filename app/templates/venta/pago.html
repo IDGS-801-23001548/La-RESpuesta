@@ -257,8 +257,8 @@
               <h4>Datos para transferencia</h4>
               <p><strong>Banco:</strong> BBVA México</p>
               <p><strong>CLABE:</strong> 012 180 01234567890 1</p>
-              <p><strong>Concepto:</strong> Pedido VentaOnline #VO-0046</p>
-              <p><strong>Monto exacto:</strong> $594.50</p>
+              <p><strong>Concepto:</strong> Pedido VentaOnline — {{ current_user.persona.nombre if current_user.persona else current_user.name }} {{ current_user.persona.apellido_paterno if current_user.persona else '' }}</p>
+              <p><strong>Monto exacto:</strong> ${{ '%.2f'|format(total) }}</p>
               <p style="margin-top:.5rem;font-size:.68rem;opacity:.8;">Tu pedido se confirmará al recibir la transferencia (aprox. 2–4 hrs)</p>
             </div>
           </div>
@@ -268,7 +268,7 @@
             <div class="info-box info-box-amber">
               <h4>Pago contra entrega</h4>
               <p>El repartidor cobrará el monto exacto al momento de la entrega.</p>
-              <p style="font-size:.88rem;font-weight:900;margin-top:.6rem;">Total a pagar: $594.50</p>
+              <p style="font-size:.88rem;font-weight:900;margin-top:.6rem;">Total a pagar: ${{ '%.2f'|format(total) }}</p>
             </div>
           </div>
         </div>
@@ -285,8 +285,13 @@
             <svg style="width:15px;height:15px;stroke:#16a34a;fill:none;" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           </div>
           <div>
-            <p style="font-size:.85rem;font-weight:700;color:#111827;margin:0 0 3px;">Haziel Gutiérrez</p>
-            <p style="font-size:.72rem;color:#9ca3af;font-weight:600;margin:0;">Blvd. Torres Landa 204, Col. Centro, León, Gto.</p>
+            <p style="font-size:.85rem;font-weight:700;color:#111827;margin:0 0 3px;">
+              {{ current_user.persona.nombre if current_user.persona else current_user.name }}
+              {{ current_user.persona.apellido_paterno if current_user.persona else '' }}
+            </p>
+            <p style="font-size:.72rem;color:#9ca3af;font-weight:600;margin:0;">
+              {{ current_user.persona.direccion if current_user.persona and current_user.persona.direccion else 'Sin dirección registrada' }}
+            </p>
           </div>
         </div>
       </div>
@@ -300,24 +305,34 @@
           <h3>Resumen del pedido</h3>
         </div>
         <div>
-          <div class="mini-item"><div class="mini-item-left"><span>🥩</span><span class="mini-item-name">Ribeye 1.0kg</span></div><span class="mini-item-price">$280.00</span></div>
-          <div class="mini-item"><div class="mini-item-left"><span>🥩</span><span class="mini-item-name">Arrachera 0.5kg</span></div><span class="mini-item-price">$90.00</span></div>
-          <div class="mini-item"><div class="mini-item-left"><span>🦴</span><span class="mini-item-name">Costilla 1.5kg</span></div><span class="mini-item-price">$142.50</span></div>
+          {% for item in items %}
+          <div class="mini-item">
+            <div class="mini-item-left">
+              <span>🥩</span>
+              <span class="mini-item-name">{{ item.producto.NombreProducto }} ×{{ item.cantidad }}</span>
+            </div>
+            <span class="mini-item-price">${{ '%.2f'|format(item.subtotal) }}</span>
+          </div>
+          {% endfor %}
         </div>
         <div class="panel-body" style="border-top:1px solid #f5f5f5;">
-          <div class="summary-row"><span class="lbl">Subtotal</span><span class="val">$512.50</span></div>
+          <div class="summary-row"><span class="lbl">Subtotal</span><span class="val">${{ '%.2f'|format(subtotal) }}</span></div>
           <div class="summary-row"><span class="lbl">Envío</span><span class="val green">Gratis</span></div>
-          <div class="summary-row"><span class="lbl">IVA (16%)</span><span class="val">$82.00</span></div>
+          <div class="summary-row"><span class="lbl">IVA (16%)</span><span class="val">${{ '%.2f'|format(iva) }}</span></div>
           <div style="border-top:1px solid #f0f0f0;padding-top:.65rem;margin-top:.4rem;" class="summary-row">
             <span class="lbl" style="font-weight:800;color:#374151;">Total</span>
-            <span style="font-size:1.15rem;font-weight:900;color:#16a34a;">$594.50</span>
+            <span style="font-size:1.15rem;font-weight:900;color:#16a34a;">${{ '%.2f'|format(total) }}</span>
           </div>
         </div>
         <div style="padding:0 1.2rem 1.2rem;">
-          <button class="btn-pay" onclick="procesarPago(this)">
-            <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            Confirmar y pagar $594.50
-          </button>
+          <form id="form-pago" action="{{ url_for('venta.confirmar_pago') }}" method="POST">
+            <input type="hidden" name="metodo_pago" id="input-metodo" value="Tarjeta">
+            <input type="hidden" name="tipo_entrega" value="Domicilio">
+            <button type="submit" class="btn-pay" onclick="this.disabled=true; this.innerText='Procesando…'; this.form.submit();">
+              <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              Confirmar y pagar ${{ '%.2f'|format(total) }}
+            </button>
+          </form>
           <p class="terms-note">Al confirmar aceptas nuestros Términos de servicio</p>
         </div>
       </div>
@@ -326,27 +341,6 @@
   </div>
 </div>
 
-<!-- SUCCESS SCREEN -->
-<div id="success-screen" style="max-width:520px;margin:0 auto;padding:3rem 1rem;text-align:center;" class="fade-in">
-  <div class="check-circle">
-    <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-  </div>
-  <h2 style="font-size:1.7rem;font-weight:900;color:#111827;margin:0 0 .5rem;">¡Pedido confirmado!</h2>
-  <p style="font-size:.85rem;color:#6b7280;font-weight:600;margin:0 0 4px;">Tu orden <strong style="color:#374151;">#VO-0046</strong> ha sido registrada con éxito.</p>
-  <p style="font-size:.75rem;color:#9ca3af;font-weight:600;margin:0 0 1.5rem;">Recibirás una confirmación por correo. Entrega estimada: <strong>mañana antes de las 2pm</strong>.</p>
-
-  <div class="success-summary">
-    <div class="success-row"><span class="lbl">Pedido</span><span class="val" style="font-family:monospace;">#VO-0046</span></div>
-    <div class="success-row"><span class="lbl">Total pagado</span><span class="val" style="color:#16a34a;">$594.50</span></div>
-    <div class="success-row"><span class="lbl">Método</span><span class="val">Tarjeta ····3456</span></div>
-    <div class="success-row"><span class="lbl">Dirección</span><span class="val">Blvd. Torres Landa 204</span></div>
-  </div>
-
-  <div class="btn-group">
-    <a href="{{ url_for('venta.pedidos') }}" class="btn-primary">Ver mis pedidos</a>
-    <a href="{{ url_for('venta.inicio') }}" class="btn-secondary">Volver al inicio</a>
-  </div>
-</div>
 
 <script>
 function selectMethod(el, type) {
@@ -354,6 +348,9 @@ function selectMethod(el, type) {
   el.classList.add('selected');
   ['card-form','transfer-form','cash-form'].forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById(type === 'card' ? 'card-form' : type === 'transfer' ? 'transfer-form' : 'cash-form').classList.remove('hidden');
+  // Sincroniza el campo hidden del método de pago
+  document.getElementById('input-metodo').value =
+    type === 'card' ? 'Tarjeta' : type === 'transfer' ? 'Transferencia' : 'Efectivo';
 }
 function formatCard(input) {
   let v = input.value.replace(/\D/g,'').substring(0,16);
@@ -363,15 +360,6 @@ function formatExpiry(input) {
   let v = input.value.replace(/\D/g,'').substring(0,4);
   if (v.length >= 3) v = v.substring(0,2) + '/' + v.substring(2);
   input.value = v;
-}
-function procesarPago(btn) {
-  btn.textContent = 'Procesando...';
-  btn.disabled = true;
-  setTimeout(() => {
-    document.getElementById('payment-screen').style.display = 'none';
-    document.getElementById('success-screen').style.display = 'block';
-    window.scrollTo(0,0);
-  }, 1800);
 }
 </script>
 {% endblock %}

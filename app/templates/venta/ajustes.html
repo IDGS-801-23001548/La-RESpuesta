@@ -158,9 +158,14 @@
     <div>
       <!-- Avatar card -->
       <div class="user-card fade-in-2">
-        <div class="user-avatar">HG</div>
-        <p class="user-name">Haziel Gutiérrez</p>
-        <p class="user-email">haziel@ejemplo.com</p>
+        <div class="user-avatar">
+          {{ (current_user.persona.nombre[0] if current_user.persona and current_user.persona.nombre else '') | upper }}{{ (current_user.persona.apellido_paterno[0] if current_user.persona and current_user.persona.apellido_paterno else '') | upper }}
+        </div>
+        <p class="user-name">
+          {{ current_user.persona.nombre if current_user.persona else '' }}
+          {{ current_user.persona.apellido_paterno if current_user.persona else '' }}
+        </p>
+        <p class="user-email">{{ current_user.email }}</p>
         <span class="user-badge">Cliente activo</span>
       </div>
 
@@ -188,39 +193,45 @@
             <h3>Información personal</h3>
           </div>
           <div class="panel-body">
+            <form action="{{ url_for('venta.ajustes_datos') }}" method="POST">
             <div class="form-grid2" style="margin-bottom:.85rem;">
               <div class="form-row" style="margin:0;">
                 <label class="form-label">Nombre</label>
-                <input type="text" class="form-input" value="Haziel">
+                <input type="text" name="nombre" class="form-input"
+                  value="{{ current_user.persona.nombre if current_user.persona else '' }}">
               </div>
               <div class="form-row" style="margin:0;">
                 <label class="form-label">Apellido</label>
-                <input type="text" class="form-input" value="Gutiérrez">
+                <input type="text" name="apellido" class="form-input"
+                  value="{{ current_user.persona.apellido_paterno if current_user.persona else '' }}">
               </div>
             </div>
             <div class="form-row">
               <label class="form-label">Correo electrónico</label>
-              <input type="email" class="form-input" value="haziel@ejemplo.com">
+              <input type="email" name="email" class="form-input" value="{{ current_user.email }}">
             </div>
             <div class="form-grid2" style="margin-bottom:.85rem;">
               <div>
                 <label class="form-label">Teléfono</label>
-                <input type="tel" class="form-input" value="477 123 4567">
+                <input type="tel" name="telefono" class="form-input"
+                  value="{{ current_user.persona.telefono if current_user.persona and current_user.persona.telefono else '' }}">
               </div>
               <div>
-                <label class="form-label">Ciudad</label>
-                <input type="text" class="form-input" value="León, Gto.">
+                <label class="form-label">Apellido materno</label>
+                <input type="text" name="apellido_materno" class="form-input"
+                  value="{{ current_user.persona.apellido_materno if current_user.persona and current_user.persona.apellido_materno else '' }}">
               </div>
             </div>
             <div class="form-row">
               <label class="form-label">Dirección de entrega</label>
-              <textarea class="form-input" rows="2">Blvd. Torres Landa 204, Col. Centro, León, Gto. C.P. 37000</textarea>
+              <textarea name="direccion" class="form-input" rows="2">{{ current_user.persona.direccion if current_user.persona and current_user.persona.direccion else '' }}</textarea>
             </div>
             <div style="display:flex;justify-content:flex-end;padding-top:.5rem;">
-              <button class="btn-save" onclick="showToast('Datos actualizados correctamente')">
+              <button type="submit" class="btn-save">
                 Guardar cambios
               </button>
             </div>
+            </form>
           </div>
         </div>
       </div>
@@ -233,17 +244,18 @@
             <h3>Cambiar contraseña</h3>
           </div>
           <div class="panel-body">
+            <form action="{{ url_for('venta.ajustes_password') }}" method="POST">
             <div class="form-row">
               <label class="form-label">Contraseña actual</label>
-              <input type="password" class="form-input" placeholder="••••••••">
+              <input type="password" name="password_actual" class="form-input" placeholder="••••••••">
             </div>
             <div class="form-row">
               <label class="form-label">Nueva contraseña</label>
-              <input type="password" class="form-input" placeholder="Mínimo 8 caracteres">
+              <input type="password" name="password_nueva" class="form-input" placeholder="Mínimo 8 caracteres">
             </div>
             <div class="form-row">
               <label class="form-label">Confirmar nueva contraseña</label>
-              <input type="password" class="form-input" placeholder="Repite la nueva contraseña">
+              <input type="password" name="password_confirmar" class="form-input" placeholder="Repite la nueva contraseña">
             </div>
             <div class="hint-box" style="margin-bottom:1rem;">
               <h4>Requisitos de contraseña</h4>
@@ -255,10 +267,11 @@
               </ul>
             </div>
             <div style="display:flex;justify-content:flex-end;">
-              <button class="btn-save" onclick="showToast('Contraseña actualizada correctamente')">
+              <button type="submit" class="btn-save">
                 Actualizar contraseña
               </button>
             </div>
+            </form>
           </div>
         </div>
       </div>
