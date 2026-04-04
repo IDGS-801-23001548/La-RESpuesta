@@ -384,25 +384,11 @@
       <input id="buscar" type="text" placeholder="Buscar producto…" autocomplete="off"/>
     </div>
 
-    {# Filtros dinámicos por unidad #}
     <div class="filtros" id="filtros">
-      <button class="filtro-btn active" data-unidad="todos">Todos</button>
-
-      {% set ns = namespace(unidades=[]) %}
-      {% for p in productos %}
-        {% set primera = p.unidades.first() %}
-        {% if primera and primera.NombreUnidad not in ns.unidades %}
-          {% set ns.unidades = ns.unidades + [primera.NombreUnidad] %}
-          <button class="filtro-btn" data-unidad="{{ primera.NombreUnidad | lower }}">
-            {{ primera.NombreUnidad }}
-          </button>
-        {% endif %}
-      {% endfor %}
-
-      <span class="filtro-count">
-        <span id="contador">{{ productos | length }}</span> productos
-      </span>
-    </div>
+  <span class="filtro-count">
+    <span id="contador">{{ productos | length }}</span> productos
+  </span>
+</div>
 
     {# Grid de productos #}
     <div class="productos-grid" id="productos-grid">
@@ -422,12 +408,10 @@
             {% set badge_txt = 'Stock: ' ~ p.StockProducto %}
           {% endif %}
 
-          {% set primera_u  = p.unidades.first() %}
-          {% set nombre_u   = primera_u.NombreUnidad if primera_u else 'kg' %}
+          
 
           <div class="producto-card {% if p.StockProducto <= 0 %}sin-stock{% endif %}"
-               data-nombre="{{ p.NombreProducto | lower }}"
-               data-unidad="{{ nombre_u | lower }}">
+     data-nombre="{{ p.NombreProducto | lower }}">
 
             <span class="stock-badge {{ badge_cls }}">{{ badge_txt }}</span>
 
@@ -435,11 +419,10 @@
 
             <div class="producto-info">
               <div class="producto-nombre">{{ p.NombreProducto }}</div>
-              <div class="producto-precio-row">
-                <span class="producto-precio">${{ "%.2f" | format(p.PrecioVentaProducto) }}</span>
-                <span class="producto-unidad">/ {{ nombre_u }}</span>
-              </div>
-              <div class="producto-stock-txt">Disponible: {{ p.StockProducto }} {{ nombre_u }}</div>
+               <div class="producto-precio-row">
+    <span class="producto-precio">${{ "%.2f" | format(p.PrecioVentaProducto) }}</span>
+  </div>
+  <div class="producto-stock-txt">Disponible: {{ p.StockProducto }} pzas</div>
 
               {# Formulario POST → agregarProducto #}
               <form class="form-agregar"
@@ -450,9 +433,9 @@
                   type="number"
                   name="cantidad"
                   value="1"
-                  min="0.1"
+                  min="1"
                   max="{{ p.StockProducto }}"
-                  step="0.1"
+                  step="1"
                   title="Cantidad"
                   {% if p.StockProducto <= 0 %}disabled{% endif %}
                 />
@@ -525,11 +508,10 @@
           <div class="carrito-item">
 
             <div class="item-top">
-              <div>
-                <div class="item-nombre">{{ item.nombre }}</div>
-                <div class="item-precio-unit">${{ "%.2f" | format(item.precio) }} / {{ item.unidad }}</div>
-              </div>
-              <span class="item-unidad-tag">{{ item.unidad }}</span>
+  <div>
+    <div class="item-nombre">{{ item.nombre }}</div>
+    <div class="item-precio-unit">${{ "%.2f" | format(item.precio) }} c/u</div>
+  </div>
 
               {# Formulario eliminar ítem #}
               <form action="{{ url_for('mostrador.eliminarProducto', id_producto=item.id_producto) }}"
@@ -566,7 +548,7 @@
                   value="{{ item.cantidad }}"
                   min="0"
                   max="{{ item.stock }}"
-                  step="0.1"
+                  step="1"
                   onchange="this.form.submit()"
                 />
 
@@ -577,7 +559,7 @@
                         title="Aumentar"
                         {% if item.cantidad >= item.stock %}disabled{% endif %}>+</button>
 
-                <span class="qty-unit">{{ item.unidad }}</span>
+                
               </form>
 
               <div class="item-subtotal">${{ "%.2f" | format(item.subtotal) }}</div>
@@ -648,30 +630,20 @@
   // ── Búsqueda en tiempo real ──
   document.getElementById('buscar').addEventListener('input', filtrar);
 
-  // ── Filtros por unidad ──
-  document.getElementById('filtros').addEventListener('click', function (e) {
-    const btn = e.target.closest('.filtro-btn');
-    if (!btn) return;
-    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    filtrar();
+  
+  function filtrar() {
+  const q = document.getElementById('buscar').value.toLowerCase().trim();
+  let count = 0;
+
+  document.querySelectorAll('.producto-card').forEach(card => {
+    const nombre  = card.dataset.nombre || '';
+    const visible = nombre.includes(q);
+    card.style.display = visible ? '' : 'none';
+    if (visible) count++;
   });
 
-  function filtrar() {
-    const q      = document.getElementById('buscar').value.toLowerCase().trim();
-    const filtro = (document.querySelector('.filtro-btn.active') || {}).dataset?.unidad || 'todos';
-    let   count  = 0;
-
-    document.querySelectorAll('.producto-card').forEach(card => {
-      const nombre  = card.dataset.nombre || '';
-      const unidad  = card.dataset.unidad || '';
-      const visible = nombre.includes(q) && (filtro === 'todos' || unidad === filtro);
-      card.style.display = visible ? '' : 'none';
-      if (visible) count++;
-    });
-
-    document.getElementById('contador').textContent = count;
-  }
+  document.getElementById('contador').textContent = count;
+}
 </script>
 
 </body>

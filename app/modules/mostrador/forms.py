@@ -1,22 +1,22 @@
 from flask_wtf import FlaskForm
-from wtforms import FloatField, HiddenField, SubmitField
+from wtforms import FloatField, HiddenField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, NumberRange
 
 
 class AgregarProductoForm(FlaskForm):
-    cantidad = FloatField(
+    cantidad = IntegerField(
         'Cantidad',
-        default=1.0,
+        default=1,
         validators=[
             DataRequired(message='La cantidad es requerida.'),
-            NumberRange(min=0.001, message='La cantidad debe ser mayor a 0.'),
+            NumberRange(min=1, message='La cantidad debe ser mayor a 1'),
         ]
     )
     submit = SubmitField('Agregar')
 
 
 class ModificarCantidadForm(FlaskForm):
-    cantidad = FloatField(
+    cantidad = IntegerField(
         'Cantidad',
         validators=[
             DataRequired(message='La cantidad es requerida.'),

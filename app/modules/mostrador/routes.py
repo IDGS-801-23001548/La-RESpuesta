@@ -1,4 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request, session
+from flask_login import login_required
+from flask_security.decorators import roles_required
 from . import mostrador
 from datetime import datetime
 import uuid
@@ -31,6 +33,8 @@ def _build_carrito():
 
 
 @mostrador.route("/venta", methods=['GET'])
+@login_required
+@roles_required('Cajero')
 def mostradorVenta():
     if 'carrito' not in session:
         session['carrito'] = []
@@ -58,6 +62,8 @@ def mostradorVenta():
 
 
 @mostrador.route("/venta/agregar/<int:id_producto>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
 def agregarProducto(id_producto):
     form = AgregarProductoForm()
 
@@ -90,13 +96,12 @@ def agregarProducto(id_producto):
             flash(f'"{producto.NombreProducto}" actualizado en el carrito.', 'success')
             return redirect(url_for('mostrador.mostradorVenta'))
 
-    primera_unidad = producto.unidades.first()
-    nombre_unidad  = primera_unidad.NombreUnidad if primera_unidad else 'kg'
+    
 
     if cantidad > producto.StockProducto:
         flash(
             f'Stock insuficiente. Máximo disponible: '
-            f'{producto.StockProducto} {nombre_unidad}.',
+            f'{producto.StockProducto}.',
             'warning'
         )
         return redirect(url_for('mostrador.mostradorVenta'))
@@ -105,7 +110,6 @@ def agregarProducto(id_producto):
         'id_producto': id_producto,
         'nombre':      producto.NombreProducto,
         'precio':      producto.PrecioVentaProducto,
-        'unidad':      nombre_unidad,
         'cantidad':    round(cantidad, 3),
         'stock':       producto.StockProducto,
     })
@@ -117,6 +121,8 @@ def agregarProducto(id_producto):
 
 
 @mostrador.route("/venta/modificar/<int:id_producto>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
 def modificarCantidad(id_producto):
     form = ModificarCantidadForm()
 
@@ -131,9 +137,9 @@ def modificarCantidad(id_producto):
     for item in carrito:
         if item['id_producto'] == id_producto:
             if accion == 'sumar':
-                nueva_cantidad = cantidad + 0.1
+                nueva_cantidad = cantidad + 1
             elif accion == 'restar':
-                nueva_cantidad = cantidad - 0.1
+                nueva_cantidad = cantidad - 1
             else:
                 nueva_cantidad = cantidad
 
@@ -146,7 +152,7 @@ def modificarCantidad(id_producto):
 
             if nueva_cantidad > item['stock']:
                 flash(
-                    f'Stock insuficiente. Máximo: {item["stock"]} {item["unidad"]}.',
+                    f'Stock insuficiente. Máximo: {item["stock"]}.',
                     'warning'
                 )
                 return redirect(url_for('mostrador.mostradorVenta'))
@@ -161,6 +167,8 @@ def modificarCantidad(id_producto):
 
 
 @mostrador.route("/venta/eliminar/<int:id_producto>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
 def eliminarProducto(id_producto):
     form = EliminarProductoForm()
 
@@ -187,6 +195,8 @@ def eliminarProducto(id_producto):
 
 
 @mostrador.route("/venta/vaciar", methods=['POST'])
+@login_required
+@roles_required('Cajero')
 def vaciarCarrito():
     form = VaciarCarritoForm()
 
@@ -201,6 +211,8 @@ def vaciarCarrito():
 
 
 @mostrador.route("/venta/cobrar", methods=['POST'])
+@login_required
+@roles_required('Cajero')
 def cobrar():
     form = CobrarForm()
 
@@ -249,5 +261,7 @@ def cobrar():
     return redirect(url_for('mostrador.mostradorVenta'))
 
 @mostrador.route("/pedidos", methods=['GET'])
+@login_required
+@roles_required('Cajero')
 def mostradorPedido():
-    return render_template("mostrador/pedido.html")
+    return render_template("mostrador/pedidos.html")

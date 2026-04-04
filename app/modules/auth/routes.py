@@ -82,6 +82,9 @@ def login_post():
     if user.has_role('admin'):
         return redirect(url_for('admin.dashboard'))
     
+    elif user.has_role('Cajero'):
+        return redirect(url_for('mostrador.mostradorVenta'))
+    
     elif user.has_role('end-user'):
         return f"Bienvenido {email}"
     
