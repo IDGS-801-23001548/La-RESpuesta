@@ -187,62 +187,32 @@
     <!-- LEFT: items -->
     <div>
       <div id="cart-items">
-        <div class="cart-item" data-price="280">
+        {% for item in items %}
+        <div class="cart-item">
           <div class="item-icon" style="background:#fef2f2;">🥩</div>
           <div class="item-info">
-            <p class="item-name">Ribeye / Entrecot</p>
-            <p class="item-sub">Res · Corte premium</p>
-            <p class="item-price">$280.00/kg</p>
+            <p class="item-name">{{ item.producto.NombreProducto }}</p>
+            <p class="item-sub">{{ item.producto.DescripcionProducto or '' }}</p>
+            <p class="item-price">${{ '%.2f'|format(item.producto.PrecioVentaProducto) }} c/u</p>
           </div>
           <div class="qty-ctrl">
-            <button class="qty-btn" onclick="changeQty(this,-0.5)">−</button>
-            <span class="qty-val">1.0</span>
-            <span class="qty-unit">kg</span>
-            <button class="qty-btn" onclick="changeQty(this,0.5)">+</button>
+            <span class="qty-val">{{ item.cantidad }}</span>
+            <span class="qty-unit">uds</span>
           </div>
-          <div class="item-total"><span class="item-subtotal">$280.00</span></div>
-          <button class="remove-btn" onclick="removeItem(this)">
-            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+          <div class="item-total">
+            <span class="item-subtotal">${{ '%.2f'|format(item.subtotal) }}</span>
+          </div>
+          <form action="{{ url_for('venta.quitar_del_carrito', id_producto_unitario=item.ultima_unidad_id) }}" method="POST" style="display:inline;">
+            <button type="submit" class="remove-btn" title="Quitar una unidad">
+              <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </form>
         </div>
-
-        <div class="cart-item" data-price="180">
-          <div class="item-icon" style="background:#fffbeb;">🥩</div>
-          <div class="item-info">
-            <p class="item-name">Arrachera</p>
-            <p class="item-sub">Res · Corte especial</p>
-            <p class="item-price">$180.00/kg</p>
-          </div>
-          <div class="qty-ctrl">
-            <button class="qty-btn" onclick="changeQty(this,-0.5)">−</button>
-            <span class="qty-val">0.5</span>
-            <span class="qty-unit">kg</span>
-            <button class="qty-btn" onclick="changeQty(this,0.5)">+</button>
-          </div>
-          <div class="item-total"><span class="item-subtotal">$90.00</span></div>
-          <button class="remove-btn" onclick="removeItem(this)">
-            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+        {% else %}
+        <div style="text-align:center;padding:2rem;color:#9ca3af;font-size:.85rem;font-weight:600;">
+          Tu carrito está vacío
         </div>
-
-        <div class="cart-item" data-price="95">
-          <div class="item-icon" style="background:#fff7ed;">🦴</div>
-          <div class="item-info">
-            <p class="item-name">Costilla corta</p>
-            <p class="item-sub">Res · Para asado</p>
-            <p class="item-price">$95.00/kg</p>
-          </div>
-          <div class="qty-ctrl">
-            <button class="qty-btn" onclick="changeQty(this,-0.5)">−</button>
-            <span class="qty-val">1.5</span>
-            <span class="qty-unit">kg</span>
-            <button class="qty-btn" onclick="changeQty(this,0.5)">+</button>
-          </div>
-          <div class="item-total"><span class="item-subtotal">$142.50</span></div>
-          <button class="remove-btn" onclick="removeItem(this)">
-            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
+        {% endfor %}
       </div>
 
       <a href="{{ url_for('venta.seleccionar_animal') }}" class="add-more">
@@ -263,8 +233,13 @@
             <svg style="width:15px;height:15px;stroke:#16a34a;fill:none;" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           </div>
           <div style="flex:1;">
-            <p style="font-size:.85rem;font-weight:700;color:#111827;margin:0 0 3px;">Blvd. Torres Landa 204</p>
-            <p style="font-size:.72rem;color:#9ca3af;font-weight:600;margin:0;">Col. Centro, León, Gto. C.P. 37000</p>
+            <p style="font-size:.85rem;font-weight:700;color:#111827;margin:0 0 3px;">
+              {{ current_user.persona.nombre if current_user.persona else current_user.name }}
+              {{ current_user.persona.apellido_paterno if current_user.persona else '' }}
+            </p>
+            <p style="font-size:.72rem;color:#9ca3af;font-weight:600;margin:0;">
+              {{ current_user.persona.direccion if current_user.persona and current_user.persona.direccion else 'Sin dirección registrada — actualiza en Ajustes' }}
+            </p>
           </div>
           <button style="font-size:.72rem;color:#16a34a;font-weight:700;background:none;border:none;cursor:pointer;padding:0;">Cambiar</button>
         </div>
@@ -291,8 +266,8 @@
         </div>
         <div class="panel-body">
           <div class="summary-row">
-            <span class="lbl">Subtotal (<span id="items-count">3</span> productos)</span>
-            <span id="subtotal-val" class="val">$512.50</span>
+            <span class="lbl">Subtotal (<span id="items-count">{{ items|length }}</span> productos)</span>
+            <span id="subtotal-val" class="val">${{ '%.2f'|format(subtotal) }}</span>
           </div>
           <div class="summary-row">
             <span class="lbl">Envío</span>
@@ -300,11 +275,11 @@
           </div>
           <div class="summary-row">
             <span class="lbl">IVA estimado</span>
-            <span id="iva-val" class="val">$82.00</span>
+            <span id="iva-val" class="val">${{ '%.2f'|format(iva) }}</span>
           </div>
           <div style="border-top:1px solid #f0f0f0;padding-top:.7rem;margin-top:.4rem;" class="summary-row">
             <span class="lbl" style="font-weight:800;color:#374151;">Total estimado</span>
-            <span id="total-val" style="font-size:1.1rem;font-weight:900;color:#16a34a;">$594.50</span>
+            <span id="total-val" style="font-size:1.1rem;font-weight:900;color:#16a34a;">${{ '%.2f'|format(total) }}</span>
           </div>
 
           <div class="delivery-box">

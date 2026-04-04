@@ -1,321 +1,503 @@
 {% extends "/venta/layout.html" %}
-{% block title %}VentaOnline — Cortes de Res{% endblock %}
+{% block title %}VentaOnline — Catálogo Res{% endblock %}
 
 {% block styles %}
 <style>
-  .catalog-layout {
-    display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 1.25rem;
-  }
-  @media (max-width: 860px) {
-    .catalog-layout { grid-template-columns: 1fr; }
-  }
-
-  .panel-card {
-    background: #fff;
-    border-radius: 18px;
-    border: 1px solid #f0f0f0;
-    box-shadow: 0 2px 14px rgba(0,0,0,.06);
-    overflow: hidden;
-  }
-  .panel-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: .85rem 1.25rem;
-    border-bottom: 1px solid #f5f5f5;
-    background: #fafafa;
-  }
-  .panel-head h3 { font-size: .85rem; font-weight: 700; color: #374151; margin: 0; }
-  .panel-head p  { font-size: .72rem; color: #9ca3af; font-weight: 600; margin: .15rem 0 0; }
-  .panel-body { padding: 1.1rem; }
-
-  /* SVG interactive zones */
-  .cut-zone {
-    cursor: pointer;
-    transition: all .18s;
-  }
-  .cut-zone:hover { filter: brightness(.9); }
-  .cut-zone.selected { stroke-width: 2.5; filter: brightness(.85); }
-  .cut-label {
-    font-size: 8px;
-    font-weight: 800;
-    font-family: 'Nunito', sans-serif;
-    letter-spacing: .04em;
-    pointer-events: none;
-  }
-
-  /* Legend */
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-top: .75rem;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: .65rem;
-    color: #6b7280;
-    font-weight: 600;
-  }
-  .legend-dot {
-    width: 14px; height: 8px;
-    border-radius: 3px;
-    opacity: .7;
-  }
-
-  /* Cut tags */
-  .cut-tag {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: .6rem .85rem;
-    border-radius: 12px;
-    border: 1.5px solid #f0f0f0;
-    background: #fafafa;
-    cursor: pointer;
-    transition: all .18s;
-    margin-bottom: 6px;
-  }
-  .cut-tag:hover { border-color: #16a34a; background: #f0fdf4; }
-  .cut-tag.selected {
-    border-color: #16a34a;
-    background: #f0fdf4;
-    box-shadow: 0 0 0 3px rgba(22,163,74,.1);
-  }
-  .cut-tag-left { display: flex; align-items: center; gap: 8px; }
-  .cut-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .cut-name { font-size: .78rem; font-weight: 700; color: #374151; }
-  .cut-price { font-size: .65rem; color: #9ca3af; font-weight: 600; }
-
-  /* Breadcrumb */
+  /* ── BREADCRUMB ── */
   .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: .72rem;
-    color: #9ca3af;
-    font-weight: 600;
-    padding: .65rem 0 1.25rem;
+    display: flex; align-items: center; gap: 8px;
+    font-size: .72rem; color: #9ca3af; font-weight: 600;
+    padding: 0 0 1.5rem;
   }
   .breadcrumb a { color: #16a34a; font-weight: 700; text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
   .breadcrumb svg { width: 12px; height: 12px; stroke: #d1d5db; fill: none; }
 
-  /* Continue button */
-  .btn-continue {
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* Búsqueda */
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+  .search-wrap svg {
+    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; stroke: #9ca3af; fill: none; pointer-events: none;
+  }
+  .search-input {
     width: 100%;
-    padding: .8rem;
-    border: none;
-    border-radius: 13px;
-    font-size: .85rem;
-    font-weight: 800;
+    padding: .65rem .85rem .65rem 2.4rem;
+    font-size: .85rem; font-family: 'Nunito', sans-serif;
+    color: #374151; background: #fff;
+    border: 1.5px solid #e5e7eb; border-radius: 12px;
+    outline: none; transition: all .18s;
+  }
+  .search-input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
+  .search-input::placeholder { color: #d1d5db; }
+
+  /* Panel de filtros */
+  .filters-panel {
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 14px;
+    padding: .75rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    min-width: 280px;
+  }
+
+  .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+  .filter-label {
+    font-size: .6rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .1em; color: #9ca3af;
+  }
+
+  /* Ordenamiento */
+  .sort-select {
+    padding: .45rem .75rem;
+    font-size: .8rem; font-family: 'Nunito', sans-serif;
+    color: #374151; background: #f9fafb;
+    border: 1.5px solid #e5e7eb; border-radius: 9px;
+    outline: none; cursor: pointer; transition: border-color .18s;
+  }
+  .sort-select:focus { border-color: #16a34a; }
+
+  /* Slider de rango de precio */
+  .range-wrap { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+  .range-labels { display: flex; justify-content: space-between; font-size: .7rem; font-weight: 700; color: #374151; }
+  .range-slider {
+    -webkit-appearance: none;
+    width: 100%; height: 4px;
+    border-radius: 2px; outline: none;
     cursor: pointer;
-    transition: all .2s;
-    margin-top: .75rem;
+    background: linear-gradient(to right,
+      #16a34a 0%,
+      #16a34a var(--pct, 100%),
+      #e5e7eb var(--pct, 100%),
+      #e5e7eb 100%);
   }
-  .btn-continue.disabled {
-    background: #f0f0f0;
+  .range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #16a34a; border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(22,163,74,.35); cursor: pointer;
+  }
+  .range-slider::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #16a34a; border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(22,163,74,.35); cursor: pointer;
+  }
+
+  /* Contador de resultados */
+  .results-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem;
+  }
+  .results-count {
+    font-size: .78rem; font-weight: 700; color: #6b7280;
+  }
+  .results-count strong { color: #111827; }
+  .btn-reset {
+    font-size: .72rem; font-weight: 700; color: #9ca3af;
+    background: none; border: none; cursor: pointer;
+    text-decoration: underline; padding: 0;
+    transition: color .15s;
+  }
+  .btn-reset:hover { color: #374151; }
+
+  /* ── GRID DE TARJETAS ── */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .product-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1.5px solid #f0f0f0;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: all .22s cubic-bezier(.4,0,.2,1);
+  }
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.1);
+    border-color: #d1fae5;
+  }
+
+  /* Foto */
+  .card-img-wrap {
+    width: 100%; aspect-ratio: 4/3;
+    background: #f8faf8;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+  }
+  .card-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform .3s ease;
+  }
+  .product-card:hover .card-img { transform: scale(1.04); }
+  .card-img-placeholder {
+    font-size: 3.5rem; opacity: .25;
+    user-select: none;
+  }
+
+  /* Badge de stock */
+  .stock-badge {
+    position: absolute; top: 8px; right: 8px;
+    font-size: .6rem; font-weight: 800;
+    padding: 3px 8px; border-radius: 99px;
+    background: #f0fdf4; color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+  .stock-badge.low { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+
+  /* Cuerpo de la tarjeta */
+  .card-body {
+    padding: .9rem 1rem;
+    flex: 1; display: flex; flex-direction: column; gap: .4rem;
+  }
+  .card-name {
+    font-size: .88rem; font-weight: 800; color: #111827;
+    margin: 0; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-desc {
+    font-size: .72rem; color: #9ca3af; font-weight: 600;
+    margin: 0; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+  .card-price {
+    font-size: 1.15rem; font-weight: 900; color: #16a34a;
+    margin: .25rem 0 0;
+  }
+  .card-price span { font-size: .68rem; color: #9ca3af; font-weight: 600; }
+
+  /* Botón agregar */
+  .card-footer { padding: 0 1rem .9rem; }
+  .btn-add {
+    width: 100%; padding: .65rem;
+    background: #16a34a; color: #fff;
+    font-size: .8rem; font-weight: 800;
+    border: none; border-radius: 11px; cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    box-shadow: 0 3px 10px rgba(22,163,74,.25);
+    transition: all .18s;
+  }
+  .btn-add:hover { background: #15803d; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(22,163,74,.35); }
+  .btn-add:active { transform: scale(.98); }
+  .btn-add svg { width: 14px; height: 14px; stroke: #fff; fill: none; }
+  .btn-add.adding { background: #f0fdf4; color: #16a34a; cursor: default; }
+
+  /* Sin resultados */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center; padding: 3rem 1rem;
     color: #9ca3af;
-    cursor: not-allowed;
   }
-  .btn-continue.enabled {
-    background: #16a34a;
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(22,163,74,.3);
+  .empty-state-icon { font-size: 3rem; margin-bottom: .75rem; }
+  .empty-state p { font-size: .85rem; font-weight: 600; }
+
+  /* Feedback toast */
+  #toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+    display: flex; align-items: center; gap: 8px;
+    padding: .7rem 1.1rem;
+    background: #111827; color: #fff;
+    font-size: .78rem; font-weight: 700;
+    border-radius: 13px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    pointer-events: none;
+    opacity: 0; transform: translateY(10px);
+    transition: all .25s;
   }
-  .btn-continue.enabled:hover {
-    background: #15803d;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(22,163,74,.35);
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.error { background: #b91c1c; }
+  #toast svg { width: 15px; height: 15px; stroke: currentColor; fill: none; }
+
+  @media (max-width: 600px) {
+    .toolbar { flex-direction: column; }
+    .filters-panel { width: 100%; }
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
   }
 </style>
 {% endblock %}
 
 {% block container %}
 
+<!-- BREADCRUMB -->
 <div class="breadcrumb fade-in">
   <a href="{{ url_for('venta.seleccionar_animal') }}">← Catálogo</a>
   <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-  <span style="color:#374151;font-weight:700;">🐄 Res — Elige tus cortes</span>
+  <span style="color:#374151;font-weight:700;">{{ emoji }} {{ label }} — Elige tus productos</span>
 </div>
 
-<div class="catalog-layout fade-in-2">
+<!-- TOOLBAR: búsqueda + filtros -->
+<div class="toolbar fade-in">
 
-  <!-- DIAGRAMA -->
-  <div class="panel-card">
-    <div class="panel-head">
-      <svg style="width:16px;height:16px;stroke:#16a34a;fill:none;" viewBox="0 0 24 24" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-      </svg>
-      <div>
-        <h3>Diagrama de cortes</h3>
-        <p>Haz clic en una zona para seleccionar ese corte</p>
-      </div>
-    </div>
-    <div class="panel-body" style="display:flex;flex-direction:column;align-items:center;">
-      <svg viewBox="0 0 500 320" width="100%" style="max-width:520px;" id="cow-diagram">
-        <ellipse cx="250" cy="295" rx="180" ry="12" fill="#e5e7eb" opacity=".5"/>
-        <path id="zone-lomo" class="cut-zone" onclick="toggleCut('lomo','Lomo / Costillar','$185/kg')"
-          d="M 160 100 Q 200 60 280 60 Q 340 62 360 90 Q 370 110 360 130 Q 320 120 280 118 Q 220 118 160 125 Z"
-          fill="#ef4444" fill-opacity=".18" stroke="#ef4444" stroke-width="1.5"/>
-        <text class="cut-label" fill="#b91c1c" x="240" y="92" text-anchor="middle">LOMO / COSTILLAR</text>
-        <path id="zone-ribeye" class="cut-zone" onclick="toggleCut('ribeye','Ribeye / Entrecot','$280/kg')"
-          d="M 280 60 Q 320 55 355 68 Q 370 78 360 90 Q 340 62 280 60 Z"
-          fill="#f97316" fill-opacity=".25" stroke="#ea580c" stroke-width="1.5"/>
-        <text class="cut-label" fill="#c2410c" x="320" y="72" text-anchor="middle">RIBEYE</text>
-        <path id="zone-filete" class="cut-zone" onclick="toggleCut('filete','Filete','$320/kg')"
-          d="M 170 125 Q 220 118 280 118 Q 280 145 270 155 Q 220 152 170 148 Z"
-          fill="#a855f7" fill-opacity=".2" stroke="#7c3aed" stroke-width="1.5"/>
-        <text class="cut-label" fill="#6d28d9" x="225" y="138" text-anchor="middle">FILETE</text>
-        <path id="zone-brisket" class="cut-zone" onclick="toggleCut('brisket','Pecho / Brisket','$120/kg')"
-          d="M 310 140 Q 370 130 400 150 Q 410 175 395 195 Q 360 185 320 180 Q 305 165 310 140 Z"
-          fill="#3b82f6" fill-opacity=".2" stroke="#2563eb" stroke-width="1.5"/>
-        <text class="cut-label" fill="#1d4ed8" x="358" y="162" text-anchor="middle">PECHO / BRISKET</text>
-        <path id="zone-arrachera" class="cut-zone" onclick="toggleCut('arrachera','Arrachera','$180/kg')"
-          d="M 170 148 Q 220 152 270 155 Q 268 190 255 205 Q 215 200 170 195 Z"
-          fill="#f59e0b" fill-opacity=".25" stroke="#d97706" stroke-width="1.5"/>
-        <text class="cut-label" fill="#b45309" x="215" y="177" text-anchor="middle">ARRACHERA</text>
-        <path id="zone-aguayon" class="cut-zone" onclick="toggleCut('aguayon','Aguayón','$150/kg')"
-          d="M 100 100 Q 135 80 160 100 Q 160 125 155 148 Q 130 150 100 140 Z"
-          fill="#10b981" fill-opacity=".22" stroke="#059669" stroke-width="1.5"/>
-        <text class="cut-label" fill="#047857" x="128" y="122" text-anchor="middle">AGUAYÓN</text>
-        <path id="zone-costilla" class="cut-zone" onclick="toggleCut('costilla','Costilla corta','$95/kg')"
-          d="M 290 118 Q 325 115 360 130 Q 360 160 345 175 Q 315 168 290 160 Z"
-          fill="#06b6d4" fill-opacity=".22" stroke="#0891b2" stroke-width="1.5"/>
-        <text class="cut-label" fill="#0e7490" x="325" y="145" text-anchor="middle">COSTILLA</text>
-        <path id="zone-chamorro-d" class="cut-zone" onclick="toggleCut('chamorro-d','Chamorro delantero','$75/kg')"
-          d="M 380 185 Q 408 190 415 215 Q 415 250 400 265 Q 385 260 375 240 Q 368 215 380 185 Z"
-          fill="#8b5cf6" fill-opacity=".2" stroke="#7c3aed" stroke-width="1.5"/>
-        <text class="cut-label" fill="#6d28d9" x="395" y="225" text-anchor="middle">CHAMORRO</text>
-        <path id="zone-chamorro-t" class="cut-zone" onclick="toggleCut('chamorro-t','Chamorro trasero','$75/kg')"
-          d="M 90 158 Q 110 152 130 158 Q 138 185 132 218 Q 115 225 98 218 Q 88 192 90 158 Z"
-          fill="#ec4899" fill-opacity=".2" stroke="#db2777" stroke-width="1.5"/>
-        <text class="cut-label" fill="#9d174d" x="112" y="188" text-anchor="middle">CHAMORRO T.</text>
-        <path d="M 155 100 Q 170 70 250 58 Q 320 52 365 72 Q 415 100 420 155 Q 420 200 400 240 Q 395 270 380 280 Q 355 285 340 265 L 330 245 L 310 265 Q 290 282 270 278 Q 250 282 230 278 L 215 258 L 195 278 Q 175 285 155 278 L 148 258 L 130 265 Q 108 278 95 265 Q 78 245 80 200 Q 80 158 95 140 Q 110 115 130 105 Z"
-          fill="none" stroke="#374151" stroke-width="2.5" stroke-linejoin="round"/>
-        <ellipse cx="440" cy="130" rx="42" ry="35" fill="white" stroke="#374151" stroke-width="2.5"/>
-        <ellipse cx="478" cy="140" rx="14" ry="10" fill="#f3f4f6" stroke="#374151" stroke-width="2"/>
-        <circle cx="474" cy="138" r="3" fill="#374151"/>
-        <circle cx="482" cy="138" r="3" fill="#374151"/>
-        <circle cx="455" cy="118" r="4" fill="white" stroke="#374151" stroke-width="1.5"/>
-        <circle cx="455" cy="118" r="2" fill="#1f2937"/>
-        <path d="M 430 100 Q 420 82 408 88" stroke="#374151" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path d="M 445 97 Q 445 78 455 82" stroke="#374151" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <ellipse cx="428" cy="112" rx="8" ry="5" fill="#f3f4f6" stroke="#374151" stroke-width="1.5" transform="rotate(-20,428,112)"/>
-        <path d="M 82 165 Q 55 155 48 170 Q 44 180 55 182 Q 65 184 70 175" stroke="#374151" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <rect x="183" y="278" width="16" height="10" rx="5" fill="#374151"/>
-        <rect x="205" y="278" width="16" height="10" rx="5" fill="#374151"/>
-        <rect x="320" y="265" width="16" height="10" rx="5" fill="#374151"/>
-        <rect x="340" y="265" width="16" height="10" rx="5" fill="#374151"/>
-        <rect x="376" y="278" width="16" height="10" rx="5" fill="#374151"/>
-        <rect x="133" y="265" width="14" height="10" rx="5" fill="#374151"/>
-        <ellipse cx="218" cy="272" rx="20" ry="8" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
-        <line x1="160" y1="100" x2="160" y2="200" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
-        <line x1="290" y1="90" x2="290" y2="200" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
-        <line x1="100" y1="148" x2="400" y2="148" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
-      </svg>
-
-      <div class="legend">
-        <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Lomo</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span>Ribeye</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#a855f7"></span>Filete</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Brisket</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Arrachera</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Aguayón</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#06b6d4"></span>Costilla</span>
-      </div>
-    </div>
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+    </svg>
+    <input
+      type="text"
+      id="search-input"
+      class="search-input"
+      placeholder="Buscar producto..."
+      oninput="filtrar()"
+      autocomplete="off"
+    >
   </div>
 
-  <!-- PANEL CORTES -->
-  <div style="display:flex;flex-direction:column;gap:.75rem;">
-    <div class="panel-card">
-      <div class="panel-head">
-        <span style="font-size:1.1rem;">🥩</span>
-        <div>
-          <h3>Cortes disponibles</h3>
-          <p>Clic para seleccionar</p>
-        </div>
-      </div>
-      <div class="panel-body">
-        <div id="tag-lomo" class="cut-tag" onclick="toggleCut('lomo','Lomo / Costillar','$185/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#ef4444"></span><span class="cut-name">Lomo / Costillar</span></div>
-          <span class="cut-price">$185/kg</span>
-        </div>
-        <div id="tag-ribeye" class="cut-tag" onclick="toggleCut('ribeye','Ribeye / Entrecot','$280/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#f97316"></span><span class="cut-name">Ribeye / Entrecot</span></div>
-          <span class="cut-price">$280/kg</span>
-        </div>
-        <div id="tag-filete" class="cut-tag" onclick="toggleCut('filete','Filete','$320/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#a855f7"></span><span class="cut-name">Filete</span></div>
-          <span class="cut-price">$320/kg</span>
-        </div>
-        <div id="tag-brisket" class="cut-tag" onclick="toggleCut('brisket','Pecho / Brisket','$120/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#3b82f6"></span><span class="cut-name">Pecho / Brisket</span></div>
-          <span class="cut-price">$120/kg</span>
-        </div>
-        <div id="tag-arrachera" class="cut-tag" onclick="toggleCut('arrachera','Arrachera','$180/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#f59e0b"></span><span class="cut-name">Arrachera</span></div>
-          <span class="cut-price">$180/kg</span>
-        </div>
-        <div id="tag-aguayon" class="cut-tag" onclick="toggleCut('aguayon','Aguayón','$150/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#10b981"></span><span class="cut-name">Aguayón</span></div>
-          <span class="cut-price">$150/kg</span>
-        </div>
-        <div id="tag-costilla" class="cut-tag" onclick="toggleCut('costilla','Costilla corta','$95/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#06b6d4"></span><span class="cut-name">Costilla corta</span></div>
-          <span class="cut-price">$95/kg</span>
-        </div>
-        <div id="tag-chamorro-d" class="cut-tag" onclick="toggleCut('chamorro-d','Chamorro delantero','$75/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#8b5cf6"></span><span class="cut-name">Chamorro delantero</span></div>
-          <span class="cut-price">$75/kg</span>
-        </div>
-        <div id="tag-chamorro-t" class="cut-tag" onclick="toggleCut('chamorro-t','Chamorro trasero','$75/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#ec4899"></span><span class="cut-name">Chamorro trasero</span></div>
-          <span class="cut-price">$75/kg</span>
-        </div>
-      </div>
+  <div class="filters-panel">
+
+    <div class="filter-group">
+      <span class="filter-label">Ordenar por precio</span>
+      <select class="sort-select" id="sort-select" onchange="filtrar()">
+        <option value="">Sin ordenar</option>
+        <option value="asc">Menor a mayor</option>
+        <option value="desc">Mayor a menor</option>
+      </select>
     </div>
 
-    <button id="btn-continuar" class="btn-continue disabled" disabled onclick="window.location.href='{{ url_for('venta.carrito') }}'">
-      Continuar con 0 cortes →
-    </button>
-  </div>
+    <div class="filter-group range-wrap">
+      <span class="filter-label">Precio máximo</span>
+      <div class="range-labels">
+        <span>${{ precio_min }}</span>
+        <span id="range-val">${{ precio_max }}</span>
+      </div>
+      <input
+        type="range"
+        class="range-slider"
+        id="price-range"
+        min="{{ precio_min }}"
+        max="{{ precio_max }}"
+        value="{{ precio_max }}"
+        oninput="onRange(this)"
+      >
+    </div>
 
+  </div>
+</div>
+
+<!-- BARRA DE RESULTADOS -->
+<div class="results-bar fade-in-2">
+  <p class="results-count">
+    Mostrando <strong id="count-visible">{{ items|length }}</strong>
+    de <strong>{{ items|length }}</strong> producto{{ 's' if items|length != 1 else '' }}
+  </p>
+  <button class="btn-reset" onclick="resetFiltros()">Limpiar filtros</button>
+</div>
+
+<!-- GRID -->
+<div class="products-grid fade-in-2" id="products-grid">
+
+  {% for item in items %}
+  {% set p = item.producto %}
+  <div class="product-card"
+       data-nombre="{{ p.NombreProducto | lower }}"
+       data-precio="{{ p.PrecioVentaProducto }}">
+
+    <!-- IMAGEN -->
+    <div class="card-img-wrap">
+      {% if item.foto_b64 %}
+        <img src="{{ item.foto_b64 }}" alt="{{ p.NombreProducto }}" class="card-img" loading="lazy">
+      {% else %}
+        <span class="card-img-placeholder">{{ emoji }}</span>
+      {% endif %}
+
+      <!-- Badge stock -->
+      {% if p.StockProducto <= 3 %}
+        <span class="stock-badge low">Últimas {{ p.StockProducto }}</span>
+      {% else %}
+        <span class="stock-badge">En stock</span>
+      {% endif %}
+    </div>
+
+    <!-- CUERPO -->
+    <div class="card-body">
+      <p class="card-name">{{ p.NombreProducto }}</p>
+      {% if p.DescripcionProducto %}
+        <p class="card-desc">{{ p.DescripcionProducto }}</p>
+      {% else %}
+        <p class="card-desc" style="font-style:italic;">Sin descripción</p>
+      {% endif %}
+      <p class="card-price">
+        ${{ '%.2f'|format(p.PrecioVentaProducto) }}
+        <span>/ unidad</span>
+      </p>
+    </div>
+
+    <!-- BOTÓN AGREGAR -->
+    <div class="card-footer">
+      <form method="POST"
+            action="{{ url_for('venta.agregar_al_carrito', id_producto=p.idProducto) }}"
+            onsubmit="return onAgregar(event, this)">
+        {{ form.hidden_tag() }}
+        <button type="submit" class="btn-add">
+          <svg viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Agregar al carrito
+        </button>
+      </form>
+    </div>
+
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">{{ emoji }}</div>
+    <p>No hay productos disponibles en este momento.</p>
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <svg viewBox="0 0 24 24" stroke-width="2.5" id="toast-icon">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+  </svg>
+  <span id="toast-msg"></span>
 </div>
 
 <script>
-const selected = new Set();
-function toggleCut(id, name, price) {
-  const zoneEl = document.getElementById('zone-' + id);
-  const tagEl  = document.getElementById('tag-' + id);
-  if (selected.has(id)) {
-    selected.delete(id);
-    if (zoneEl) zoneEl.classList.remove('selected');
-    if (tagEl)  tagEl.classList.remove('selected');
-  } else {
-    selected.add(id);
-    if (zoneEl) zoneEl.classList.add('selected');
-    if (tagEl)  tagEl.classList.add('selected');
+// ── Datos de productos para filtrado cliente ─────────────────────────────────
+const precioMax = {{ precio_max }};
+const precioMin = {{ precio_min }};
+
+// ── Filtrado dinámico ────────────────────────────────────────────────────────
+function filtrar() {
+  const query     = document.getElementById('search-input').value.toLowerCase().trim();
+  const sort      = document.getElementById('sort-select').value;
+  const maxPrecio = parseFloat(document.getElementById('price-range').value);
+
+  const grid  = document.getElementById('products-grid');
+  const cards = [...grid.querySelectorAll('.product-card')];
+
+  // Filtrar visibilidad
+  let visibles = [];
+  cards.forEach(card => {
+    const nombre = card.dataset.nombre;
+    const precio = parseFloat(card.dataset.precio);
+    const match  = nombre.includes(query) && precio <= maxPrecio;
+    card.style.display = match ? '' : 'none';
+    if (match) visibles.push(card);
+  });
+
+  // Ordenar los visibles dentro del grid
+  if (sort === 'asc') {
+    visibles.sort((a, b) => parseFloat(a.dataset.precio) - parseFloat(b.dataset.precio));
+  } else if (sort === 'desc') {
+    visibles.sort((a, b) => parseFloat(b.dataset.precio) - parseFloat(a.dataset.precio));
   }
-  updateCounter();
+  visibles.forEach(card => grid.appendChild(card));
+
+  // Actualizar contador
+  document.getElementById('count-visible').textContent = visibles.length;
+
+  // Estado vacío
+  let emptyEl = grid.querySelector('.empty-state-dynamic');
+  if (visibles.length === 0 && !emptyEl) {
+    emptyEl = document.createElement('div');
+    emptyEl.className = 'empty-state empty-state-dynamic';
+    emptyEl.innerHTML = `<div class="empty-state-icon">🔍</div><p>Sin resultados para "<strong>${query || 'este filtro'}</strong>".</p>`;
+    grid.appendChild(emptyEl);
+  } else if (visibles.length > 0 && emptyEl) {
+    emptyEl.remove();
+  }
 }
-function updateCounter() {
-  const n = selected.size;
-  const btn = document.getElementById('btn-continuar');
-  if (n > 0) {
-    btn.disabled = false;
-    btn.className = 'btn-continue enabled';
-    btn.textContent = `Continuar con ${n} corte${n > 1 ? 's' : ''} →`;
+
+// ── Slider de precio ─────────────────────────────────────────────────────────
+function onRange(input) {
+  const val = parseFloat(input.value);
+  const pct = ((val - precioMin) / (precioMax - precioMin || 1)) * 100;
+  input.style.setProperty('--pct', pct + '%');
+  document.getElementById('range-val').textContent = '$' + val.toFixed(0);
+  filtrar();
+}
+
+// Inicializar slider
+(function() {
+  const slider = document.getElementById('price-range');
+  const pct    = ((precioMax - precioMin) / (precioMax - precioMin || 1)) * 100;
+  slider.style.setProperty('--pct', pct + '%');
+})();
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function resetFiltros() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('sort-select').value  = '';
+  const slider = document.getElementById('price-range');
+  slider.value = precioMax;
+  onRange(slider);
+  filtrar();
+}
+
+// ── Agregar al carrito (fetch para no recargar) ───────────────────────────────
+function onAgregar(event, form) {
+  event.preventDefault();
+  const btn = form.querySelector('.btn-add');
+  btn.classList.add('adding');
+  btn.textContent = 'Agregando…';
+
+  fetch(form.action, {
+    method:  'POST',
+    body:    new FormData(form),
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      showToast(data.msg, false);
+      // Actualizar badge del navbar si existe
+      const badge = document.getElementById('nav-carrito-count');
+      if (badge) badge.textContent = data.carrito_count;
+    } else {
+      showToast(data.msg, true);
+    }
+  })
+  .catch(() => showToast('Error de red. Intenta de nuevo.', true))
+  .finally(() => {
+    btn.classList.remove('adding');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" stroke-width="2.5" style="width:14px;height:14px;stroke:#fff;fill:none;">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Agregar al carrito`;
+  });
+
+  return false;
+}
+
+function showToast(msg, isError = false) {
+  const t   = document.getElementById('toast');
+  const ico = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+
+  if (isError) {
+    ico.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>`;
   } else {
-    btn.disabled = true;
-    btn.className = 'btn-continue disabled';
-    btn.textContent = 'Continuar con 0 cortes →';
+    ico.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>`;
   }
+
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 </script>
 {% endblock %}
