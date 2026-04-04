@@ -296,7 +296,9 @@ VentaOnline
         Ajustes
       </a>
 
-      <div class="vo-avatar">HG</div>
+      <div class="vo-avatar">
+        {{ (current_user.persona.nombre[0] if current_user.persona and current_user.persona.nombre else '') | upper }}{{ (current_user.persona.apellido_paterno[0] if current_user.persona and current_user.persona.apellido_paterno else '') | upper }}
+      </div>
 
     </div>
   </div>

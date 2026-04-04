@@ -31,5 +31,4 @@ class User(db.Model, UserMixin):
                                     uselist=False)
     
     pedido              = db.relationship('Pedido', 
-                                    backref='userPedido', 
-                                    uselist=False)
+                                    backref='userPedido')

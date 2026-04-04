@@ -1,324 +1,503 @@
 {% extends "/venta/layout.html" %}
-{% block title %}VentaOnline — Cortes de Cerdo{% endblock %}
+{% block title %}VentaOnline — Catálogo Cerdo{% endblock %}
 
 {% block styles %}
 <style>
-  .catalog-layout {
-    display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 1.25rem;
-  }
-  @media (max-width: 860px) {
-    .catalog-layout { grid-template-columns: 1fr; }
-  }
-
-  .panel-card {
-    background: #fff;
-    border-radius: 18px;
-    border: 1px solid #f0f0f0;
-    box-shadow: 0 2px 14px rgba(0,0,0,.06);
-    overflow: hidden;
-  }
-  .panel-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: .85rem 1.25rem;
-    border-bottom: 1px solid #f5f5f5;
-    background: #fafafa;
-  }
-  .panel-head h3 { font-size: .85rem; font-weight: 700; color: #374151; margin: 0; }
-  .panel-head p  { font-size: .72rem; color: #9ca3af; font-weight: 600; margin: .15rem 0 0; }
-  .panel-body { padding: 1.1rem; }
-
-  .cut-zone {
-    cursor: pointer;
-    transition: all .18s;
-  }
-  .cut-zone:hover { filter: brightness(.88); }
-  .cut-zone.selected { stroke-width: 2.5; filter: brightness(.82); }
-  .cut-label {
-    font-size: 8px;
-    font-weight: 800;
-    font-family: 'Nunito', sans-serif;
-    letter-spacing: .04em;
-    pointer-events: none;
-  }
-
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-top: .75rem;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: .65rem;
-    color: #6b7280;
-    font-weight: 600;
-  }
-  .legend-dot { width: 14px; height: 8px; border-radius: 3px; opacity: .7; }
-
-  .cut-tag {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: .6rem .85rem;
-    border-radius: 12px;
-    border: 1.5px solid #f0f0f0;
-    background: #fafafa;
-    cursor: pointer;
-    transition: all .18s;
-    margin-bottom: 6px;
-  }
-  .cut-tag:hover { border-color: #16a34a; background: #f0fdf4; }
-  .cut-tag.selected {
-    border-color: #16a34a;
-    background: #f0fdf4;
-    box-shadow: 0 0 0 3px rgba(22,163,74,.1);
-  }
-  .cut-tag-left { display: flex; align-items: center; gap: 8px; }
-  .cut-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .cut-name { font-size: .78rem; font-weight: 700; color: #374151; }
-  .cut-price { font-size: .65rem; color: #9ca3af; font-weight: 600; }
-
+  /* ── BREADCRUMB ── */
   .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: .72rem;
-    color: #9ca3af;
-    font-weight: 600;
-    padding: 0 0 1.25rem;
+    display: flex; align-items: center; gap: 8px;
+    font-size: .72rem; color: #9ca3af; font-weight: 600;
+    padding: 0 0 1.5rem;
   }
   .breadcrumb a { color: #16a34a; font-weight: 700; text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
   .breadcrumb svg { width: 12px; height: 12px; stroke: #d1d5db; fill: none; }
 
-  .btn-continue {
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* Búsqueda */
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+  .search-wrap svg {
+    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; stroke: #9ca3af; fill: none; pointer-events: none;
+  }
+  .search-input {
     width: 100%;
-    padding: .8rem;
-    border: none;
-    border-radius: 13px;
-    font-size: .85rem;
-    font-weight: 800;
+    padding: .65rem .85rem .65rem 2.4rem;
+    font-size: .85rem; font-family: 'Nunito', sans-serif;
+    color: #374151; background: #fff;
+    border: 1.5px solid #e5e7eb; border-radius: 12px;
+    outline: none; transition: all .18s;
+  }
+  .search-input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
+  .search-input::placeholder { color: #d1d5db; }
+
+  /* Panel de filtros */
+  .filters-panel {
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 14px;
+    padding: .75rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    min-width: 280px;
+  }
+
+  .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+  .filter-label {
+    font-size: .6rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .1em; color: #9ca3af;
+  }
+
+  /* Ordenamiento */
+  .sort-select {
+    padding: .45rem .75rem;
+    font-size: .8rem; font-family: 'Nunito', sans-serif;
+    color: #374151; background: #f9fafb;
+    border: 1.5px solid #e5e7eb; border-radius: 9px;
+    outline: none; cursor: pointer; transition: border-color .18s;
+  }
+  .sort-select:focus { border-color: #16a34a; }
+
+  /* Slider de rango de precio */
+  .range-wrap { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+  .range-labels { display: flex; justify-content: space-between; font-size: .7rem; font-weight: 700; color: #374151; }
+  .range-slider {
+    -webkit-appearance: none;
+    width: 100%; height: 4px;
+    border-radius: 2px; outline: none;
     cursor: pointer;
-    transition: all .2s;
-    margin-top: .75rem;
-    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(to right,
+      #16a34a 0%,
+      #16a34a var(--pct, 100%),
+      #e5e7eb var(--pct, 100%),
+      #e5e7eb 100%);
   }
-  .btn-continue.disabled { background: #f0f0f0; color: #9ca3af; cursor: not-allowed; }
-  .btn-continue.enabled {
+  .range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #16a34a; border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(22,163,74,.35); cursor: pointer;
+  }
+  .range-slider::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #16a34a; border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(22,163,74,.35); cursor: pointer;
+  }
+
+  /* Contador de resultados */
+  .results-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem;
+  }
+  .results-count {
+    font-size: .78rem; font-weight: 700; color: #6b7280;
+  }
+  .results-count strong { color: #111827; }
+  .btn-reset {
+    font-size: .72rem; font-weight: 700; color: #9ca3af;
+    background: none; border: none; cursor: pointer;
+    text-decoration: underline; padding: 0;
+    transition: color .15s;
+  }
+  .btn-reset:hover { color: #374151; }
+
+  /* ── GRID DE TARJETAS ── */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .product-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1.5px solid #f0f0f0;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: all .22s cubic-bezier(.4,0,.2,1);
+  }
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.1);
+    border-color: #d1fae5;
+  }
+
+  /* Foto */
+  .card-img-wrap {
+    width: 100%; aspect-ratio: 4/3;
+    background: #f8faf8;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+  }
+  .card-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform .3s ease;
+  }
+  .product-card:hover .card-img { transform: scale(1.04); }
+  .card-img-placeholder {
+    font-size: 3.5rem; opacity: .25;
+    user-select: none;
+  }
+
+  /* Badge de stock */
+  .stock-badge {
+    position: absolute; top: 8px; right: 8px;
+    font-size: .6rem; font-weight: 800;
+    padding: 3px 8px; border-radius: 99px;
+    background: #f0fdf4; color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+  .stock-badge.low { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+
+  /* Cuerpo de la tarjeta */
+  .card-body {
+    padding: .9rem 1rem;
+    flex: 1; display: flex; flex-direction: column; gap: .4rem;
+  }
+  .card-name {
+    font-size: .88rem; font-weight: 800; color: #111827;
+    margin: 0; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-desc {
+    font-size: .72rem; color: #9ca3af; font-weight: 600;
+    margin: 0; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+  .card-price {
+    font-size: 1.15rem; font-weight: 900; color: #16a34a;
+    margin: .25rem 0 0;
+  }
+  .card-price span { font-size: .68rem; color: #9ca3af; font-weight: 600; }
+
+  /* Botón agregar */
+  .card-footer { padding: 0 1rem .9rem; }
+  .btn-add {
+    width: 100%; padding: .65rem;
     background: #16a34a; color: #fff;
-    box-shadow: 0 4px 14px rgba(22,163,74,.3);
+    font-size: .8rem; font-weight: 800;
+    border: none; border-radius: 11px; cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    box-shadow: 0 3px 10px rgba(22,163,74,.25);
+    transition: all .18s;
   }
-  .btn-continue.enabled:hover {
-    background: #15803d;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(22,163,74,.35);
+  .btn-add:hover { background: #15803d; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(22,163,74,.35); }
+  .btn-add:active { transform: scale(.98); }
+  .btn-add svg { width: 14px; height: 14px; stroke: #fff; fill: none; }
+  .btn-add.adding { background: #f0fdf4; color: #16a34a; cursor: default; }
+
+  /* Sin resultados */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center; padding: 3rem 1rem;
+    color: #9ca3af;
+  }
+  .empty-state-icon { font-size: 3rem; margin-bottom: .75rem; }
+  .empty-state p { font-size: .85rem; font-weight: 600; }
+
+  /* Feedback toast */
+  #toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+    display: flex; align-items: center; gap: 8px;
+    padding: .7rem 1.1rem;
+    background: #111827; color: #fff;
+    font-size: .78rem; font-weight: 700;
+    border-radius: 13px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    pointer-events: none;
+    opacity: 0; transform: translateY(10px);
+    transition: all .25s;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.error { background: #b91c1c; }
+  #toast svg { width: 15px; height: 15px; stroke: currentColor; fill: none; }
+
+  @media (max-width: 600px) {
+    .toolbar { flex-direction: column; }
+    .filters-panel { width: 100%; }
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
   }
 </style>
 {% endblock %}
 
 {% block container %}
 
+<!-- BREADCRUMB -->
 <div class="breadcrumb fade-in">
   <a href="{{ url_for('venta.seleccionar_animal') }}">← Catálogo</a>
   <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-  <span style="color:#374151;font-weight:700;">🐷 Cerdo — Elige tus cortes</span>
+  <span style="color:#374151;font-weight:700;">{{ emoji }} {{ label }} — Elige tus productos</span>
 </div>
 
-<div class="catalog-layout fade-in-2">
+<!-- TOOLBAR: búsqueda + filtros -->
+<div class="toolbar fade-in">
 
-  <!-- DIAGRAMA -->
-  <div class="panel-card">
-    <div class="panel-head">
-      <svg style="width:16px;height:16px;stroke:#16a34a;fill:none;" viewBox="0 0 24 24" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-      </svg>
-      <div>
-        <h3>Diagrama de cortes</h3>
-        <p>Haz clic en una zona para seleccionar ese corte</p>
-      </div>
-    </div>
-    <div class="panel-body" style="display:flex;flex-direction:column;align-items:center;">
-
-      <svg viewBox="0 0 520 300" width="100%" style="max-width:540px;" id="pig-diagram">
-        <ellipse cx="248" cy="285" rx="185" ry="11" fill="#e5e7eb" opacity=".5"/>
-
-        <!-- CABEZA / JETA -->
-        <path id="zone-jeta" class="cut-zone" onclick="toggleCut('jeta','Cabeza / Jeta','$45/kg')"
-          d="M 390 65 Q 420 50 450 58 Q 478 68 482 95 Q 480 125 455 135 Q 428 138 400 125 Q 382 110 385 85 Z"
-          fill="#f59e0b" fill-opacity=".25" stroke="#d97706" stroke-width="1.5"/>
-        <text class="cut-label" fill="#92400e" x="433" y="100" text-anchor="middle">CABEZA / JETA</text>
-
-        <!-- LOMO / CARRÉ -->
-        <path id="zone-lomo" class="cut-zone" onclick="toggleCut('lomo','Lomo / Carré','$175/kg')"
-          d="M 155 70 Q 210 50 300 52 Q 360 54 390 75 Q 388 110 370 125 Q 315 118 240 118 Q 185 118 155 125 Z"
-          fill="#ef4444" fill-opacity=".2" stroke="#dc2626" stroke-width="1.5"/>
-        <text class="cut-label" fill="#991b1b" x="270" y="90" text-anchor="middle">LOMO / CARRÉ</text>
-
-        <!-- COSTILLAR -->
-        <path id="zone-costillar" class="cut-zone" onclick="toggleCut('costillar','Costillar','$110/kg')"
-          d="M 240 118 Q 315 118 370 125 Q 368 158 350 175 Q 305 170 245 168 Q 218 162 218 140 Z"
-          fill="#06b6d4" fill-opacity=".22" stroke="#0891b2" stroke-width="1.5"/>
-        <text class="cut-label" fill="#0e7490" x="292" y="148" text-anchor="middle">COSTILLAR</text>
-
-        <!-- BARRIGA / TOCINO -->
-        <path id="zone-tocino" class="cut-zone" onclick="toggleCut('tocino','Barriga / Tocino','$90/kg')"
-          d="M 218 140 Q 245 168 305 170 Q 310 200 295 218 Q 255 225 215 220 Q 192 210 188 190 Q 184 168 218 140 Z"
-          fill="#f97316" fill-opacity=".22" stroke="#ea580c" stroke-width="1.5"/>
-        <text class="cut-label" fill="#c2410c" x="249" y="192" text-anchor="middle">BARRIGA / TOCINO</text>
-
-        <!-- PIERNA / JAMÓN -->
-        <path id="zone-jamon" class="cut-zone" onclick="toggleCut('jamon','Pierna / Jamón','$135/kg')"
-          d="M 105 100 Q 140 78 158 100 Q 160 130 155 160 Q 130 168 105 158 Q 82 145 82 120 Z"
-          fill="#10b981" fill-opacity=".22" stroke="#059669" stroke-width="1.5"/>
-        <text class="cut-label" fill="#065f46" x="120" y="128" text-anchor="middle">PIERNA / JAMÓN</text>
-
-        <!-- PALETA -->
-        <path id="zone-paleta" class="cut-zone" onclick="toggleCut('paleta','Paleta / Espaldilla','$120/kg')"
-          d="M 350 165 Q 395 158 420 175 Q 432 200 418 220 Q 390 232 362 222 Q 342 208 342 185 Z"
-          fill="#8b5cf6" fill-opacity=".22" stroke="#7c3aed" stroke-width="1.5"/>
-        <text class="cut-label" fill="#5b21b6" x="385" y="197" text-anchor="middle">PALETA</text>
-
-        <!-- MANITA DELANTERA -->
-        <path id="zone-manita-d" class="cut-zone" onclick="toggleCut('manita-d','Manita delantera','$55/kg')"
-          d="M 408 218 Q 435 225 445 250 Q 442 272 425 275 Q 408 272 402 252 Q 396 232 408 218 Z"
-          fill="#ec4899" fill-opacity=".2" stroke="#db2777" stroke-width="1.5"/>
-        <text class="cut-label" fill="#9d174d" x="424" y="248" text-anchor="middle">MANITA D.</text>
-
-        <!-- MANITA TRASERA -->
-        <path id="zone-manita-t" class="cut-zone" onclick="toggleCut('manita-t','Manita trasera','$55/kg')"
-          d="M 88 175 Q 108 170 118 195 Q 120 218 105 225 Q 88 228 80 208 Q 74 188 88 175 Z"
-          fill="#ec4899" fill-opacity=".2" stroke="#db2777" stroke-width="1.5"/>
-        <text class="cut-label" fill="#9d174d" x="98" y="200" text-anchor="middle">MANITA T.</text>
-
-        <!-- CONTORNO CUERPO -->
-        <path d="M 150 100 Q 165 68 255 55 Q 330 50 395 68 Q 430 50 468 62 Q 492 82 488 108 Q 488 145 460 148
-                 Q 432 148 410 138 Q 408 175 422 220 Q 445 228 450 258 Q 448 280 428 282 Q 408 282 398 262
-                 Q 378 278 355 278 L 320 255 L 295 228 Q 255 235 215 228 L 188 258
-                 Q 168 282 148 278 Q 125 275 120 255 Q 102 272 84 270 Q 62 266 60 245
-                 Q 58 222 76 210 Q 72 175 72 148 Q 55 140 50 110 Q 52 82 78 75 Q 105 70 125 85 Z"
-          fill="none" stroke="#374151" stroke-width="2.5" stroke-linejoin="round"/>
-
-        <!-- CARA CERDO -->
-        <ellipse cx="438" cy="100" rx="44" ry="38" fill="none" stroke="#374151" stroke-width="2.5"/>
-        <ellipse cx="476" cy="108" rx="16" ry="12" fill="#f9fafb" stroke="#374151" stroke-width="2"/>
-        <circle cx="471" cy="108" r="4" fill="#374151"/>
-        <circle cx="481" cy="108" r="4" fill="#374151"/>
-        <circle cx="452" cy="88" r="4.5" fill="white" stroke="#374151" stroke-width="1.5"/>
-        <circle cx="453" cy="88" r="2.2" fill="#1f2937"/>
-        <ellipse cx="420" cy="68" rx="14" ry="18" fill="#f9fafb" stroke="#374151" stroke-width="2" transform="rotate(-15,420,68)"/>
-        <ellipse cx="420" cy="68" rx="8" ry="12" fill="#fce7f3" stroke="none" transform="rotate(-15,420,68)"/>
-        <path d="M 52 112 Q 35 100 38 90 Q 42 80 50 85 Q 55 90 50 96" stroke="#374151" stroke-width="3" fill="none" stroke-linecap="round"/>
-
-        <!-- DIVISORES -->
-        <line x1="155" y1="100" x2="155" y2="210" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
-        <line x1="350" y1="100" x2="350" y2="210" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
-        <line x1="82" y1="158" x2="450" y2="158" stroke="#374151" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
-      </svg>
-
-      <div class="legend">
-        <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Lomo</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#06b6d4"></span>Costillar</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span>Tocino</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Jamón</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>Paleta</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#ec4899"></span>Manitas</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Jeta</span>
-      </div>
-    </div>
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+    </svg>
+    <input
+      type="text"
+      id="search-input"
+      class="search-input"
+      placeholder="Buscar producto..."
+      oninput="filtrar()"
+      autocomplete="off"
+    >
   </div>
 
-  <!-- PANEL CORTES -->
-  <div style="display:flex;flex-direction:column;gap:.75rem;">
-    <div class="panel-card">
-      <div class="panel-head">
-        <span style="font-size:1.1rem;">🥩</span>
-        <div>
-          <h3>Cortes disponibles</h3>
-          <p>Clic para seleccionar</p>
-        </div>
-      </div>
-      <div class="panel-body">
-        <div id="tag-lomo" class="cut-tag" onclick="toggleCut('lomo','Lomo / Carré','$175/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#ef4444"></span><span class="cut-name">Lomo / Carré</span></div>
-          <span class="cut-price">$175/kg</span>
-        </div>
-        <div id="tag-costillar" class="cut-tag" onclick="toggleCut('costillar','Costillar','$110/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#06b6d4"></span><span class="cut-name">Costillar</span></div>
-          <span class="cut-price">$110/kg</span>
-        </div>
-        <div id="tag-tocino" class="cut-tag" onclick="toggleCut('tocino','Barriga / Tocino','$90/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#f97316"></span><span class="cut-name">Barriga / Tocino</span></div>
-          <span class="cut-price">$90/kg</span>
-        </div>
-        <div id="tag-jamon" class="cut-tag" onclick="toggleCut('jamon','Pierna / Jamón','$135/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#10b981"></span><span class="cut-name">Pierna / Jamón</span></div>
-          <span class="cut-price">$135/kg</span>
-        </div>
-        <div id="tag-paleta" class="cut-tag" onclick="toggleCut('paleta','Paleta / Espaldilla','$120/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#8b5cf6"></span><span class="cut-name">Paleta / Espaldilla</span></div>
-          <span class="cut-price">$120/kg</span>
-        </div>
-        <div id="tag-jeta" class="cut-tag" onclick="toggleCut('jeta','Cabeza / Jeta','$45/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#f59e0b"></span><span class="cut-name">Cabeza / Jeta</span></div>
-          <span class="cut-price">$45/kg</span>
-        </div>
-        <div id="tag-manita-d" class="cut-tag" onclick="toggleCut('manita-d','Manita delantera','$55/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#ec4899"></span><span class="cut-name">Manita delantera</span></div>
-          <span class="cut-price">$55/kg</span>
-        </div>
-        <div id="tag-manita-t" class="cut-tag" onclick="toggleCut('manita-t','Manita trasera','$55/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#ec4899"></span><span class="cut-name">Manita trasera</span></div>
-          <span class="cut-price">$55/kg</span>
-        </div>
-        <div id="tag-chuleta" class="cut-tag" onclick="toggleCut('chuleta','Chuleta ahumada','$145/kg')">
-          <div class="cut-tag-left"><span class="cut-dot" style="background:#d97706"></span><span class="cut-name">Chuleta ahumada</span></div>
-          <span class="cut-price">$145/kg</span>
-        </div>
-      </div>
+  <div class="filters-panel">
+
+    <div class="filter-group">
+      <span class="filter-label">Ordenar por precio</span>
+      <select class="sort-select" id="sort-select" onchange="filtrar()">
+        <option value="">Sin ordenar</option>
+        <option value="asc">Menor a mayor</option>
+        <option value="desc">Mayor a menor</option>
+      </select>
     </div>
 
-    <button id="btn-continuar" class="btn-continue disabled" disabled
-      onclick="window.location.href='{{ url_for('venta.carrito') }}'">
-      Continuar con 0 cortes →
-    </button>
-  </div>
+    <div class="filter-group range-wrap">
+      <span class="filter-label">Precio máximo</span>
+      <div class="range-labels">
+        <span>${{ precio_min }}</span>
+        <span id="range-val">${{ precio_max }}</span>
+      </div>
+      <input
+        type="range"
+        class="range-slider"
+        id="price-range"
+        min="{{ precio_min }}"
+        max="{{ precio_max }}"
+        value="{{ precio_max }}"
+        oninput="onRange(this)"
+      >
+    </div>
 
+  </div>
+</div>
+
+<!-- BARRA DE RESULTADOS -->
+<div class="results-bar fade-in-2">
+  <p class="results-count">
+    Mostrando <strong id="count-visible">{{ items|length }}</strong>
+    de <strong>{{ items|length }}</strong> producto{{ 's' if items|length != 1 else '' }}
+  </p>
+  <button class="btn-reset" onclick="resetFiltros()">Limpiar filtros</button>
+</div>
+
+<!-- GRID -->
+<div class="products-grid fade-in-2" id="products-grid">
+
+  {% for item in items %}
+  {% set p = item.producto %}
+  <div class="product-card"
+       data-nombre="{{ p.NombreProducto | lower }}"
+       data-precio="{{ p.PrecioVentaProducto }}">
+
+    <!-- IMAGEN -->
+    <div class="card-img-wrap">
+      {% if item.foto_b64 %}
+        <img src="{{ item.foto_b64 }}" alt="{{ p.NombreProducto }}" class="card-img" loading="lazy">
+      {% else %}
+        <span class="card-img-placeholder">{{ emoji }}</span>
+      {% endif %}
+
+      <!-- Badge stock -->
+      {% if p.StockProducto <= 3 %}
+        <span class="stock-badge low">Últimas {{ p.StockProducto }}</span>
+      {% else %}
+        <span class="stock-badge">En stock</span>
+      {% endif %}
+    </div>
+
+    <!-- CUERPO -->
+    <div class="card-body">
+      <p class="card-name">{{ p.NombreProducto }}</p>
+      {% if p.DescripcionProducto %}
+        <p class="card-desc">{{ p.DescripcionProducto }}</p>
+      {% else %}
+        <p class="card-desc" style="font-style:italic;">Sin descripción</p>
+      {% endif %}
+      <p class="card-price">
+        ${{ '%.2f'|format(p.PrecioVentaProducto) }}
+        <span>/ unidad</span>
+      </p>
+    </div>
+
+    <!-- BOTÓN AGREGAR -->
+    <div class="card-footer">
+      <form method="POST"
+            action="{{ url_for('venta.agregar_al_carrito', id_producto=p.idProducto) }}"
+            onsubmit="return onAgregar(event, this)">
+        {{ form.hidden_tag() }}
+        <button type="submit" class="btn-add">
+          <svg viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Agregar al carrito
+        </button>
+      </form>
+    </div>
+
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">{{ emoji }}</div>
+    <p>No hay productos disponibles en este momento.</p>
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <svg viewBox="0 0 24 24" stroke-width="2.5" id="toast-icon">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+  </svg>
+  <span id="toast-msg"></span>
 </div>
 
 <script>
-const selected = new Set();
-function toggleCut(id, name, price) {
-  const zoneEl = document.getElementById('zone-' + id);
-  const tagEl  = document.getElementById('tag-' + id);
-  if (selected.has(id)) {
-    selected.delete(id);
-    if (zoneEl) zoneEl.classList.remove('selected');
-    if (tagEl)  tagEl.classList.remove('selected');
-  } else {
-    selected.add(id);
-    if (zoneEl) zoneEl.classList.add('selected');
-    if (tagEl)  tagEl.classList.add('selected');
+// ── Datos de productos para filtrado cliente ─────────────────────────────────
+const precioMax = {{ precio_max }};
+const precioMin = {{ precio_min }};
+
+// ── Filtrado dinámico ────────────────────────────────────────────────────────
+function filtrar() {
+  const query     = document.getElementById('search-input').value.toLowerCase().trim();
+  const sort      = document.getElementById('sort-select').value;
+  const maxPrecio = parseFloat(document.getElementById('price-range').value);
+
+  const grid  = document.getElementById('products-grid');
+  const cards = [...grid.querySelectorAll('.product-card')];
+
+  // Filtrar visibilidad
+  let visibles = [];
+  cards.forEach(card => {
+    const nombre = card.dataset.nombre;
+    const precio = parseFloat(card.dataset.precio);
+    const match  = nombre.includes(query) && precio <= maxPrecio;
+    card.style.display = match ? '' : 'none';
+    if (match) visibles.push(card);
+  });
+
+  // Ordenar los visibles dentro del grid
+  if (sort === 'asc') {
+    visibles.sort((a, b) => parseFloat(a.dataset.precio) - parseFloat(b.dataset.precio));
+  } else if (sort === 'desc') {
+    visibles.sort((a, b) => parseFloat(b.dataset.precio) - parseFloat(a.dataset.precio));
   }
-  updateCounter();
+  visibles.forEach(card => grid.appendChild(card));
+
+  // Actualizar contador
+  document.getElementById('count-visible').textContent = visibles.length;
+
+  // Estado vacío
+  let emptyEl = grid.querySelector('.empty-state-dynamic');
+  if (visibles.length === 0 && !emptyEl) {
+    emptyEl = document.createElement('div');
+    emptyEl.className = 'empty-state empty-state-dynamic';
+    emptyEl.innerHTML = `<div class="empty-state-icon">🔍</div><p>Sin resultados para "<strong>${query || 'este filtro'}</strong>".</p>`;
+    grid.appendChild(emptyEl);
+  } else if (visibles.length > 0 && emptyEl) {
+    emptyEl.remove();
+  }
 }
-function updateCounter() {
-  const n = selected.size;
-  const btn = document.getElementById('btn-continuar');
-  if (n > 0) {
-    btn.disabled = false;
-    btn.className = 'btn-continue enabled';
-    btn.textContent = `Continuar con ${n} corte${n > 1 ? 's' : ''} →`;
+
+// ── Slider de precio ─────────────────────────────────────────────────────────
+function onRange(input) {
+  const val = parseFloat(input.value);
+  const pct = ((val - precioMin) / (precioMax - precioMin || 1)) * 100;
+  input.style.setProperty('--pct', pct + '%');
+  document.getElementById('range-val').textContent = '$' + val.toFixed(0);
+  filtrar();
+}
+
+// Inicializar slider
+(function() {
+  const slider = document.getElementById('price-range');
+  const pct    = ((precioMax - precioMin) / (precioMax - precioMin || 1)) * 100;
+  slider.style.setProperty('--pct', pct + '%');
+})();
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function resetFiltros() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('sort-select').value  = '';
+  const slider = document.getElementById('price-range');
+  slider.value = precioMax;
+  onRange(slider);
+  filtrar();
+}
+
+// ── Agregar al carrito (fetch para no recargar) ───────────────────────────────
+function onAgregar(event, form) {
+  event.preventDefault();
+  const btn = form.querySelector('.btn-add');
+  btn.classList.add('adding');
+  btn.textContent = 'Agregando…';
+
+  fetch(form.action, {
+    method:  'POST',
+    body:    new FormData(form),
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      showToast(data.msg, false);
+      // Actualizar badge del navbar si existe
+      const badge = document.getElementById('nav-carrito-count');
+      if (badge) badge.textContent = data.carrito_count;
+    } else {
+      showToast(data.msg, true);
+    }
+  })
+  .catch(() => showToast('Error de red. Intenta de nuevo.', true))
+  .finally(() => {
+    btn.classList.remove('adding');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" stroke-width="2.5" style="width:14px;height:14px;stroke:#fff;fill:none;">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Agregar al carrito`;
+  });
+
+  return false;
+}
+
+function showToast(msg, isError = false) {
+  const t   = document.getElementById('toast');
+  const ico = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+
+  if (isError) {
+    ico.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>`;
   } else {
-    btn.disabled = true;
-    btn.className = 'btn-continue disabled';
-    btn.textContent = 'Continuar con 0 cortes →';
+    ico.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>`;
   }
+
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 </script>
 {% endblock %}

@@ -9,3 +9,4 @@ from .compras import OrdenCompra
 from .producto import Producto
 from .producto_unitario import ProductoUnitario
 from .pedido import Pedido
+from .carrito import Carrito

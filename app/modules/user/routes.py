@@ -211,3 +211,79 @@ def usuarios_editar(id):
                 flash(error, "error")
 
     return render_template("admin/user/usuarios_editar.html", form=form, usuario=usuario)
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  REGISTRO PÚBLICO DE CLIENTE
+#  Ruta abierta (sin @login_required). Crea siempre usuarios con el rol
+#  cuyo id sea 5 (Cliente), reutilizando la misma lógica que usuarios_nuevo.
+# ─────────────────────────────────────────────────────────────────────────────
+
+@user.route("/registro", methods=["GET"])
+def registro_cliente():
+    """Muestra el formulario de registro público para clientes."""
+    from app.modules.user.forms import RegistroClienteForm
+    form = RegistroClienteForm()
+    return render_template("admin/user/registro_cliente.html", form=form)
+
+
+@user.route("/registro", methods=["POST"])
+def registro_cliente_post():
+    """Procesa el registro público. Asigna siempre el rol con id=5 (Cliente)."""
+    from app.modules.user.forms import RegistroClienteForm
+
+    form = RegistroClienteForm()
+
+    if not form.validate_on_submit():
+        for campo, errores in form.errors.items():
+            for error in errores:
+                flash(error, "error")
+        return render_template("admin/user/registro_cliente.html", form=form)
+
+    # Correo duplicado
+    if User.query.filter_by(email=form.email.data).first():
+        flash("Ya existe una cuenta con ese correo.", "error")
+        return render_template("admin/user/registro_cliente.html", form=form)
+
+    # Rol Cliente (id = 5)
+    rol_cliente = Role.query.get(5)
+    if not rol_cliente:
+        flash("Error de configuración: el rol de cliente no existe. Contacta al administrador.", "error")
+        current_app.logger.error("Registro público fallido: Role id=5 (Cliente) no encontrado en BD")
+        return render_template("admin/user/registro_cliente.html", form=form)
+
+    nombre_completo = f"{form.nombre.data} {form.apellido_paterno.data} {form.apellido_materno.data or ''}".strip()
+
+    nuevo_u = User(
+        name=nombre_completo,
+        email=form.email.data,
+        password=hash_password(form.password.data),
+        active=True,
+        fs_uniquifier=uuid.uuid4().hex,
+    )
+    nuevo_u.roles.append(rol_cliente)
+
+    db.session.add(nuevo_u)
+    db.session.flush()  # obtiene nuevo_u.id antes del commit
+
+    nueva_persona = Persona(
+        nombre=form.nombre.data,
+        apellido_paterno=form.apellido_paterno.data,
+        apellido_materno=form.apellido_materno.data,
+        telefono=form.telefono.data,
+        direccion=form.direccion.data,
+        user_id=nuevo_u.id
+    )
+
+    db.session.add(nueva_persona)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al registrar cliente: {str(e)}")
+        flash("Ocurrió un error al crear tu cuenta. Intenta de nuevo.", "error")
+        return render_template("admin/user/registro_cliente.html", form=form)
+
+    current_app.logger.info(f"Cliente registrado públicamente: {form.email.data}")
+    flash("¡Cuenta creada exitosamente! Ya puedes iniciar sesión.", "success")
+    return redirect(url_for("auth.login"))
