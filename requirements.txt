@@ -34,6 +34,7 @@ ordered-set==4.1.0
 packaging==26.0
 pycparser==3.0
 PyMySQL==1.1.2
+pymongo==4.16.0
 python-dotenv==1.2.2
 SQLAlchemy==2.0.48
 tomli==2.4.1
