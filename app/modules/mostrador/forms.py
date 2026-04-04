@@ -33,3 +33,7 @@ class VaciarCarritoForm(FlaskForm):
 
 class CobrarForm(FlaskForm):
     pass
+
+class EntregarPedidoForm(FlaskForm):
+    """Formulario de confirmación para marcar un pedido como entregado — solo CSRF."""
+    pass

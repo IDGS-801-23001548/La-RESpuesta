@@ -13,3 +13,5 @@ class Pedido(db.Model):
     unidadesPedido                    = db.relationship('ProductoUnitario',
                                         backref='pedido',
                                         lazy='dynamic')
+    
+    user = db.relationship('User', backref='pedidos', lazy=True)

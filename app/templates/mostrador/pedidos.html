@@ -6,6 +6,7 @@
   <title>La RESpuesta – Pedidos</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
+    <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', sans-serif;
@@ -195,190 +196,276 @@
 </head>
 <body>
 
-<!-- NAV -->
+{# ─── NAV ─── #}
 <nav>
   <div class="nav-brand">
     <div class="nav-brand-logo">
       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184
+             1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
       </svg>
     </div>
     <span class="nav-brand-text">La <span>RESpuesta</span></span>
   </div>
   <div class="nav-tabs">
-    <a href="mostrador.html" class="nav-tab">
-      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+    <a href="{{ url_for('mostrador.mostradorVenta') }}" class="nav-tab">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184
+             1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
       Mostrador
     </a>
-    <a href="pedidos.html" class="nav-tab active">
-      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <a href="{{ url_for('mostrador.mostradorPedido') }}" class="nav-tab active">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
+             M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
       Pedidos
     </a>
   </div>
 </nav>
 
-<!-- MAIN -->
+{# ─── FLASH MESSAGES ─── #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-wrap" id="flash-wrap">
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">
+          {{ message }}
+          <button class="flash-close" onclick="this.parentElement.remove()">✕</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{# ─── MAIN ─── #}
 <div class="main">
 
-  <!-- LEFT -->
+  {# ══════════ LEFT: LISTA DE PEDIDOS ══════════ #}
   <div class="panel-left">
 
     <div class="search-wrap">
       <span class="search-icon">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
       </span>
-      <input type="text" placeholder="Buscar pedido por cliente o número…"/>
+      <input id="buscar" type="text" placeholder="Buscar pedido por cliente o número…" autocomplete="off"/>
     </div>
 
     <div class="seccion-titulo">Pedidos pendientes por entregar</div>
 
-    <div class="pedidos-grid">
+    <div class="pedidos-grid" id="pedidos-grid">
 
-      <div class="pedido-card selected">
-        <div class="pedido-top">
-          <div class="pedido-num">#0042</div>
-          <span class="pedido-badge badge-pagado">Pagado</span>
-        </div>
-        <div class="pedido-cliente">Martínez, Juan</div>
-        <div class="pedido-meta">Hoy 10:30 am · 3 productos</div>
-        <div class="pedido-items-preview">
-          · Bistec de res — 1.5 kg<br>
-          · Chuleta de cerdo — 2.0 kg<br>
-          · Carne molida — 0.5 kg
-        </div>
-        <button class="btn-ver">Ver pedido</button>
-      </div>
+      {% if pedidos %}
+        {% for p in pedidos %}
 
-      <div class="pedido-card">
-        <div class="pedido-top">
-          <div class="pedido-num">#0043</div>
-          <span class="pedido-badge badge-pendiente">Por cobrar</span>
-        </div>
-        <div class="pedido-cliente">García, Sofía</div>
-        <div class="pedido-meta">Hoy 11:00 am · 2 productos</div>
-        <div class="pedido-items-preview">
-          · Pechuga entera — 3.0 kg<br>
-          · Muslo de pollo — 1.5 kg
-        </div>
-        <button class="btn-ver">Ver pedido</button>
-      </div>
+          {# Badge según Tipo de pago #}
+          {% if p.Tipo %}
+            {% set badge_cls = 'badge-pagado' %}
+            {% set badge_txt = 'Pagado' %}
+          {% else %}
+            {% set badge_cls = 'badge-pendiente' %}
+            {% set badge_txt = 'Por cobrar' %}
+          {% endif %}
 
-      <div class="pedido-card">
-        <div class="pedido-top">
-          <div class="pedido-num">#0044</div>
-          <span class="pedido-badge badge-pagado">Pagado</span>
-        </div>
-        <div class="pedido-cliente">López, Karla</div>
-        <div class="pedido-meta">Hoy 11:45 am · 4 productos</div>
-        <div class="pedido-items-preview">
-          · Arrachera — 1.0 kg<br>
-          · Costilla de res — 2.0 kg<br>
-          · Alitas — 1.5 kg<br>
-          · Hígado de res — 0.5 kg
-        </div>
-        <button class="btn-ver">Ver pedido</button>
-      </div>
+          {# Nombre del cliente #}
+          {% set nombre_cliente = p.user.name if p.user else 'Sin cliente' %}
 
-      <div class="pedido-card">
-        <div class="pedido-top">
-          <div class="pedido-num">#0045</div>
-          <span class="pedido-badge badge-pendiente">Por cobrar</span>
-        </div>
-        <div class="pedido-cliente">Ramírez, Pedro</div>
-        <div class="pedido-meta">Hoy 12:15 pm · 2 productos</div>
-        <div class="pedido-items-preview">
-          · Lomo de cerdo — 2.5 kg<br>
-          · Carne molida — 1.0 kg
-        </div>
-        <button class="btn-ver">Ver pedido</button>
-      </div>
+          
+          <div class="pedido-card"
+               data-id="{{ p.idPedido }}"
+               data-nombre="{{ nombre_cliente | lower }}"
+               data-num="{{ p.idPedido }}">
 
-      <div class="pedido-card">
-        <div class="pedido-top">
-          <div class="pedido-num">#0046</div>
-          <span class="pedido-badge badge-pagado">Pagado</span>
-        </div>
-        <div class="pedido-cliente">Torres, Ana</div>
-        <div class="pedido-meta">Hoy 01:00 pm · 1 producto</div>
-        <div class="pedido-items-preview">
-          · Bistec de res — 3.0 kg
-        </div>
-        <button class="btn-ver">Ver pedido</button>
-      </div>
+            <div class="pedido-top">
+              <div class="pedido-num">#{{ '%04d' | format(p.idPedido) }}</div>
+              <span class="pedido-badge {{ badge_cls }}">{{ badge_txt }}</span>
+            </div>
 
-    </div>
-  </div>
+            <div class="pedido-cliente">{{ nombre_cliente }}</div>
+
+            <div class="pedido-meta">
+              {{ num_unidades }} producto{{ 's' if num_unidades != 1 else '' }}
+            </div>
+
+            {# Preview de ítems — placeholder hasta que se defina el modelo de detalle #}
+            <div class="pedido-items-preview">
+              Sin detalle disponible
+            </div>
+
+            <button class="btn-ver" onclick="verPedido({{ p.idPedido }}, this)">
+              Ver pedido
+            </button>
+
+          </div>
+
+        {% endfor %}
+      {% else %}
+        <div style="grid-column:1/-1; display:flex; flex-direction:column;
+                    align-items:center; justify-content:center; gap:8px;
+                    padding:48px 0; color:#d1d5db; font-size:.875rem; text-align:center;">
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24"
+               stroke="#e5e7eb" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
+                 M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <p>No hay pedidos pendientes</p>
+        </div>
+      {% endif %}
+
+    </div>{# /pedidos-grid #}
+  </div>{# /panel-left #}
 
   <div class="divider"></div>
 
-  <!-- DETALLE -->
+  {# ══════════ RIGHT: DETALLE ══════════ #}
   <div class="panel-right">
 
+    {# Header — cambia con JS #}
     <div class="detalle-header">
       <div class="detalle-header-icon">
         <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
+               M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
       </div>
       <h2>Detalle del pedido</h2>
-      <span class="ped-num">#0042</span>
+      <span class="ped-num" id="det-num">—</span>
     </div>
 
-    <div class="detalle-cliente-info">
-      <div class="det-cliente-nombre">Martínez, Juan</div>
-      <div class="det-cliente-meta">Hoy, 10:30 am · 3 productos</div>
+    {# Estado vacío (visible por defecto) #}
+    <div class="detalle-empty" id="det-empty">
+      <span>📋</span>
+      <p>Selecciona un pedido</p>
+      <p style="font-size:.75rem;color:#e5e7eb;">Haz clic en "Ver pedido"</p>
     </div>
 
-    <div class="detalle-items">
+    {# Contenido del detalle (oculto hasta seleccionar) #}
+    <div id="det-contenido" style="display:none; flex:1; display:none; flex-direction:column; overflow:hidden;">
 
-      <div class="det-item">
-        <div class="det-item-left">
-          <div class="det-item-nombre">Bistec de res</div>
-          <div class="det-item-cant">1.5 kg × $180/kg</div>
+      <div class="detalle-cliente-info">
+        <div class="det-cliente-nombre" id="det-cliente"></div>
+        <div class="det-cliente-meta" id="det-meta"></div>
+      </div>
+
+      <div class="detalle-items" id="det-items">
+        {# Se llena con JS #}
+      </div>
+
+      <div class="detalle-footer">
+
+        <div class="total-row">
+          <span class="total-label">Total</span>
+          <span class="total-monto" id="det-total">—</span>
         </div>
-        <div class="det-item-precio">$270</div>
-      </div>
 
-      <div class="det-item">
-        <div class="det-item-left">
-          <div class="det-item-nombre">Chuleta de cerdo</div>
-          <div class="det-item-cant">2.0 kg × $130/kg</div>
+        <div class="estatus-row" id="det-estatus-row">
+          <span class="estatus-label">Estatus de pago</span>
+          <span class="estatus-valor" id="det-estatus-val">—</span>
         </div>
-        <div class="det-item-precio">$260</div>
-      </div>
 
-      <div class="det-item">
-        <div class="det-item-left">
-          <div class="det-item-nombre">Carne molida</div>
-          <div class="det-item-cant">0.5 kg × $160/kg</div>
-        </div>
-        <div class="det-item-precio">$80</div>
-      </div>
+        {# Formulario entregar — el id_pedido se inyecta con JS #}
+        <form id="form-entregar"
+              action=""
+              method="POST"
+              style="margin:0;"
+              onsubmit="return confirm('¿Confirmar entrega del pedido?')">
+          {{ entregar_form.hidden_tag() }}
+          <button class="btn-entregar" type="submit">Entregar pedido</button>
+        </form>
 
+      </div>
     </div>
 
-    <div class="detalle-footer">
+  </div>{# /panel-right #}
 
-      <div class="total-row">
-        <span class="total-label">Total</span>
-        <span class="total-monto">$610.00</span>
-      </div>
+</div>{# /main #}
 
-      <div class="estatus-row pagado">
-        <span class="estatus-label">Estatus de pago</span>
-        <span class="estatus-valor pagado">
-          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          Pagado
-        </span>
-      </div>
+<script>
+  // ── Búsqueda en tiempo real ──
+  document.getElementById('buscar').addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    document.querySelectorAll('.pedido-card').forEach(card => {
+      const nombre = card.dataset.nombre || '';
+      const num    = String(card.dataset.num || '');
+      card.style.display = (nombre.includes(q) || num.includes(q)) ? '' : 'none';
+    });
+  });
 
-      <button class="btn-entregar">Entregar pedido</button>
+  // ── Ver pedido ──
+  function verPedido(idPedido, btnEl) {
+    // Marcar card como selected
+    document.querySelectorAll('.pedido-card').forEach(c => c.classList.remove('selected'));
+    btnEl.closest('.pedido-card').classList.add('selected');
 
-    </div>
+    // Fetch al backend
+    fetch(`{{ url_for('mostrador.detallePedido', id_pedido=0) }}`.replace('/0', '/' + idPedido))
+      .then(r => r.json())
+      .then(d => pintarDetalle(d))
+      .catch(() => alert('No se pudo cargar el pedido.'));
+  }
 
-  </div>
+  function pintarDetalle(d) {
+    // Header
+    document.getElementById('det-num').textContent = '#' + String(d.idPedido).padStart(4, '0');
 
-</div>
+    // Cliente y meta
+    document.getElementById('det-cliente').textContent = d.cliente;
+    document.getElementById('det-meta').textContent    =
+      (d.unidades.length) + ' producto' + (d.unidades.length !== 1 ? 's' : '');
+
+    // Total
+    document.getElementById('det-total').textContent =
+      '$' + parseFloat(d.total).toFixed(2);
+
+    // Estatus de pago
+    const esPagado   = !!d.tipo;
+    const rowEl      = document.getElementById('det-estatus-row');
+    const valEl      = document.getElementById('det-estatus-val');
+    rowEl.className  = 'estatus-row ' + (esPagado ? 'pagado' : 'pendiente');
+    valEl.className  = 'estatus-valor ' + (esPagado ? 'pagado' : 'pendiente');
+    valEl.textContent = esPagado ? '✓ Pagado' : 'Por cobrar';
+
+    // Ítems
+    const contenedor = document.getElementById('det-items');
+    if (d.unidades.length === 0) {
+      contenedor.innerHTML = `
+        <p style="font-size:.8rem;color:#9ca3af;text-align:center;padding:16px 0;">
+          Sin detalle de productos disponible
+        </p>`;
+    } else {
+      contenedor.innerHTML = d.unidades.map(u => `
+        <div class="det-item">
+          <div class="det-item-left">
+            <div class="det-item-nombre">${u.nombre}</div>
+            <div class="det-item-cant">${u.cantidad} × $${parseFloat(u.precio).toFixed(2)}</div>
+          </div>
+          <div class="det-item-precio">$${parseFloat(u.subtotal).toFixed(2)}</div>
+        </div>
+      `).join('');
+    }
+
+    // Form entregar — actualizar action con el id correcto
+    document.getElementById('form-entregar').action =
+      `{{ url_for('mostrador.entregarPedido', id_pedido=0) }}`.replace('/0', '/' + d.idPedido);
+
+    // Mostrar contenido, ocultar empty
+    document.getElementById('det-empty').style.display    = 'none';
+    const cont = document.getElementById('det-contenido');
+    cont.style.display        = 'flex';
+    cont.style.flexDirection  = 'column';
+    cont.style.overflow       = 'hidden';
+    cont.style.flex           = '1';
+  }
+</script>
 
 </body>
 </html>

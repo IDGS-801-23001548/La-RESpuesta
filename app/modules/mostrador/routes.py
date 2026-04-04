@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, session
+from flask import render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import login_required
 from flask_security.decorators import roles_required
 from . import mostrador
@@ -6,6 +6,7 @@ from datetime import datetime
 import uuid
 from app.extensions import db
 from app.models.producto import Producto
+from app.models.pedido import Pedido
 from app.models.ticket import Ticket
 from app.models.detallesTicket import DetalleTicket
 from .forms import (
@@ -13,7 +14,8 @@ from .forms import (
     ModificarCantidadForm,
     EliminarProductoForm,
     VaciarCarritoForm,
-    CobrarForm
+    CobrarForm,
+    EntregarPedidoForm
 )
 
 
@@ -260,8 +262,94 @@ def cobrar():
 
     return redirect(url_for('mostrador.mostradorVenta'))
 
+# ─────────────────────────────────────────────────────────────
+#  PEDIDOS — VISTA PRINCIPAL
+# ─────────────────────────────────────────────────────────────
 @mostrador.route("/pedidos", methods=['GET'])
 @login_required
 @roles_required('Cajero')
 def mostradorPedido():
-    return render_template("mostrador/pedidos.html")
+    # Solo pedidos de tipo Mostrador que no estén finalizados ni cancelados
+    pedidos = (
+        Pedido.query
+        .filter(
+            Pedido.Entrega == 'Mostrador',
+            Pedido.Estatus == 'EnCurso'
+        )
+        .order_by(Pedido.idPedido.asc())
+        .all()
+    )
+
+    entregar_form = EntregarPedidoForm()
+
+    return render_template(
+        "mostrador/pedidos.html",
+        pedidos       = pedidos,
+        entregar_form = entregar_form,
+    )
+
+
+# ─────────────────────────────────────────────────────────────
+#  PEDIDOS — DETALLE (JSON para el panel derecho)
+# ─────────────────────────────────────────────────────────────
+@mostrador.route("/pedidos/detalle/<int:id_pedido>", methods=['GET'])
+@login_required
+@roles_required('Cajero')
+def detallePedido(id_pedido):
+    pedido = Pedido.query.filter(
+        Pedido.idPedido == id_pedido,
+        Pedido.Entrega  == 'Mostrador',
+        Pedido.Estatus  == 'EnCurso'
+    ).first_or_404()
+
+    # Nombre del cliente desde la relación con User
+    cliente = pedido.user.name if pedido.user.name else 'Cliente desconocido'
+
+    # Unidades del pedido — placeholder hasta que se defina el modelo completo
+    unidades = []
+    for u in pedido.unidadesPedido:
+        unidades.append({
+            'nombre':   getattr(u, 'nombre',   '—'),
+            'cantidad': getattr(u, 'cantidad', 0),
+            'precio':   getattr(u, 'precio',   0),
+            'subtotal': getattr(u, 'subtotal', 0),
+        })
+
+    return jsonify({
+        'idPedido': pedido.idPedido,
+        'cliente':  pedido.user.name,
+        'total':    pedido.Total,
+        'tipo':     pedido.Tipo,
+        'estatus':  pedido.Estatus,
+        'unidades': unidades,
+    })
+
+
+# ─────────────────────────────────────────────────────────────
+#  PEDIDOS — ENTREGAR
+# ─────────────────────────────────────────────────────────────
+@mostrador.route("/pedidos/entregar/<int:id_pedido>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def entregarPedido(id_pedido):
+    form = EntregarPedidoForm()
+
+    if not form.validate_on_submit():
+        flash('Acción no válida.', 'warning')
+        return redirect(url_for('mostrador.mostradorPedido'))
+
+    pedido = Pedido.query.filter(
+        Pedido.idPedido == id_pedido,
+        Pedido.Entrega  == 'Mostrador',
+        Pedido.Estatus  == 'EnCurso'
+    ).first_or_404()
+
+    try:
+        pedido.Estatus = 'Finalizado'
+        db.session.commit()
+        flash(f'Pedido #{id_pedido:04d} marcado como entregado.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar el pedido: {str(e)}', 'error')
+
+    return redirect(url_for('mostrador.mostradorPedido'))
