@@ -1,33 +1,28 @@
+# app/modules/venta/forms.py
+
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, BooleanField
-from wtforms.validators import DataRequired, Length, Regexp
+from wtforms import HiddenField, IntegerField
+from wtforms.validators import DataRequired, NumberRange
 
 
-PASSWORD_REGEX = (
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)'
-    r'(?=.*[!@#$%^&*()\-_=+\[\]{};:\'",.<>/?\\|`~])'
-    r'[A-Za-z\d!@#$%^&*()\-_=+\[\]{};:\'",.<>/?\\|`~]{8,}$'
-)
+class AgregarAlCarritoForm(FlaskForm):
+    """
+    Formulario CSRF mínimo para agregar una unidad de un producto al carrito.
+    Se usa en las tarjetas del catálogo, en carrito.html y en pedido_detalle.html.
 
+    Uso en template:
+        <form method="POST" action="{{ url_for('venta.agregar_al_carrito', id_producto=p.idProducto) }}">
+            {{ form.hidden_tag() }}
+            <button type="submit">Agregar</button>
+        </form>
 
-class UserForm(FlaskForm):
-    username = StringField('Usuario', validators=[
-        DataRequired(message="El nombre de usuario es obligatorio."),
-        Length(min=4, max=50, message="Debe tener entre 4 y 50 caracteres.")
-    ])
-    password = PasswordField('Contraseña', validators=[
-        DataRequired(message="La contraseña es obligatoria."),
-        Length(min=8, message="Debe tener al menos 8 caracteres."),
-        Regexp(PASSWORD_REGEX,
-               message="La contraseña debe tener mayúscula, minúscula, número y carácter especial.")
-    ])
-    id_rol = SelectField('Rol', coerce=int, validators=[
-        DataRequired(message="Selecciona un rol.")
-    ])
-    estatus = BooleanField('Activo', default=True)
-
-
-class ComprasForm(FlaskForm):
-    proveedor = StringField('Proveedor', validators=[
-        DataRequired(message='El proveedor es obligatorio'),
-    ])
+    Uso en routes:
+        from app.modules.venta.forms import AgregarAlCarritoForm
+        form = AgregarAlCarritoForm()
+        if form.validate_on_submit():
+            ...
+    """
+    # Sin campos adicionales: solo necesitamos el token CSRF que provee hidden_tag().
+    # Si en el futuro se necesita elegir cantidad, se puede agregar:
+    # cantidad = IntegerField('Cantidad', default=1, validators=[NumberRange(min=1)])
+    pass

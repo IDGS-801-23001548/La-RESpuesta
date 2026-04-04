@@ -1,10 +1,11 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from . import venta
-from app.extensions import db
+from app.extensions import db, mongo_fotos
 from app.models.producto import Producto
 from app.models.producto_unitario import ProductoUnitario
 from app.models.carrito import Carrito
 from app.models.pedido import Pedido
+from app.modules.venta.forms import AgregarAlCarritoForm
 from flask_security import login_required
 from flask_login import current_user
 
@@ -48,8 +49,38 @@ def _agrupar_unidades(unidades):
             }
         resumen[pid]['cantidad'] += 1
         resumen[pid]['subtotal'] += u.producto.PrecioVentaProducto
-        resumen[pid]['ultima_unidad_id'] = u.idProductoUnitario  # para el botón quitar
+        resumen[pid]['ultima_unidad_id'] = u.idProductoUnitario
     return list(resumen.values())
+
+
+def _enrich_productos_con_fotos(productos):
+    """
+    Recibe una lista de objetos Producto (SQLAlchemy) y devuelve una lista
+    de dicts enriquecidos con la foto en base64 obtenida de MongoDB.
+
+    Estructura retornada por elemento:
+    {
+        'producto': <Producto>,
+        'foto_b64': "data:image/jpeg;base64,..." | None
+    }
+    """
+    resultado = []
+    for p in productos:
+        foto_b64 = None
+        if p.idFoto and mongo_fotos is not None:
+            try:
+                doc = mongo_fotos.find_one({'idFoto': str(p.idFoto)})
+                if doc and doc.get('foto'):
+                    # La foto ya viene en base64 según la estructura de MongoDB
+                    raw = doc['foto']
+                    # Si no trae el prefijo data URI, lo agregamos
+                    if not raw.startswith('data:'):
+                        raw = f'data:image/jpeg;base64,{raw}'
+                    foto_b64 = raw
+            except Exception:
+                pass   # Falla silenciosa: se mostrará el placeholder
+        resultado.append({'producto': p, 'foto_b64': foto_b64})
+    return resultado
 
 
 # ─────────────────────────────────────────────
@@ -88,98 +119,54 @@ def seleccionar_animal():
 #  CATÁLOGOS POR ANIMAL
 # ─────────────────────────────────────────────
 
+def _catalogo_view(categoria, template, emoji, label):
+    """
+    Helper compartido para los tres catálogos.
+    Consulta MySQL filtrando por categoría y stock,
+    enriquece con fotos de MongoDB y pasa el form CSRF.
+    """
+    form = AgregarAlCarritoForm()
+    productos_db = Producto.query.filter_by(
+        Categoria=categoria
+    ).filter(
+        Producto.StockProducto > 0
+    ).order_by(Producto.NombreProducto).all()
+
+    items = _enrich_productos_con_fotos(productos_db)
+
+    # Precio mínimo y máximo para el slider del frontend
+    precios = [p['producto'].PrecioVentaProducto for p in items]
+    precio_min = int(min(precios)) if precios else 0
+    precio_max = int(max(precios)) if precios else 9999
+
+    return render_template(
+        template,
+        items=items,
+        precio_min=precio_min,
+        precio_max=precio_max,
+        emoji=emoji,
+        label=label,
+        form=form,
+        carrito_count=_carrito_count()
+    )
+
+
 @venta.route("/catalogo_res", methods=['GET'])
 @login_required
 def catalogo_res():
-    productos = Producto.query.filter_by(Categoria='Res').filter(
-        Producto.StockProducto > 0
-    ).all()
-    return render_template(
-        "venta/catalogo_res.html",
-        productos=productos,
-        carrito_count=_carrito_count()
-    )
+    return _catalogo_view('Res', 'venta/catalogo_res.html', '🐄', 'Res')
 
 
 @venta.route("/catalogo_cerdo", methods=['GET'])
 @login_required
 def catalogo_cerdo():
-    productos = Producto.query.filter_by(Categoria='Cerdo').filter(
-        Producto.StockProducto > 0
-    ).all()
-    return render_template(
-        "venta/catalogo_cerdo.html",
-        productos=productos,
-        carrito_count=_carrito_count()
-    )
+    return _catalogo_view('Cerdo', 'venta/catalogo_cerdo.html', '🐷', 'Cerdo')
 
 
 @venta.route("/catalogo_pollo", methods=['GET'])
 @login_required
 def catalogo_pollo():
-    productos = Producto.query.filter_by(Categoria='Pollo').filter(
-        Producto.StockProducto > 0
-    ).all()
-    return render_template(
-        "venta/catalogo_pollo.html",
-        productos=productos,
-        carrito_count=_carrito_count()
-    )
-
-
-# ─────────────────────────────────────────────
-#  CARRITO — AGREGAR DESDE CATÁLOGO (por nombre de corte)
-# ─────────────────────────────────────────────
-
-@venta.route("/carrito/agregar_cortes", methods=['POST'])
-@login_required
-def agregar_cortes():
-    """
-    Recibe los IDs de corte seleccionados en el diagrama SVG (ej: 'ribeye,arrachera')
-    y agrega al carrito una unidad disponible de cada producto cuyo nombre
-    contenga esa clave.
-    """
-    cortes_str = request.form.get('cortes', '').strip()
-    if not cortes_str:
-        flash('No seleccionaste ningún corte.', 'warning')
-        return redirect(request.referrer or url_for('venta.seleccionar_animal'))
-
-    carrito_obj = _get_or_create_carrito()
-    claves      = [c.strip() for c in cortes_str.split(',') if c.strip()]
-    agregados, sin_stock = [], []
-
-    for clave in claves:
-        # Busca producto cuyo nombre contenga la clave (case-insensitive)
-        producto = Producto.query.filter(
-            Producto.NombreProducto.ilike(f'%{clave}%'),
-            Producto.StockProducto > 0
-        ).first()
-
-        if not producto:
-            sin_stock.append(clave)
-            continue
-
-        unidad = ProductoUnitario.query.filter_by(
-            idProducto=producto.idProducto,
-            estatus='Disponible'
-        ).first()
-
-        if not unidad:
-            sin_stock.append(producto.NombreProducto)
-            continue
-
-        unidad.estatus   = 'EnCarrito'
-        unidad.idCarrito = carrito_obj.idCarrito
-        agregados.append(producto.NombreProducto)
-
-    db.session.commit()
-
-    if agregados:
-        flash(f'Agregado al carrito: {", ".join(agregados)}.', 'success')
-    if sin_stock:
-        flash(f'Sin stock disponible: {", ".join(sin_stock)}.', 'warning')
-
-    return redirect(url_for('venta.carrito'))
+    return _catalogo_view('Pollo', 'venta/catalogo_pollo.html', '🐔', 'Pollo')
 
 
 # ─────────────────────────────────────────────
@@ -191,8 +178,16 @@ def agregar_cortes():
 def agregar_al_carrito(id_producto):
     """
     Agrega una unidad disponible de un producto concreto al carrito.
+    Valida CSRF via AgregarAlCarritoForm.
     Soporta JSON (fetch) y redirect normal.
     """
+    form = AgregarAlCarritoForm()
+    if not form.validate_on_submit():
+        if request.is_json:
+            return jsonify({'ok': False, 'msg': 'Token inválido'}), 400
+        flash('Solicitud inválida.', 'error')
+        return redirect(request.referrer or url_for('venta.seleccionar_animal'))
+
     producto    = Producto.query.get_or_404(id_producto)
     carrito_obj = _get_or_create_carrito()
 
@@ -213,9 +208,9 @@ def agregar_al_carrito(id_producto):
 
     if request.is_json:
         return jsonify({
-            'ok':           True,
+            'ok':            True,
             'carrito_count': _carrito_count(),
-            'msg':          f'"{producto.NombreProducto}" agregado al carrito'
+            'msg':           f'"{producto.NombreProducto}" agregado al carrito'
         })
 
     flash(f'"{producto.NombreProducto}" agregado al carrito.', 'success')
