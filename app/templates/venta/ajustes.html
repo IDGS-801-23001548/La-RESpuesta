@@ -194,6 +194,7 @@
           </div>
           <div class="panel-body">
             <form action="{{ url_for('venta.ajustes_datos') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-grid2" style="margin-bottom:.85rem;">
               <div class="form-row" style="margin:0;">
                 <label class="form-label">Nombre</label>
@@ -245,6 +246,7 @@
           </div>
           <div class="panel-body">
             <form action="{{ url_for('venta.ajustes_password') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-row">
               <label class="form-label">Contraseña actual</label>
               <input type="password" name="password_actual" class="form-input" placeholder="••••••••">
