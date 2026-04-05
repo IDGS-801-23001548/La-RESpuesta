@@ -8,11 +8,7 @@ from app.models.pedido import Pedido
 from app.modules.venta.forms import AgregarAlCarritoForm
 from flask_security import login_required
 from flask_login import current_user
-
-
-# ─────────────────────────────────────────────
-#  HELPERS
-# ─────────────────────────────────────────────
+from flask_wtf.csrf import validate_csrf, ValidationError
 
 def _get_or_create_carrito():
     """Devuelve el carrito activo del usuario; lo crea si no existe."""
@@ -257,7 +253,7 @@ def quitar_del_carrito(id_producto_unitario):
 
 
 # ─────────────────────────────────────────────
-#  CARRITO — VACIAR TODO
+#  CARRITO — VACIAR-TODO
 # ─────────────────────────────────────────────
 
 @venta.route("/carrito/vaciar", methods=['POST'])
@@ -501,7 +497,6 @@ def cancelar_pedido(id_pedido):
     return redirect(url_for('venta.pedidos'))
 
 
-
 # ─────────────────────────────────────────────
 #  PEDIDOS — TICKET
 # ─────────────────────────────────────────────
@@ -527,6 +522,11 @@ def ticket_pedido(id_pedido):
         carrito_count=_carrito_count()
     )
 
+
+# ─────────────────────────────────────────────
+#  AJUSTES — VER
+# ─────────────────────────────────────────────
+
 @venta.route("/ajustes", methods=['GET'])
 @login_required
 def ajustes():
@@ -543,11 +543,19 @@ def ajustes():
 @venta.route("/ajustes/datos", methods=['POST'])
 @login_required
 def ajustes_datos():
-    nombre    = request.form.get('nombre', '').strip()
-    apellido  = request.form.get('apellido', '').strip()
-    email     = request.form.get('email', '').strip()
-    telefono  = request.form.get('telefono', '').strip()
-    direccion = request.form.get('direccion', '').strip()
+    # Validar token CSRF manualmente (los forms de ajustes son HTML puro, sin Flask-WTF)
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        flash('Solicitud inválida (CSRF).', 'error')
+        return redirect(url_for('venta.ajustes'))
+
+    nombre           = request.form.get('nombre', '').strip()
+    apellido         = request.form.get('apellido', '').strip()
+    apellido_materno = request.form.get('apellido_materno', '').strip()
+    email            = request.form.get('email', '').strip()
+    telefono         = request.form.get('telefono', '').strip()
+    direccion        = request.form.get('direccion', '').strip()
 
     if not nombre or not email:
         flash('Nombre y correo son obligatorios.', 'error')
@@ -563,6 +571,7 @@ def ajustes_datos():
 
     persona.nombre           = nombre
     persona.apellido_paterno = apellido
+    persona.apellido_materno = apellido_materno
     persona.telefono         = telefono
     persona.direccion        = direccion
 
@@ -579,13 +588,21 @@ def ajustes_datos():
 @venta.route("/ajustes/password", methods=['POST'])
 @login_required
 def ajustes_password():
-    from werkzeug.security import check_password_hash, generate_password_hash
+    # Validar token CSRF manualmente (los forms de ajustes son HTML puro, sin Flask-WTF)
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        flash('Solicitud inválida (CSRF).', 'error')
+        return redirect(url_for('venta.ajustes'))
+
+    from flask_security import verify_password
+    from flask_security.utils import hash_password
 
     actual    = request.form.get('password_actual', '')
     nueva     = request.form.get('password_nueva', '')
     confirmar = request.form.get('password_confirmar', '')
 
-    if not check_password_hash(current_user.password, actual):
+    if not verify_password(actual, current_user.password):
         flash('La contraseña actual es incorrecta.', 'error')
         return redirect(url_for('venta.ajustes'))
 
@@ -597,7 +614,7 @@ def ajustes_password():
         flash('Las contraseñas nuevas no coinciden.', 'error')
         return redirect(url_for('venta.ajustes'))
 
-    current_user.password = generate_password_hash(nueva)
+    current_user.password = hash_password(nueva)
     db.session.commit()
 
     flash('Contraseña actualizada correctamente.', 'success')

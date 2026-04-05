@@ -37,7 +37,6 @@ VentaOnline
 
   body {
     background: var(--page-bg);
-    /* Subtle dot-grid texture */
     background-image: radial-gradient(circle, #d1fae5 1px, transparent 1px);
     background-size: 28px 28px;
   }
@@ -128,6 +127,35 @@ VentaOnline
   .vo-nav__link.active {
     color: var(--green-primary);
     background: var(--green-light);
+  }
+
+  /* Botón logout */
+  .vo-nav__logout {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #b91c1c;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    letter-spacing: .1px;
+  }
+
+  .vo-nav__logout:hover {
+    color: #991b1b;
+    background: #fef2f2;
+  }
+
+  .vo-nav__divider {
+    width: 1px;
+    height: 20px;
+    background: var(--gray-border);
+    margin: 0 4px;
   }
 
   .vo-avatar {
@@ -296,9 +324,25 @@ VentaOnline
         Ajustes
       </a>
 
-      <div class="vo-avatar">
+      <!-- Separador -->
+      <div class="vo-nav__divider"></div>
+
+      <!-- Avatar -->
+      <a href="{{ url_for('venta.ajustes') }}" class="vo-avatar" title="{{ current_user.email }}">
         {{ (current_user.persona.nombre[0] if current_user.persona and current_user.persona.nombre else '') | upper }}{{ (current_user.persona.apellido_paterno[0] if current_user.persona and current_user.persona.apellido_paterno else '') | upper }}
-      </div>
+      </a>
+
+      <!-- Cerrar sesión -->
+      <form action="{{ url_for('security.logout') }}" method="POST" style="margin:0;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="vo-nav__logout" title="Cerrar sesión">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
+          </svg>
+          Salir
+        </button>
+      </form>
 
     </div>
   </div>

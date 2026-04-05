@@ -49,7 +49,7 @@ def create_app():
     app.config['SECURITY_MSG_UNAUTHENTICATED']   = ("Inicia sesión primero.", "warning")
     app.config['SECURITY_MSG_UNAUTHORIZED']      = ("No tienes permisos para acceder.", "danger")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY']                     = os.urandom(24)
+    app.config['SECRET_KEY']                     = os.getenv('SECRET_KEY')  # ← clave fija desde .env
     app.config['SECURITY_PASSWORD_HASH']         = 'pbkdf2_sha512'
     app.config['SECURITY_PASSWORD_SALT']         = 'thisissecretsalt'
 
@@ -83,6 +83,14 @@ def create_app():
     migrate = Migrate(app, db)
     security = Security(app, user_datastore)
     _init_mongo(app)
+
+    # ==============================
+    # RENOVAR SESIÓN EN CADA REQUEST
+    # ==============================
+    @app.before_request
+    def renovar_sesion():
+        session.permanent = True
+        app.permanent_session_lifetime = timedelta(minutes=10)
 
     # ==============================
     # BLUEPRINTS
