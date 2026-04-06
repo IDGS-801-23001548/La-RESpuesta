@@ -11,7 +11,7 @@ from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 
-from .models import User, Role
+from .models import User, Role, Categoria
 from app.extensions import db, limiter, _init_mongo
 
 load_dotenv()

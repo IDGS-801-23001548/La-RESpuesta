@@ -10,8 +10,7 @@ class Producto(db.Model):
     PrecioCompraProducto   = db.Column(db.Float, nullable=False)
     PrecioVentaProducto    = db.Column(db.Float, nullable=False)
     StockProducto          = db.Column(db.Integer, default=0, nullable=False)
-    # Valores esperados: 'Res' | 'Cerdo' | 'Pollo'
-    Categoria              = db.Column(db.String(50), nullable=True)
+    idCategoria            = db.Column(db.Integer, db.ForeignKey('categoria.idCategoria'), nullable=True)
 
     unidadesProducto       = db.relationship(
         'ProductoUnitario',

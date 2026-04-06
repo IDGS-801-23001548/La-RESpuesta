@@ -1,3 +1,7 @@
+
+INSERT INTO categoria (nombreCategoria) VALUES("Res"),("Pollo"),("Cerdo"),("Borrego"),("Otro");
+
+
 DELIMITER $$
 
 -- ─────────────────────────────────────────────────────────────
@@ -50,3 +54,5 @@ BEGIN
         WHERE idProducto = NEW.idProducto;
     END IF;
 END$$
+
+

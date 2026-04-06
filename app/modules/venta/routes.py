@@ -2,6 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify
 from . import venta
 from app.extensions import db, mongo_fotos
 from app.models.producto import Producto
+from app.models.categoria import Categoria
 from app.models.producto_unitario import ProductoUnitario
 from app.models.carrito import Carrito
 from app.models.pedido import Pedido
@@ -124,11 +125,11 @@ def seleccionar_animal():
 
 def _catalogo_view(categoria, template, emoji, label):
     form = AgregarAlCarritoForm()
-    productos_db = Producto.query.filter_by(
-        Categoria=categoria
-    ).filter(
-        Producto.StockProducto > 0
-    ).order_by(Producto.NombreProducto).all()
+    productos_db = Producto.query \
+        .join(Categoria, Producto.idCategoria == Categoria.idCategoria) \
+        .filter(Categoria.nombreCategoria == categoria) \
+        .filter(Producto.StockProducto > 0) \
+        .order_by(Producto.NombreProducto).all()
 
     items = _enrich_productos_con_fotos(productos_db)
 
