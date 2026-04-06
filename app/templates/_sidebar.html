@@ -102,7 +102,7 @@
                 {{ ui.sidebar_item( "Solicitudes de Producción",
                 url_for('solicitud_de_produccion.solicitudes'),endpoint_prefix="solicitud_de_produccion.solicitudes") }}
                 {{ ui.sidebar_item( "Producción", url_for('admin.produccion'), endpoint_prefix="admin.produccion") }}
-                {{ ui.sidebar_item( "Producto Terminado", url_for('admin.productos'), endpoint_prefix="admin.productos")
+                {{ ui.sidebar_item( "Productos", url_for('productos.catalogo'), endpoint_prefix="productos.catalogo")
                 }}
                 {{ ui.sidebar_item( "Ventas", url_for('admin.ventas'), endpoint_prefix="admin.ventas") }}
 
@@ -203,6 +203,48 @@
 
             <!-- Contenido -->
             <div class="flex-1 overflow-y-auto p-6">
+
+                {# ── Flash messages globales — se consumen aquí para todos los módulos ── #}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div id="flash-messages" class="space-y-2 mb-5">
+                    {% for cat, msg in messages %}
+                    <div class="flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium
+                        {% if cat == 'success' %}bg-green-50 border border-green-200 text-green-700
+                        {% elif cat in ('error', 'danger') %}bg-red-50 border border-red-200 text-red-600
+                        {% elif cat == 'warning' %}bg-amber-50 border border-amber-200 text-amber-700
+                        {% else %}bg-blue-50 border border-blue-200 text-blue-600{% endif %}">
+                        <div class="flex items-center gap-2">
+                            {% if cat == 'success' %}
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {% elif cat in ('error', 'danger') %}
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {% elif cat == 'warning' %}
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {% else %}
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {% endif %}
+                            <span>{{ msg }}</span>
+                        </div>
+                        <button onclick="this.parentElement.remove()" class="shrink-0 opacity-50 hover:opacity-100 transition-opacity">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
                 {% block content %}
                 <p class="text-gray-400 text-sm">Contenido del dashboard...</p>
                 {% endblock %}

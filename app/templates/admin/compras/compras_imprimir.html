@@ -354,9 +354,21 @@
                     </span>
                 </div>
                 <div class="field-row">
-                    <span class="lbl">Artículos</span>
+                    <span class="lbl">Líneas materia</span>
                     <span class="val">{{ items|length }}</span>
                 </div>
+                {% if items_producto %}
+                <div class="field-row">
+                    <span class="lbl">Tipos producto</span>
+                    <span class="val">{{ items_producto|length }} ({{ items_producto | sum(attribute='total') }} pzs)</span>
+                </div>
+                {% endif %}
+                {% if items_canal %}
+                <div class="field-row">
+                    <span class="lbl">Canales</span>
+                    <span class="val">{{ items_canal | sum(attribute='total') }} ({{ "%.2f"|format(items_canal | sum(attribute='peso_total')) }} kg)</span>
+                </div>
+                {% endif %}
                 <div class="field-row">
                     <span class="lbl">Total</span>
                     <span class="val" style="color:#15803d">${{ "{:,.2f}".format(orden.totalOrden) }}</span>
@@ -365,9 +377,10 @@
         </div>
     </div>
 
-    <!-- Tabla de artículos -->
+    <!-- Tabla de artículos — tipo Materia -->
+    {% if items %}
     <div class="items-section">
-        <h3>Detalle de Artículos Solicitados</h3>
+        <h3>Materias Primas Solicitadas</h3>
         <table>
             <thead>
                 <tr>
@@ -416,6 +429,103 @@
             </tfoot>
         </table>
     </div>
+    {% endif %}
+
+    <!-- Tabla de productos unitarios — tipo Producto -->
+    {% if items_producto %}
+    <div class="items-section" style="margin-top:20px">
+        <h3>Productos Ingresados al Inventario</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Producto</th>
+                    <th class="r">Total piezas</th>
+                    <th>Fecha caducidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in items_producto %}
+                <tr>
+                    <td style="color:#9ca3af">{{ loop.index }}</td>
+                    <td>
+                        <strong style="font-size:11px">{{ row.producto.NombreProducto }}</strong>
+                        <div class="sub">{{ row.producto.DescripcionProducto or '' }}</div>
+                    </td>
+                    <td class="r" style="font-weight:700">{{ row.total }}</td>
+                    <td>
+                        {% if row.fecha_caducidad %}{{ row.fecha_caducidad.strftime('%d/%m/%Y') }}
+                        {% else %}<span style="color:#9ca3af">No especificada</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="text-align:right; font-size:10px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+                        Total piezas
+                    </td>
+                    <td class="r" style="font-weight:700; font-size:13px; color:#1d4ed8">
+                        {{ items_producto | sum(attribute='total') }}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Tabla de canales — tipo Canal -->
+    {% if items_canal %}
+    <div class="items-section" style="margin-top:20px">
+        <h3>Canales Ingresadas al Inventario</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Materia / Presentación</th>
+                    <th class="r">Total canales</th>
+                    <th class="r">Peso total (kg)</th>
+                    <th>Fecha sacrificio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in items_canal %}
+                <tr>
+                    <td style="color:#9ca3af">{{ loop.index }}</td>
+                    <td>
+                        <strong style="font-size:11px">{{ row.materia_proveida.nombreMateriaProveida }}</strong>
+                        <div class="sub">{{ row.materia_proveida.materiaPrima.nombreMateriaPrima }}</div>
+                    </td>
+                    <td class="r" style="font-weight:700">{{ row.total }}</td>
+                    <td class="r">
+                        {% if row.peso_total %}{{ "%.2f"|format(row.peso_total) }} kg
+                        {% else %}<span style="color:#9ca3af">—</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if row.fecha_sacrificio %}{{ row.fecha_sacrificio.strftime('%d/%m/%Y') }}
+                        {% else %}<span style="color:#9ca3af">No especificada</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="text-align:right; font-size:10px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+                        Totales
+                    </td>
+                    <td class="r" style="font-weight:700; font-size:13px; color:#d97706">
+                        {{ items_canal | sum(attribute='total') }}
+                    </td>
+                    <td class="r" style="font-weight:700; font-size:13px; color:#d97706">
+                        {{ "%.2f"|format(items_canal | sum(attribute='peso_total')) }} kg
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% endif %}
 
     {% if orden.notas %}
     <div class="notas-section">

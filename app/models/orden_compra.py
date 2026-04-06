@@ -8,13 +8,13 @@ class OrdenCompra(db.Model):
 
     idOrdenCompra   = db.Column(db.Integer, primary_key=True, autoincrement=True)
     idProveedor     = db.Column(db.Integer, db.ForeignKey('proveedor.id'), nullable=False)
-    numeroLote      = db.Column(db.String(20), nullable=True)
+    numeroLote      = db.Column(db.String(20), nullable=True, unique=True)
     estatus         = db.Column(
         db.Enum('EnCurso', 'Recibida', 'Cancelada'),
         nullable=False,
         default='EnCurso'
     )
-    fechaDeOrden    = db.Column(db.Date, default=datetime.utcnow, nullable=False)
+    fechaDeOrden    = db.Column(db.Date, default=datetime.now, nullable=False)
     notas           = db.Column(db.String(500), nullable=True)
     totalOrden      = db.Column(db.Float, nullable=False, default=0.0)
 

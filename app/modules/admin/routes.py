@@ -45,29 +45,6 @@ def produccion_detalle(id):
 def produccion_completar(id):
     return redirect(url_for('admin.produccion_detalle', id=id))
 
-
-@admin.route('/productos')
-def productos():
-    return render_template('admin/productos.html',
-                           productos=[], kg_totales=0)
-
-@admin.route('/productos/ajuste', methods=['GET', 'POST'])
-def productos_ajuste():
-    return render_template('admin/productos_ajuste.html', producto=None)
-
-@admin.route('/ventas')
-def ventas():
-    return render_template('admin/ventas.html',
-        ventas=[],
-        total_hoy='0.00',
-        tickets_hoy=0,
-        kg_hoy=0,
-        ticket_promedio='0.00',
-        ventas_por_canal={},
-        tickets_por_canal={}
-    )
-
-
 @admin.route('/pago')
 def pago():
     return render_template('admin/pagos.html',
@@ -117,3 +94,7 @@ def reportes():
 @admin.route("/ajustes",)
 def ajustes():
     return f"ajustes"
+
+@admin.route("/ventas")
+def ventas():
+    return f"ventas"

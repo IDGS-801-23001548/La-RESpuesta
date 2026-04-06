@@ -1,0 +1,416 @@
+{% extends "_sidebar.html" %}
+
+{% block content %}
+<style>
+  /* ── LAYOUT ── */
+  .form-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  /* ── CARD ── */
+  .form-card {
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .form-card-header {
+    padding: 1rem 1.25rem .75rem;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .form-card-header h3 {
+    font-size: .88rem; font-weight: 800; color: #111827; margin: 0;
+  }
+  .form-card-header p {
+    font-size: .72rem; color: #9ca3af; margin: 2px 0 0;
+  }
+  .form-card-body { padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: .9rem; }
+
+  /* ── FIELD ── */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field-label {
+    font-size: .72rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .07em;
+    color: #374151;
+  }
+  .field-label .req { color: #dc2626; margin-left: 2px; }
+  .field-input, .field-textarea, .field-select {
+    padding: .6rem .85rem;
+    font-size: .85rem; font-family: 'Inter', sans-serif;
+    color: #374151; background: #fff;
+    border: 1.5px solid #e5e7eb; border-radius: 10px;
+    outline: none; transition: all .18s; width: 100%;
+  }
+  .field-input:focus,
+  .field-textarea:focus,
+  .field-select:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22,163,74,.1);
+  }
+  .field-textarea { resize: vertical; min-height: 80px; }
+  .field-error {
+    font-size: 11px; color: #dc2626; font-weight: 600;
+  }
+
+  /* ── PRECIO GRID ── */
+  .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .input-prefix-wrap { position: relative; }
+  .input-prefix-wrap .prefix {
+    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
+    font-size: .85rem; font-weight: 700; color: #9ca3af; pointer-events: none;
+  }
+  .input-prefix-wrap .field-input { padding-left: 1.75rem; }
+
+  /* ── FOTO UPLOAD ── */
+  .foto-dropzone {
+    border: 2px dashed #d1d5db; border-radius: 14px;
+    padding: 1.5rem 1rem; text-align: center;
+    cursor: pointer; transition: all .2s;
+    background: #fafafa; position: relative;
+  }
+  .foto-dropzone:hover, .foto-dropzone.drag-over {
+    border-color: #16a34a; background: #f0fdf4;
+  }
+  .foto-dropzone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .dropzone-icon { font-size: 2rem; margin-bottom: .5rem; opacity: .5; }
+  .dropzone-text { font-size: .78rem; font-weight: 700; color: #6b7280; }
+  .dropzone-hint { font-size: .68rem; color: #9ca3af; margin-top: 3px; }
+
+  /* Previsualización foto */
+  .foto-preview-wrap {
+    border-radius: 12px; overflow: hidden;
+    border: 1.5px solid #e5e7eb; background: #f8faf8;
+    aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center;
+    margin-bottom: .75rem; position: relative;
+  }
+  .foto-preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .foto-preview-wrap .no-foto {
+    font-size: 3rem; opacity: .18; user-select: none;
+  }
+  .foto-preview-wrap .foto-badge {
+    position: absolute; top: 8px; right: 8px;
+    font-size: .6rem; font-weight: 800;
+    background: #f0fdf4; color: #16a34a;
+    border: 1px solid #bbf7d0; padding: 3px 8px; border-radius: 99px;
+  }
+  .foto-preview-wrap .foto-badge.nueva {
+    background: #eff6ff; color: #2563eb; border-color: #bfdbfe;
+  }
+
+  /* ── STOCK INFO ── */
+  .stock-info {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .6rem .85rem;
+    background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 10px;
+  }
+  .stock-info svg { width: 14px; height: 14px; fill: none; stroke: #9ca3af; stroke-width: 2; flex-shrink: 0; }
+  .stock-info span { font-size: .78rem; color: #6b7280; font-weight: 600; }
+  .stock-info strong { color: #374151; }
+
+  /* ── BOTONES ── */
+  .form-actions {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .85rem 1.25rem;
+    border-top: 1px solid #f3f4f6;
+    background: #fafafa;
+  }
+  .btn-guardar {
+    flex: 1; padding: .65rem;
+    background: #16a34a; color: #fff;
+    font-size: .82rem; font-weight: 800;
+    border: none; border-radius: 11px; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 3px 10px rgba(22,163,74,.25);
+    transition: all .18s; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-guardar:hover { background: #15803d; transform: translateY(-1px); }
+  .btn-guardar svg { width: 14px; height: 14px; stroke: #fff; fill: none; }
+  .btn-cancelar {
+    padding: .65rem 1rem;
+    background: #fff; color: #6b7280;
+    font-size: .82rem; font-weight: 700;
+    border: 1.5px solid #e5e7eb; border-radius: 11px; cursor: pointer;
+    font-family: 'Inter', sans-serif; text-decoration: none;
+    transition: all .18s; display: flex; align-items: center; justify-content: center;
+  }
+  .btn-cancelar:hover { border-color: #9ca3af; color: #374151; }
+
+  @media (max-width: 768px) {
+    .form-layout { grid-template-columns: 1fr; }
+  }
+</style>
+
+<!-- ENCABEZADO -->
+<div class="flex items-center gap-3 mb-5">
+  <a href="{{ url_for('productos.catalogo') }}"
+     class="flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+    <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+  </a>
+  <div>
+    <h2 class="text-base font-bold text-gray-800">
+      {% if modo == 'nuevo' %}Nuevo producto{% else %}Editar producto{% endif %}
+    </h2>
+    <p class="text-xs text-gray-400 mt-0.5">
+      {% if modo == 'nuevo' %}
+        El stock inicial siempre es 0 — se gestiona desde producto unitario.
+      {% else %}
+        ID #{{ producto.idProducto }} · Stock actual: <strong>{{ producto.StockProducto }}</strong>
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data" novalidate>
+  {{ form.hidden_tag() }}
+
+  <div class="form-layout">
+
+    <!-- ── COLUMNA IZQUIERDA: datos del producto ── -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+      <!-- Datos básicos -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Datos básicos</h3>
+          <p>Nombre, descripción y categoría</p>
+        </div>
+        <div class="form-card-body">
+
+          <!-- Nombre -->
+          <div class="field">
+            <label class="field-label" for="NombreProducto">
+              Nombre <span class="req">*</span>
+            </label>
+            {{ form.NombreProducto(id="NombreProducto", class="field-input",
+               placeholder="Ej. Bistec de res, Pechuga entera…") }}
+            {% for e in form.NombreProducto.errors %}
+              <span class="field-error">{{ e }}</span>
+            {% endfor %}
+          </div>
+
+          <!-- Descripción -->
+          <div class="field">
+            <label class="field-label" for="DescripcionProducto">Descripción</label>
+            {{ form.DescripcionProducto(id="DescripcionProducto", class="field-textarea",
+               placeholder="Describe el corte, presentación, peso aproximado…",
+               rows=3) }}
+            {% for e in form.DescripcionProducto.errors %}
+              <span class="field-error">{{ e }}</span>
+            {% endfor %}
+          </div>
+
+          <!-- Categoría -->
+          <div class="field">
+            <label class="field-label" for="idCategoria">
+              Categoría <span class="req">*</span>
+            </label>
+            {{ form.idCategoria(id="idCategoria", class="field-select") }}
+            {% for e in form.idCategoria.errors %}
+              <span class="field-error">{{ e }}</span>
+            {% endfor %}
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Precios -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Precios</h3>
+          <p>Precio de compra (costo) y precio de venta (con IVA incluido)</p>
+        </div>
+        <div class="form-card-body">
+          <div class="price-grid">
+
+            <div class="field">
+              <label class="field-label" for="PrecioCompraProducto">
+                Precio compra <span class="req">*</span>
+              </label>
+              <div class="input-prefix-wrap">
+                <span class="prefix">$</span>
+                {{ form.PrecioCompraProducto(id="PrecioCompraProducto",
+                   class="field-input", placeholder="0.00", step="0.01") }}
+              </div>
+              {% for e in form.PrecioCompraProducto.errors %}
+                <span class="field-error">{{ e }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="PrecioVentaProducto">
+                Precio venta <span class="req">*</span>
+              </label>
+              <div class="input-prefix-wrap">
+                <span class="prefix">$</span>
+                {{ form.PrecioVentaProducto(id="PrecioVentaProducto",
+                   class="field-input", placeholder="0.00", step="0.01") }}
+              </div>
+              {% for e in form.PrecioVentaProducto.errors %}
+                <span class="field-error">{{ e }}</span>
+              {% endfor %}
+            </div>
+
+          </div>
+
+          <!-- Margen en vivo -->
+          <div id="margen-wrap" style="display:none; padding:.55rem .85rem; background:#f0fdf4;
+               border:1.5px solid #bbf7d0; border-radius:10px;">
+            <p style="font-size:.75rem; font-weight:700; color:#15803d; margin:0;">
+              Margen: <span id="margen-val">—</span>
+              <span style="font-weight:600; color:#16a34a;" id="margen-pct"></span>
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      {% if modo == 'editar' %}
+      <!-- Info stock (solo lectura) -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Stock</h3>
+          <p>El stock se gestiona automáticamente desde Producto Unitario</p>
+        </div>
+        <div class="form-card-body">
+          <div class="stock-info">
+            <svg viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <span>
+              Unidades disponibles: <strong>{{ producto.StockProducto }}</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── COLUMNA DERECHA: foto ── -->
+    <div>
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Foto del producto</h3>
+          <p>JPG, PNG o WEBP · recomendado 4:3</p>
+        </div>
+        <div class="form-card-body">
+
+          <!-- Previsualización -->
+          <div class="foto-preview-wrap" id="foto-preview-wrap">
+            {% if foto_actual %}
+              <img src="{{ foto_actual }}" alt="Foto actual" id="foto-preview-img">
+              <span class="foto-badge">Foto actual</span>
+            {% else %}
+              <span class="no-foto" id="foto-placeholder">📷</span>
+            {% endif %}
+          </div>
+
+          <!-- Drop zone -->
+          <div class="foto-dropzone" id="foto-dropzone">
+            {{ form.foto(id="foto-input", accept="image/jpeg,image/png,image/webp") }}
+            <div class="dropzone-icon">🖼️</div>
+            <div class="dropzone-text">Haz clic o arrastra una imagen</div>
+            <div class="dropzone-hint">JPG, PNG, WEBP · máx. recomendado 2 MB</div>
+          </div>
+
+          {% for e in form.foto.errors %}
+            <span class="field-error">{{ e }}</span>
+          {% endfor %}
+
+          {% if foto_actual %}
+          <p style="font-size:.68rem; color:#9ca3af; margin-top:.4rem; font-weight:600;">
+            Sube una nueva imagen para reemplazar la actual.
+          </p>
+          {% endif %}
+
+        </div>
+
+        <!-- Acciones -->
+        <div class="form-actions">
+          <button type="submit" class="btn-guardar">
+            <svg viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            {% if modo == 'nuevo' %}Crear producto{% else %}Guardar cambios{% endif %}
+          </button>
+          <a href="{{ url_for('productos.catalogo') }}" class="btn-cancelar">Cancelar</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</form>
+
+<script>
+// ── Preview de imagen ─────────────────────────────────────────────────────────
+const input     = document.getElementById('foto-input');
+const wrap      = document.getElementById('foto-preview-wrap');
+const dropzone  = document.getElementById('foto-dropzone');
+
+input.addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    // Limpiar contenido previo del wrap (excepto el input)
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = e.target.result;
+    img.id  = 'foto-preview-img';
+    const badge = document.createElement('span');
+    badge.className = 'foto-badge nueva';
+    badge.textContent = 'Nueva foto';
+    wrap.appendChild(img);
+    wrap.appendChild(badge);
+  };
+  reader.readAsDataURL(file);
+});
+
+// Drag & drop visual
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) {
+    input.files = e.dataTransfer.files;
+    input.dispatchEvent(new Event('change'));
+  }
+});
+
+// ── Margen en vivo ────────────────────────────────────────────────────────────
+const inputCompra = document.getElementById('PrecioCompraProducto');
+const inputVenta  = document.getElementById('PrecioVentaProducto');
+const margenWrap  = document.getElementById('margen-wrap');
+const margenVal   = document.getElementById('margen-val');
+const margenPct   = document.getElementById('margen-pct');
+
+function calcMargen() {
+  const compra = parseFloat(inputCompra.value);
+  const venta  = parseFloat(inputVenta.value);
+  if (!compra || !venta || compra <= 0) { margenWrap.style.display = 'none'; return; }
+  const margen = venta - compra;
+  const pct    = ((margen / compra) * 100).toFixed(1);
+  margenVal.textContent = '$' + margen.toFixed(2);
+  margenPct.textContent = `(${pct}%)`;
+  margenWrap.style.display = 'block';
+  margenWrap.style.background  = margen >= 0 ? '#f0fdf4' : '#fef2f2';
+  margenWrap.style.borderColor = margen >= 0 ? '#bbf7d0' : '#fca5a5';
+  margenVal.style.color        = margen >= 0 ? '#15803d' : '#dc2626';
+  margenPct.style.color        = margen >= 0 ? '#16a34a' : '#dc2626';
+}
+
+inputCompra.addEventListener('input', calcMargen);
+inputVenta.addEventListener('input', calcMargen);
+calcMargen(); // inicializar si hay valores pre-poblados
+</script>
+{% endblock %}
