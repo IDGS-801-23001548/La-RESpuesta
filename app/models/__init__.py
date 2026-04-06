@@ -4,9 +4,13 @@ from .usuarios import User
 from .users_roles import users_roles
 from .persona import Persona
 from .proveedor import Proveedor
-from .materia import MateriaPrima
-from .compras import OrdenCompra
 from .producto import Producto
 from .producto_unitario import ProductoUnitario
 from .pedido import Pedido
 from .carrito import Carrito
+from .categoria import Categoria
+from .conversor import Conversor
+from .materia_prima import MateriaPrima
+from .materia_proveida import MateriaProveida
+from .orden_compra import OrdenCompra
+from .unidad_medida import UnidadMedida

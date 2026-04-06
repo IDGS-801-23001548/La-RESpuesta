@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 class Proveedor(db.Model):
-    __tablename__ = 'proveedores'
+    __tablename__ = 'proveedor'
 
     id             = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nombre         = db.Column(db.String(150), nullable=False)
@@ -18,29 +18,24 @@ class Proveedor(db.Model):
     correo         = db.Column(db.String(120), nullable=True)
     direccion      = db.Column(db.String(250), nullable=True)
 
-    # Valores posibles: "Res", "Cerdo", "Pollo", "Borrego", "Otro"
-    # Se almacena como cadena separada por comas: "Res,Cerdo"
-    productos      = db.Column(db.String(100), nullable=False)
-
     condicion_pago = db.Column(
                         db.Enum('contado', 'credito_8', 'credito_15', 'credito_30'),
                         nullable=False
                      )
 
-    # Valores posibles: "Lunes", "Martes", ... almacenados como "Lunes,Miercoles,Viernes"
     dias_entrega   = db.Column(db.String(100), nullable=True)
-
     notas          = db.Column(db.Text, nullable=True)
     fecha_registro = db.Column(db.DateTime, default=datetime.now)
+
+    materiasProveidas = db.relationship(
+        'MateriaProveida',
+        backref='proveedor',
+        lazy='dynamic'
+    )
 
     # ------------------------------------------------------------------
     # Propiedades de conveniencia (no columnas extra)
     # ------------------------------------------------------------------
-
-    @property
-    def productos_lista(self):
-        """Devuelve los productos como lista Python."""
-        return self.productos.split(',') if self.productos else []
 
     @property
     def dias_entrega_lista(self):

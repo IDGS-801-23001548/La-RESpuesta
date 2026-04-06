@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request
 from . import materia
 from .forms import MateriaPrimaForm
 from app.extensions import db
-from app.models.materia import MateriaPrima
+from app.models.materia_prima import MateriaPrima
 from flask_login import login_required
 from flask_security import roles_required
 
