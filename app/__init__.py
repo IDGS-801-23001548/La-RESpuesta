@@ -95,14 +95,16 @@ def create_app():
     # ==============================
     # BLUEPRINTS
     # ==============================
-    from .modules.auth      import auth
-    from .modules.admin     import admin
-    from .modules.user      import user
-    from .modules.compras   import compras
-    from .modules.venta     import venta
-    from .modules.logs      import log
-    from .modules.proveedor import proveedor
-    from .modules.materia   import materia
+    from .modules.auth                      import auth
+    from .modules.admin                     import admin
+    from .modules.user                      import user
+    from .modules.compras                   import compras
+    from .modules.venta                     import venta
+    from .modules.logs                      import log
+    from .modules.proveedor                 import proveedor
+    from .modules.materia                   import materia
+    from .modules.recetas                   import receta
+    from .modules.solicitud_de_produccion   import solicitud_de_produccion
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
@@ -112,6 +114,8 @@ def create_app():
     app.register_blueprint(log)
     app.register_blueprint(proveedor)
     app.register_blueprint(materia)
+    app.register_blueprint(receta)
+    app.register_blueprint(solicitud_de_produccion)
 
     # ==============================
     # MANEJO DE ERRORES

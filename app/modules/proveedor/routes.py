@@ -3,8 +3,10 @@ from . import proveedor
 from .forms import ProveedorForm
 from app.extensions import db
 from app.models.proveedor import Proveedor
+from app.models.orden_compra import OrdenCompra
 from flask_login import login_required
 from flask_security import roles_required
+from datetime import date
 
 
 @proveedor.route('/proveedores')
@@ -29,7 +31,6 @@ def proveedores_nuevo():
             telefono       = form.telefono.data.strip(),
             correo         = form.correo.data.strip() or None,
             direccion      = form.direccion.data.strip() or None,
-            productos      = ','.join(form.productos.data),
             condicion_pago = form.condicion_pago.data,
             dias_entrega   = ','.join(form.dias_entrega.data) if form.dias_entrega.data else None,
             notas          = form.notas.data.strip() or None,
@@ -46,7 +47,39 @@ def proveedores_nuevo():
 @roles_required('admin')
 def proveedores_detalle(id):
     prov = Proveedor.query.get_or_404(id)
-    return render_template('admin/proveedores/proveedores_detalle.html', proveedor=prov)
+
+    # Historial de órdenes de compra del proveedor (más recientes primero)
+    ordenes = (
+        OrdenCompra.query
+        .filter_by(idProveedor=prov.id)
+        .order_by(OrdenCompra.fechaDeOrden.desc(), OrdenCompra.idOrdenCompra.desc())
+        .all()
+    )
+
+    # Estadísticas calculadas
+    total_ordenes   = len(ordenes)
+    total_comprado  = sum(o.totalOrden for o in ordenes if o.estatus != 'Cancelada')
+    ultima_compra   = ordenes[0].fechaDeOrden if ordenes else None
+
+    hoy = date.today()
+    compras_mes     = sum(
+        1 for o in ordenes
+        if o.estatus != 'Cancelada'
+        and o.fechaDeOrden.month == hoy.month
+        and o.fechaDeOrden.year  == hoy.year
+    )
+
+    return render_template(
+        'admin/proveedores/proveedores_detalle.html',
+        proveedor=prov,
+        ordenes=ordenes,
+        stats={
+            'total_ordenes':  total_ordenes,
+            'total_comprado': total_comprado,
+            'ultima_compra':  ultima_compra,
+            'compras_mes':    compras_mes,
+        },
+    )
 
 
 @proveedor.route('/proveedores/<int:id>/editar', methods=['GET', 'POST'])
@@ -57,8 +90,6 @@ def proveedores_editar(id):
     form = ProveedorForm(obj=prov)
 
     if request.method == 'GET':
-        # Convertir las cadenas almacenadas a listas para preseleccionar checkboxes
-        form.productos.data    = prov.productos_lista
         form.dias_entrega.data = prov.dias_entrega_lista
 
     if form.validate_on_submit():
@@ -69,7 +100,6 @@ def proveedores_editar(id):
         prov.telefono       = form.telefono.data.strip()
         prov.correo         = form.correo.data.strip() or None
         prov.direccion      = form.direccion.data.strip() or None
-        prov.productos      = ','.join(form.productos.data)
         prov.condicion_pago = form.condicion_pago.data
         prov.dias_entrega   = ','.join(form.dias_entrega.data) if form.dias_entrega.data else None
         prov.notas          = form.notas.data.strip() or None

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de Compra — {{ orden.numeroLote }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 11px;
+            color: #1f2937;
+            background: #fff;
+        }
+
+        .page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        /* ── Botón imprimir (se oculta al imprimir) ── */
+        .print-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .btn-print {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #16a34a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #f9fafb;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* ── Encabezado del documento ── */
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #16a34a;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .doc-header .company h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #15803d;
+            letter-spacing: -0.5px;
+        }
+        .doc-header .company p {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        .doc-header .doc-meta {
+            text-align: right;
+        }
+        .doc-header .doc-meta .lote {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1f2937;
+            font-family: monospace;
+        }
+        .doc-header .doc-meta .tipo {
+            font-size: 10px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .doc-header .doc-meta .fecha {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* ── Estatus badge ── */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .badge-encurso  { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .badge-recibida { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .badge-cancelada{ background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        /* ── Texto de solicitud formal ── */
+        .formal-text {
+            background: #f0fdf4;
+            border-left: 3px solid #16a34a;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 24px;
+            line-height: 1.7;
+            color: #374151;
+            font-size: 11px;
+        }
+
+        /* ── Sección de dos columnas (proveedor / info orden) ── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .info-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .info-card .card-title {
+            background: #f9fafb;
+            padding: 6px 12px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #9ca3af;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-card .card-body {
+            padding: 12px;
+        }
+        .info-card .card-body strong {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+        .info-card .card-body p {
+            color: #6b7280;
+            line-height: 1.6;
+            font-size: 10px;
+        }
+        .field-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            font-size: 10px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .field-row:last-child { border-bottom: none; }
+        .field-row .lbl { color: #9ca3af; }
+        .field-row .val { font-weight: 600; color: #374151; }
+
+        /* ── Tabla de artículos ── */
+        .items-section h3 {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        thead tr {
+            background: #f9fafb;
+        }
+        thead th {
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        thead th.r { text-align: right; }
+        tbody tr {
+            border-bottom: 1px solid #f3f4f6;
+        }
+        tbody tr:last-child { border-bottom: none; }
+        tbody td {
+            padding: 9px 10px;
+            color: #374151;
+            vertical-align: top;
+        }
+        tbody td.r { text-align: right; }
+        tbody td .sub { font-size: 9px; color: #9ca3af; margin-top: 1px; }
+        tfoot tr {
+            border-top: 2px solid #e5e7eb;
+            background: #f9fafb;
+        }
+        tfoot td {
+            padding: 10px 10px;
+            font-weight: 700;
+        }
+        .total-amount {
+            font-size: 14px;
+            color: #15803d;
+        }
+
+        /* ── Notas ── */
+        .notas-section {
+            margin-top: 20px;
+            padding: 10px 14px;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            font-size: 10px;
+            color: #6b7280;
+        }
+        .notas-section strong { color: #374151; }
+
+        /* ── Pie de página ── */
+        .doc-footer {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .firma-box {
+            text-align: center;
+            width: 160px;
+        }
+        .firma-line {
+            border-top: 1px solid #374151;
+            margin-bottom: 4px;
+        }
+        .firma-box p { font-size: 9px; color: #6b7280; }
+        .generated-note {
+            font-size: 9px;
+            color: #d1d5db;
+            text-align: right;
+        }
+
+        /* ── Reglas de impresión ── */
+        @media print {
+            .print-bar { display: none !important; }
+            body { font-size: 10px; }
+            .page { padding: 20px; max-width: 100%; }
+            thead { display: table-header-group; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+
+    <!-- Barra de acciones (solo pantalla) -->
+    <div class="print-bar">
+        <a href="{{ url_for('compras.compra_detalle', id=orden.idOrdenCompra) }}" class="btn-back">
+            ← Volver al detalle
+        </a>
+        <button class="btn-print" onclick="window.print()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Imprimir / Guardar PDF
+        </button>
+    </div>
+
+    <!-- Encabezado del documento -->
+    <div class="doc-header">
+        <div class="company">
+            <h1>La RESpuesta</h1>
+            <p>Sistema de Gestión — Rastro &amp; Carnicería</p>
+        </div>
+        <div class="doc-meta">
+            <div class="tipo">Orden de Compra</div>
+            <div class="lote">{{ orden.numeroLote }}</div>
+            <div class="fecha">Fecha: {{ orden.fechaDeOrden.strftime('%d de %B de %Y') }}</div>
+            {% if orden.estatus == 'Recibida' %}
+            <span class="badge badge-recibida">Recibida</span>
+            {% elif orden.estatus == 'EnCurso' %}
+            <span class="badge badge-encurso">En Curso</span>
+            {% else %}
+            <span class="badge badge-cancelada">Cancelada</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Texto formal de solicitud -->
+    <div class="formal-text">
+        Por medio de la presente, <strong>La RESpuesta</strong> solicita formalmente a la empresa
+        <strong>{{ orden.proveedor.nombre }}</strong>
+        {% if orden.proveedor.direccion %}
+        con domicilio en <strong>{{ orden.proveedor.direccion }}</strong>
+        {% endif %}
+        el suministro de los artículos descritos en este documento, con fecha de orden
+        <strong>{{ orden.fechaDeOrden.strftime('%d/%m/%Y') }}</strong>
+        y bajo las condiciones de pago acordadas
+        (<strong>{% if orden.proveedor.dias_credito == 0 %}Contado{% else %}Crédito a {{ orden.proveedor.dias_credito }} días{% endif %}</strong>).
+        Se solicita confirmar la recepción de esta orden y coordinar la entrega en tiempo y forma.
+    </div>
+
+    <!-- Info proveedor / orden -->
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="card-title">Datos del Proveedor</div>
+            <div class="card-body">
+                <strong>{{ orden.proveedor.nombre }}</strong>
+                <p>
+                    RFC: {{ orden.proveedor.rfc }}<br>
+                    Contacto: {{ orden.proveedor.contacto }}<br>
+                    Tel: {{ orden.proveedor.telefono }}
+                    {% if orden.proveedor.correo %}<br>{{ orden.proveedor.correo }}{% endif %}
+                    {% if orden.proveedor.direccion %}<br>{{ orden.proveedor.direccion }}{% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="info-card">
+            <div class="card-title">Datos de la Orden</div>
+            <div class="card-body">
+                <div class="field-row">
+                    <span class="lbl">N° de lote</span>
+                    <span class="val" style="font-family:monospace">{{ orden.numeroLote }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="lbl">Fecha de orden</span>
+                    <span class="val">{{ orden.fechaDeOrden.strftime('%d/%m/%Y') }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="lbl">Condición de pago</span>
+                    <span class="val">
+                        {% if orden.proveedor.dias_credito == 0 %}Contado
+                        {% else %}Crédito {{ orden.proveedor.dias_credito }} días{% endif %}
+                    </span>
+                </div>
+                <div class="field-row">
+                    <span class="lbl">Artículos</span>
+                    <span class="val">{{ items|length }}</span>
+                </div>
+                <div class="field-row">
+                    <span class="lbl">Total</span>
+                    <span class="val" style="color:#15803d">${{ "{:,.2f}".format(orden.totalOrden) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de artículos -->
+    <div class="items-section">
+        <h3>Detalle de Artículos Solicitados</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Materia Prima / Presentación</th>
+                    <th class="r">Cantidad</th>
+                    <th>Unidad</th>
+                    <th class="r">Por unidad</th>
+                    <th>Conversor</th>
+                    <th class="r">Total conv.</th>
+                    <th class="r">Precio unit.</th>
+                    <th class="r">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                {% set mp    = item.materiaProveida %}
+                {% set unidad = mp.unidadMedida %}
+                {% set conv  = unidad.conversor if unidad else none %}
+                <tr>
+                    <td style="color:#9ca3af">{{ loop.index }}</td>
+                    <td>
+                        <strong style="font-size:11px">{{ mp.nombreMateriaProveida }}</strong>
+                        <div class="sub">{{ mp.materiaPrima.nombreMateriaPrima }}</div>
+                    </td>
+                    <td class="r">{{ "%.4g"|format(item.cantidadDeUnidad) }}</td>
+                    <td>{{ unidad.nombreUnidadMedida if unidad else '—' }}</td>
+                    <td class="r">{{ "%.4g"|format(item.cantidadPorUnidad) }}</td>
+                    <td>{{ conv.nombreConversor if conv else '—' }}</td>
+                    <td class="r">
+                        {{ "%.4g"|format(item.totalMateria) }}
+                        {% if conv %}<span style="color:#9ca3af"> {{ conv.nombreConversor }}</span>{% endif %}
+                    </td>
+                    <td class="r">${{ "{:,.2f}".format(item.precioPorUnidad) }}</td>
+                    <td class="r" style="font-weight:700">${{ "{:,.2f}".format(item.totalCosto) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="8" style="text-align:right; font-size:10px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+                        Total de la Orden
+                    </td>
+                    <td class="r total-amount">${{ "{:,.2f}".format(orden.totalOrden) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    {% if orden.notas %}
+    <div class="notas-section">
+        <strong>Notas y observaciones:</strong> {{ orden.notas }}
+    </div>
+    {% endif %}
+
+    <!-- Pie con firmas -->
+    <div class="doc-footer">
+        <div class="firma-box">
+            <div class="firma-line" style="margin-top:40px"></div>
+            <p>Autorizado por</p>
+            <p style="font-weight:600; color:#374151">La RESpuesta</p>
+        </div>
+        <div class="generated-note">
+            Documento generado el {{ today.strftime('%d/%m/%Y') }}<br>
+            Sistema de Gestión — La RESpuesta
+        </div>
+        <div class="firma-box">
+            <div class="firma-line" style="margin-top:40px"></div>
+            <p>Recibido por</p>
+            <p style="font-weight:600; color:#374151">{{ orden.proveedor.nombre }}</p>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

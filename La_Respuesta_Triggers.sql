@@ -56,3 +56,24 @@ BEGIN
 END$$
 
 
+-- Conversores
+INSERT INTO conversor (idConversor, nombreConversor) VALUES
+  (1, 'Kilogramos'),
+  (2, 'Piezas'),
+  (3, 'Litros');
+
+-- Unidades de medida
+INSERT INTO unidad_medida (nombreUnidadMedida, idConversor) VALUES
+  ('Canal entera', 1),   
+  ('Media canal',1),  
+  ('Kilogramo',1),   
+  ('Tonelada',1),   
+  ('Paquete',1),  
+  ('Bolsa',1),   
+  ('Bulto',1),   
+  ('Pieza',2),  
+  ('Caja',2),   
+  ('Litro',3);  
+
+
+INSERT INTO Categoria (nombreCategoria) VALUES ('RES'), ('CERDO'), ('POLLO'), ('BORREGO'), ('OTRO');
