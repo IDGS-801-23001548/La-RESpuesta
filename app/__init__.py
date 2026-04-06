@@ -11,7 +11,7 @@ from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 
-from .models import User, Role
+from .models import User, Role, Categoria
 from app.extensions import db, limiter, _init_mongo
 
 load_dotenv()
@@ -45,11 +45,11 @@ def create_app():
     # ==============================
     app.config['SECURITY_LOGIN_URL']             = '/login'
     app.config['SECURITY_UNAUTHORIZED_VIEW']     = 'auth.login'
-    app.config['PERMANENT_SESSION_LIFETIME']     = timedelta(minutes=10)
+    app.config['PERMANENT_SESSION_LIFETIME']     = timedelta(days=7)
     app.config['SECURITY_MSG_UNAUTHENTICATED']   = ("Inicia sesión primero.", "warning")
     app.config['SECURITY_MSG_UNAUTHORIZED']      = ("No tienes permisos para acceder.", "danger")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY']                     = os.urandom(24)
+    app.config['SECRET_KEY']                     = os.getenv('SECRET_KEY')  # ← clave fija desde .env
     app.config['SECURITY_PASSWORD_HASH']         = 'pbkdf2_sha512'
     app.config['SECURITY_PASSWORD_SALT']         = 'thisissecretsalt'
 
@@ -85,17 +85,27 @@ def create_app():
     _init_mongo(app)
 
     # ==============================
+    # RENOVAR SESIÓN EN CADA REQUEST
+    # ==============================
+    @app.before_request
+    def renovar_sesion():
+        session.permanent = True
+        # El lifetime real lo controla session_expiration en la BD (10 min o 7 días)
+
+    # ==============================
     # BLUEPRINTS
     # ==============================
-    from .modules.auth      import auth
-    from .modules.admin     import admin
-    from .modules.user      import user
-    from .modules.compras   import compras
-    from .modules.venta     import venta
-    from .modules.logs      import log
-    from .modules.proveedor import proveedor
-    from .modules.materia   import materia
-    from .modules.mostrador import mostrador
+    from .modules.auth                      import auth
+    from .modules.admin                     import admin
+    from .modules.user                      import user
+    from .modules.compras                   import compras
+    from .modules.venta                     import venta
+    from .modules.logs                      import log
+    from .modules.proveedor                 import proveedor
+    from .modules.materia                   import materia
+    from .modules.recetas                   import receta
+    from .modules.solicitud_de_produccion   import solicitud_de_produccion
+    from .modules.productos                 import productos
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
@@ -105,7 +115,9 @@ def create_app():
     app.register_blueprint(log)
     app.register_blueprint(proveedor)
     app.register_blueprint(materia)
-    app.register_blueprint(mostrador)
+    app.register_blueprint(receta)
+    app.register_blueprint(solicitud_de_produccion)
+    app.register_blueprint(productos)
 
     # ==============================
     # MANEJO DE ERRORES

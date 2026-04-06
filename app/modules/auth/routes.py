@@ -75,6 +75,7 @@ def login_post():
     user.bloqueado_hasta   = None
 
     session["session_token"] = user.session_token
+    session["remember_me"]   = remember          # persiste el tipo de sesión en la cookie
 
     db.session.commit()
 
@@ -145,9 +146,10 @@ def register_post():
 def logout():
     current_user.session_token      = None
     current_user.session_expiration = None
+
     db.session.commit()
 
-    logout_user()
     session.clear()
+    logout_user()
 
     return redirect(url_for("auth.login"))

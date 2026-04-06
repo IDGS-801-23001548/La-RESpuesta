@@ -23,37 +23,6 @@ def index():
 def dashboard():
     return render_template("admin/dashboard.html")
 
-@admin.route('/recetas')
-def recetas():
-    return render_template('admin/recetas.html', recetas=[])
-
-@admin.route('/recetas/nueva')
-def recetas_nueva():
-    return render_template('admin/recetas_form.html', receta=None)
-
-@admin.route('/recetas/<int:id>/editar')
-def recetas_editar(id):
-    return render_template('admin/recetas_form.html', receta=None)
-
-@admin.route('/recetas/<int:id>/eliminar', methods=['POST'])
-def recetas_eliminar(id):
-    return redirect(url_for('recetas'))
-
-@admin.route('/solicitudes')
-def solicitudes():
-    return render_template('admin/solicitudes.html', solicitudes=[])
-
-@admin.route('/solicitudes/nueva')
-def solicitudes_nueva():
-    return render_template('admin/solicitudes_form.html', solicitud=None)
-
-@admin.route('/solicitudes/<int:id>/editar')
-def solicitudes_editar(id):
-    return render_template('admin/solicitudes_form.html', solicitud=None)
-
-@admin.route('/solicitudes/<int:id>/cancelar', methods=['POST'])
-def solicitudes_cancelar(id):
-    return redirect(url_for('admin.solicitudes'))
 
 @admin.route('/produccion')
 def produccion():
@@ -75,29 +44,6 @@ def produccion_detalle(id):
 @admin.route('/produccion/<int:id>/completar', methods=['GET', 'POST'])
 def produccion_completar(id):
     return redirect(url_for('admin.produccion_detalle', id=id))
-
-
-@admin.route('/productos')
-def productos():
-    return render_template('admin/productos.html',
-                           productos=[], kg_totales=0)
-
-@admin.route('/productos/ajuste', methods=['GET', 'POST'])
-def productos_ajuste():
-    return render_template('admin/productos_ajuste.html', producto=None)
-
-@admin.route('/ventas')
-def ventas():
-    return render_template('admin/ventas.html',
-        ventas=[],
-        total_hoy='0.00',
-        tickets_hoy=0,
-        kg_hoy=0,
-        ticket_promedio='0.00',
-        ventas_por_canal={},
-        tickets_por_canal={}
-    )
-
 
 @admin.route('/pago')
 def pago():
@@ -148,3 +94,7 @@ def reportes():
 @admin.route("/ajustes",)
 def ajustes():
     return f"ajustes"
+
+@admin.route("/ventas")
+def ventas():
+    return f"ventas"

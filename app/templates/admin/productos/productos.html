@@ -8,7 +8,7 @@
         <h2 class="text-lg font-semibold text-gray-800">Inventario de Producto Terminado</h2>
         <p class="text-xs text-gray-400 mt-0.5">Cortes y productos disponibles para venta</p>
     </div>
-    <a href="{{ url_for('admin.productos_ajuste') }}"
+    <a href="{{ url_for('solicitud_de_produccion.productos_ajuste') }}"
         class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
                text-white text-sm font-medium rounded-lg shadow-sm shadow-green-200
                transition-all duration-150 hover:-translate-y-px active:translate-y-0">
@@ -77,7 +77,7 @@
     </svg>
     <p class="text-xs text-red-700 font-medium">
         <strong>{{ agotados | length }} producto(s) agotado(s)</strong> —
-        <a href="{{ url_for('admin.solicitudes_nueva') }}" class="underline hover:text-red-900">solicitar producción</a>
+        <a href="{{ url_for('solicitud_de_produccion.solicitudes_nueva') }}" class="underline hover:text-red-900">solicitar producción</a>
     </p>
 </div>
 {% endif %}
@@ -247,7 +247,7 @@
                     <!-- Acciones -->
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href="{{ url_for('admin.inventario_ajuste', id=p.id_producto) }}"
+                            <a href="{{ url_for('solicitud_de_produccion.inventario_ajuste', id=p.id_producto) }}"
                                 class="w-7 h-7 flex items-center justify-center rounded-md
                                        text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                 title="Ajustar stock">
@@ -256,7 +256,7 @@
                                 </svg>
                             </a>
                             {% if bajo or agotado %}
-                            <a href="{{ url_for('admin.solicitudes_nueva') }}"
+                            <a href="{{ url_for('solicitud_de_produccion.solicitudes_nueva') }}"
                                 class="w-7 h-7 flex items-center justify-center rounded-md
                                        text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                                 title="Solicitar producción">
@@ -277,7 +277,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                         </svg>
                         <p class="text-xs text-gray-400 mb-2">Sin stock — el inventario se llena al completar órdenes de producción</p>
-                        <a href="{{ url_for('admin.produccion_nueva') }}"
+                        <a href="{{ url_for('solicitud_de_produccion.produccion_nueva') }}"
                             class="text-xs text-green-600 hover:underline">Crear orden de producción →</a>
                     </td>
                 </tr>
