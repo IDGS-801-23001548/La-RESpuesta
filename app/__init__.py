@@ -45,7 +45,7 @@ def create_app():
     # ==============================
     app.config['SECURITY_LOGIN_URL']             = '/login'
     app.config['SECURITY_UNAUTHORIZED_VIEW']     = 'auth.login'
-    app.config['PERMANENT_SESSION_LIFETIME']     = timedelta(minutes=10)
+    app.config['PERMANENT_SESSION_LIFETIME']     = timedelta(days=7)
     app.config['SECURITY_MSG_UNAUTHENTICATED']   = ("Inicia sesión primero.", "warning")
     app.config['SECURITY_MSG_UNAUTHORIZED']      = ("No tienes permisos para acceder.", "danger")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -90,7 +90,7 @@ def create_app():
     @app.before_request
     def renovar_sesion():
         session.permanent = True
-        app.permanent_session_lifetime = timedelta(minutes=10)
+        # El lifetime real lo controla session_expiration en la BD (10 min o 7 días)
 
     # ==============================
     # BLUEPRINTS

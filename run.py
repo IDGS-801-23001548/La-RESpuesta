@@ -6,7 +6,7 @@ from flask import session, redirect, url_for
 from flask_login import current_user, logout_user
 from app.models import Persona
 from app import create_app, user_datastore
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.models import User
 
 if __name__ == '__main__':
@@ -95,9 +95,15 @@ if __name__ == '__main__':
             return
         
         if current_user.is_authenticated:
-            token_db = current_user.session_token
+            token_db    = current_user.session_token
             token_session = session.get("session_token")
-            expiration = current_user.session_expiration
+            expiration  = current_user.session_expiration
+
+            # Limpiar tokens expirados del usuario actual (housekeeping)
+            if expiration and expiration < datetime.now() and token_db:
+                current_user.session_token = None
+                current_user.session_expiration = None
+                db.session.commit()
 
             if not token_db or not token_session or token_db != token_session or not expiration or expiration < datetime.now():
                 app.logger.warning(
@@ -105,8 +111,14 @@ if __name__ == '__main__':
                 )
                 current_user.session_token = None
                 current_user.session_expiration = None
-                logout_user()
                 session.clear()
+                logout_user()
                 return redirect(url_for("auth.login"))
+
+            # Sesión válida — renovar expiración (sliding session)
+            remember_me = session.get("remember_me", False)
+            delta = timedelta(days=7) if remember_me else timedelta(minutes=10)
+            current_user.session_expiration = datetime.now() + delta
+            db.session.commit()
 
     app.run(debug=True)
