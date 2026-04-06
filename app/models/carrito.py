@@ -7,7 +7,7 @@ class Carrito(db.Model):
 
     idCarrito = db.Column(db.Integer, primary_key=True)
     idUsuario = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
-    fechaCreacion = db.Column(db.DateTime, default=datetime.utcnow)
+    fechaCreacion = db.Column(db.DateTime, default=datetime.now)
 
     productos = db.relationship(
         'ProductoUnitario',

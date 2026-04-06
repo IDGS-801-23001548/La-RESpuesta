@@ -2,10 +2,6 @@
 
 {% block content %}
 
-<!-- ══════════════════════════════
-     COMPRAS — Nueva orden
-══════════════════════════════ -->
-
 <div class="flex items-center gap-3 mb-6">
     <a href="{{ url_for('compras.compra') }}"
         class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
@@ -100,12 +96,8 @@
                     </button>
                 </div>
 
-                <!-- Contenedor de líneas -->
-                <div id="lineas-container" class="divide-y divide-gray-50 p-4 space-y-4">
-                    <!-- Las líneas se insertan aquí con JS -->
-                </div>
+                <div id="lineas-container" class="divide-y divide-gray-50 p-4 space-y-4"></div>
 
-                <!-- Mensaje vacío -->
                 <div id="msg-vacio" class="px-5 py-8 text-center">
                     <svg class="w-8 h-8 text-gray-200 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -114,12 +106,10 @@
                     <p class="text-xs text-gray-400">Selecciona un proveedor para agregar materias primas</p>
                 </div>
 
-                <!-- Total de la orden -->
                 <div id="total-footer" class="hidden border-t-2 border-gray-100 bg-gray-50/50 px-5 py-3 flex justify-end items-center gap-3">
                     <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total de la orden</span>
                     <span id="total-orden" class="text-base font-bold text-gray-800">$0.00</span>
                 </div>
-
             </div>
 
         </div>
@@ -196,7 +186,7 @@
 <template id="linea-template">
     <div class="linea-item bg-gray-50/50 border border-gray-100 rounded-xl p-4 space-y-3">
 
-        <!-- Fila 1: Materia prima y Materia proveida -->
+        <!-- Fila 1: Materia prima y Materia proveída -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
@@ -219,23 +209,25 @@
             </div>
         </div>
 
-        <!-- Fila 2: Unidad de medida y Conversor (solo lectura) -->
-        <div class="grid grid-cols-2 gap-3">
+        <!-- Fila 2: Unidad de medida, Conversor y badge tipo -->
+        <div class="grid grid-cols-3 gap-3">
             <div>
                 <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
                     Unidad de medida
                 </label>
-                <div class="info-unidad w-full px-3 py-2 text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg">
-                    —
-                </div>
+                <div class="info-unidad w-full px-3 py-2 text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg">—</div>
             </div>
             <div>
                 <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
                     Conversor
                 </label>
-                <div class="info-conversor w-full px-3 py-2 text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg">
-                    —
-                </div>
+                <div class="info-conversor w-full px-3 py-2 text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg">—</div>
+            </div>
+            <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
+                    Tipo
+                </label>
+                <div class="info-tipo w-full px-3 py-2 text-xs font-semibold bg-gray-100 border border-gray-200 rounded-lg text-gray-500">—</div>
             </div>
         </div>
 
@@ -245,18 +237,18 @@
                 <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
                     Cantidad <span class="text-[10px] text-gray-300">(unidades)</span>
                 </label>
-                <input type="number" name="cantidad_de_unidad[]" class="inp-cant-u w-full px-3 py-2 text-xs text-gray-700 bg-white
-                               border border-gray-200 rounded-lg outline-none text-right
-                               focus:border-green-400 focus:ring-1 focus:ring-green-100 transition-all"
+                <input type="number" name="cantidad_de_unidad[]"
+                    class="inp-cant-u w-full px-3 py-2 text-xs text-gray-700 bg-white border border-gray-200
+                               rounded-lg outline-none text-right focus:border-green-400 focus:ring-1 focus:ring-green-100 transition-all"
                     min="0.01" step="0.01" placeholder="0" required>
             </div>
             <div>
                 <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
                     Por unidad <span class="text-[10px] text-gray-300">(conversor)</span>
                 </label>
-                <input type="number" name="cantidad_por_unidad[]" class="inp-cant-x w-full px-3 py-2 text-xs text-gray-700 bg-white
-                               border border-gray-200 rounded-lg outline-none text-right
-                               focus:border-green-400 focus:ring-1 focus:ring-green-100 transition-all"
+                <input type="number" name="cantidad_por_unidad[]"
+                    class="inp-cant-x w-full px-3 py-2 text-xs text-gray-700 bg-white border border-gray-200
+                               rounded-lg outline-none text-right focus:border-green-400 focus:ring-1 focus:ring-green-100 transition-all"
                     min="0.0001" step="any" placeholder="0" required>
             </div>
             <div>
@@ -265,9 +257,9 @@
                 </label>
                 <div class="relative">
                     <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">$</span>
-                    <input type="number" name="precio_por_unidad[]" class="inp-precio w-full pl-5 pr-2 py-2 text-xs text-gray-700 bg-white
-                                   border border-gray-200 rounded-lg outline-none text-right
-                                   focus:border-green-400 focus:ring-1 focus:ring-green-100 transition-all"
+                    <input type="number" name="precio_por_unidad[]"
+                        class="inp-precio w-full pl-5 pr-2 py-2 text-xs text-gray-700 bg-white border border-gray-200
+                                   rounded-lg outline-none text-right focus:border-green-400 focus:ring-1 focus:ring-green-100 transition-all"
                         min="0" step="0.01" placeholder="0.00" required>
                 </div>
             </div>
@@ -275,12 +267,71 @@
                 <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
                     Subtotal
                 </label>
-                <div class="lbl-subtotal w-full px-3 py-2 text-xs font-semibold text-gray-700 bg-gray-100
-                               border border-gray-200 rounded-lg text-right">
+                <div class="lbl-subtotal w-full px-3 py-2 text-xs font-semibold text-gray-700 bg-gray-100 border border-gray-200 rounded-lg text-right">
                     $0.00
                 </div>
             </div>
         </div>
+
+        <!-- ── Campo condicional: Producto → fecha de caducidad ── -->
+        <div class="div-tipo-producto hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-blue-50/60 border border-blue-100 rounded-lg">
+                <div class="sm:col-span-2">
+                    <div class="flex items-center gap-1.5 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600">Tipo Producto — se insertará en Producto Unitario</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
+                        Fecha de caducidad
+                    </label>
+                    <input type="date" name="fecha_caducidad[]"
+                        class="inp-fecha-cad w-full px-3 py-2 text-xs text-gray-700 bg-white border border-gray-200
+                               rounded-lg outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all">
+                    <p class="mt-1 text-[10px] text-gray-400">
+                        Se creará <strong class="lbl-n-piezas text-blue-600">N</strong> unidades en producto_unitario.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Campo condicional: Canal → fecha de sacrificio + peso ── -->
+        <div class="div-tipo-canal hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-amber-50/60 border border-amber-100 rounded-lg">
+                <div class="sm:col-span-2">
+                    <div class="flex items-center gap-1.5 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600">Tipo Canal — se insertará en tabla Canal</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
+                        Fecha de sacrificio <span class="text-red-400">*</span>
+                    </label>
+                    <input type="date" name="fecha_sacrificio[]"
+                        class="inp-fecha-sac w-full px-3 py-2 text-xs text-gray-700 bg-white border border-gray-200
+                               rounded-lg outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-100 transition-all">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
+                        Peso por canal (kg) <span class="text-red-400">*</span>
+                    </label>
+                    <input type="number" name="peso_canal[]"
+                        class="inp-peso-canal w-full px-3 py-2 text-xs text-gray-700 bg-white border border-gray-200
+                               rounded-lg outline-none text-right focus:border-amber-400 focus:ring-1 focus:ring-amber-100 transition-all"
+                        min="0.01" step="0.001" placeholder="0.000">
+                    <p class="mt-1 text-[10px] text-gray-400">
+                        Se creará <strong class="lbl-n-canales text-amber-600">N</strong> canales en la tabla canal.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campos hidden para tipos no activos (para que los arrays paralelos siempre tengan la misma longitud) -->
+        <input type="hidden" name="fecha_caducidad[]"  class="inp-fecha-cad-hidden"  value="">
+        <input type="hidden" name="fecha_sacrificio[]" class="inp-fecha-sac-hidden"  value="">
+        <input type="hidden" name="peso_canal[]"       class="inp-peso-canal-hidden" value="">
 
         <!-- Fila 4: Totales calculados + botón eliminar -->
         <div class="flex items-center justify-between pt-1">
@@ -309,63 +360,57 @@
 
 <!-- ══ JavaScript ══ -->
 <script>
-    const PROV_SELECT     = document.getElementById('proveedor-select');
-    const BTN_AGREGAR     = document.getElementById('btn-agregar');
-    const BTN_REGISTRAR   = document.getElementById('btn-registrar');
-    const CONTAINER       = document.getElementById('lineas-container');
-    const MSG_VACIO       = document.getElementById('msg-vacio');
-    const TOTAL_FOOTER    = document.getElementById('total-footer');
-    const TOTAL_LABEL     = document.getElementById('total-orden');
-    const RESUMEN_ART     = document.getElementById('resumen-articulos');
-    const RESUMEN_TOTAL   = document.getElementById('resumen-total');
-    const TMPL            = document.getElementById('linea-template');
+    const PROV_SELECT   = document.getElementById('proveedor-select');
+    const BTN_AGREGAR   = document.getElementById('btn-agregar');
+    const BTN_REGISTRAR = document.getElementById('btn-registrar');
+    const CONTAINER     = document.getElementById('lineas-container');
+    const MSG_VACIO     = document.getElementById('msg-vacio');
+    const TOTAL_FOOTER  = document.getElementById('total-footer');
+    const TOTAL_LABEL   = document.getElementById('total-orden');
+    const RESUMEN_ART   = document.getElementById('resumen-articulos');
+    const RESUMEN_TOTAL = document.getElementById('resumen-total');
+    const TMPL          = document.getElementById('linea-template');
 
-    const fmt = n => '$' + parseFloat(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt  = n => '$' + parseFloat(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtN = n => parseFloat(n || 0).toLocaleString('es-MX', { maximumFractionDigits: 4 });
 
-    let proveedorId = null;
-    let materiasCache = [];  // [{id, nombre}] para el proveedor actual
+    let proveedorId   = null;
+    let materiasCache = [];
 
-    // ── Cuando cambia el proveedor ────────────────────────────────────────────
+    // ── Cambio de proveedor ───────────────────────────────────────────────────
     PROV_SELECT.addEventListener('change', async () => {
         proveedorId = PROV_SELECT.value || null;
         CONTAINER.innerHTML = '';
         actualizarUI();
-
         if (!proveedorId) return;
-
-        // Habilitar botón agregar y cargar materias primas
         BTN_AGREGAR.disabled = false;
-        BTN_AGREGAR.title = '';
+        BTN_AGREGAR.title    = '';
         await cargarMateriasPrima();
-        agregarLinea();   // Agregar la primera línea automáticamente
+        agregarLinea();
     });
 
-    // ── Cargar materias primas para el proveedor ──────────────────────────────
     async function cargarMateriasPrima() {
-        const res = await fetch(`/admin/compras/api/materias-primas/${proveedorId}`);
+        const res    = await fetch(`/admin/compras/api/materias-primas/${proveedorId}`);
         materiasCache = await res.json();
     }
 
-    // ── Agregar una nueva línea ───────────────────────────────────────────────
     BTN_AGREGAR.addEventListener('click', agregarLinea);
 
+    // ── Agregar línea ─────────────────────────────────────────────────────────
     function agregarLinea() {
         const clone = TMPL.content.cloneNode(true);
         const linea = clone.querySelector('.linea-item');
 
-        // Poblar select de materia prima
-        const selMP = linea.querySelector('.sel-materia-prima');
-        materiasCache.forEach(m => {
-            const opt = new Option(m.nombre, m.id);
-            selMP.add(opt);
-        });
-
-        // Cuando cambia materia prima → cargar materias proveídas
+        const selMP   = linea.querySelector('.sel-materia-prima');
         const selMProv = linea.querySelector('.sel-materia-proveida');
+
+        // Poblar materias primas del proveedor
+        materiasCache.forEach(m => selMP.add(new Option(m.nombre, m.id)));
+
+        // ── Cambio de materia prima → cargar presentaciones ──────────────────
         selMP.addEventListener('change', async () => {
             selMProv.innerHTML = '<option value="">Cargando...</option>';
-            selMProv.disabled = true;
+            selMProv.disabled  = true;
             limpiarDetalle(linea);
 
             if (!selMP.value) {
@@ -373,18 +418,14 @@
                 return;
             }
 
-            const res = await fetch(`/admin/compras/api/materias-proveidas/${proveedorId}/${selMP.value}`);
+            const res  = await fetch(`/admin/compras/api/materias-proveidas/${proveedorId}/${selMP.value}`);
             const data = await res.json();
-
             selMProv.innerHTML = '<option value="">Seleccionar presentación...</option>';
-            data.forEach(d => {
-                const opt = new Option(d.nombre, d.id);
-                selMProv.add(opt);
-            });
+            data.forEach(d => selMProv.add(new Option(d.nombre, d.id)));
             selMProv.disabled = data.length === 0;
         });
 
-        // Cuando cambia materia proveída → mostrar unidad y conversor
+        // ── Cambio de materia proveída → detalle (unidad, conversor, TIPO) ───
         selMProv.addEventListener('change', async () => {
             limpiarDetalle(linea);
             if (!selMProv.value) return;
@@ -395,14 +436,41 @@
             linea.querySelector('.info-unidad').textContent    = data.unidad_medida;
             linea.querySelector('.info-conversor').textContent = data.conversor;
             linea.querySelector('.info-conversor-inline').textContent = data.conversor;
+
+            // Badge tipo
+            const infoTipo = linea.querySelector('.info-tipo');
+            const tipo = data.tipo || 'Materia';
+            infoTipo.textContent = tipo;
+            infoTipo.className = 'info-tipo w-full px-3 py-2 text-xs font-semibold border rounded-lg ';
+            if (tipo === 'Producto') {
+                infoTipo.className += 'bg-blue-50 border-blue-200 text-blue-700';
+            } else if (tipo === 'Canal') {
+                infoTipo.className += 'bg-amber-50 border-amber-200 text-amber-700';
+            } else {
+                infoTipo.className += 'bg-green-50 border-green-200 text-green-700';
+            }
+
+            // Mostrar/ocultar paneles condicionales
+            const divProd  = linea.querySelector('.div-tipo-producto');
+            const divCanal = linea.querySelector('.div-tipo-canal');
+            divProd.classList.toggle('hidden',  tipo !== 'Producto');
+            divCanal.classList.toggle('hidden', tipo !== 'Canal');
+
+            // Actualizar contadores de piezas/canales al recalcular
+            actualizarContadores(linea, tipo);
         });
 
-        // Calcular totales al cambiar inputs
+        // ── Recalcular al cambiar cantidades / precio ─────────────────────────
         linea.querySelectorAll('.inp-cant-u, .inp-cant-x, .inp-precio').forEach(inp => {
-            inp.addEventListener('input', () => { recalcularLinea(linea); recalcularTotal(); });
+            inp.addEventListener('input', () => {
+                recalcularLinea(linea);
+                recalcularTotal();
+                const tipo = linea.querySelector('.info-tipo').textContent;
+                actualizarContadores(linea, tipo);
+            });
         });
 
-        // Botón quitar
+        // ── Botón quitar ──────────────────────────────────────────────────────
         linea.querySelector('.btn-eliminar-linea').addEventListener('click', () => {
             linea.remove();
             actualizarUI();
@@ -413,19 +481,35 @@
         actualizarUI();
     }
 
+    // ── Actualizar contadores de piezas / canales ─────────────────────────────
+    function actualizarContadores(linea, tipo) {
+        const cantU = parseFloat(linea.querySelector('.inp-cant-u').value) || 0;
+        const cantX = parseFloat(linea.querySelector('.inp-cant-x').value) || 0;
+        if (tipo === 'Producto') {
+            const n = Math.max(1, Math.round(cantU * cantX));
+            linea.querySelector('.lbl-n-piezas').textContent = n;
+        } else if (tipo === 'Canal') {
+            const n = Math.max(1, Math.round(cantU));
+            linea.querySelector('.lbl-n-canales').textContent = n;
+        }
+    }
+
     function limpiarDetalle(linea) {
         linea.querySelector('.info-unidad').textContent    = '—';
         linea.querySelector('.info-conversor').textContent = '—';
         linea.querySelector('.info-conversor-inline').textContent = '';
+        linea.querySelector('.info-tipo').textContent      = '—';
         linea.querySelector('.lbl-subtotal').textContent   = '$0.00';
         linea.querySelector('.lbl-total-conv').textContent = '0';
         linea.querySelector('.lbl-total-dinero').textContent = '$0.00';
+        linea.querySelector('.div-tipo-producto').classList.add('hidden');
+        linea.querySelector('.div-tipo-canal').classList.add('hidden');
     }
 
     function recalcularLinea(linea) {
-        const cantU   = parseFloat(linea.querySelector('.inp-cant-u').value)  || 0;
-        const cantX   = parseFloat(linea.querySelector('.inp-cant-x').value)  || 0;
-        const precio  = parseFloat(linea.querySelector('.inp-precio').value)   || 0;
+        const cantU    = parseFloat(linea.querySelector('.inp-cant-u').value) || 0;
+        const cantX    = parseFloat(linea.querySelector('.inp-cant-x').value) || 0;
+        const precio   = parseFloat(linea.querySelector('.inp-precio').value) || 0;
         const subtotal = cantU * precio;
         const totalConv = cantU * cantX;
 
@@ -447,15 +531,14 @@
 
     function actualizarUI() {
         const n = CONTAINER.querySelectorAll('.linea-item').length;
-        MSG_VACIO.style.display  = n === 0 ? 'block' : 'none';
-        TOTAL_FOOTER.style.display = n > 0 ? 'flex' : 'none';
-        RESUMEN_ART.textContent = n;
-        BTN_REGISTRAR.disabled = n === 0 || !proveedorId;
+        MSG_VACIO.style.display       = n === 0 ? 'block' : 'none';
+        TOTAL_FOOTER.style.display    = n > 0 ? 'flex' : 'none';
+        RESUMEN_ART.textContent       = n;
+        BTN_REGISTRAR.disabled        = n === 0 || !proveedorId;
     }
 
     // Inicializar fecha con hoy
     document.getElementById('fecha-compra').value = new Date().toISOString().slice(0, 10);
-
     actualizarUI();
 </script>
 
