@@ -94,7 +94,7 @@ def create_app():
     from .modules.venta     import venta
     from .modules.logs      import log
     from .modules.proveedor import proveedor
-    from .modules.materia import materia
+    from .modules.materia   import materia
     from .modules.mostrador import mostrador
 
     app.register_blueprint(auth)

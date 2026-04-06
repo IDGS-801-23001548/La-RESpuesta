@@ -88,6 +88,9 @@ def login_post():
     # ── Redirección según rol ─────────────────────────────────────
     if user.has_role('admin'):
         return redirect(url_for('admin.dashboard'))
+    
+    if user.has_role('Cajero'):
+        return redirect(url_for('mostrador.mostradorVenta'))
 
     if user.has_role('end-user'):
         return redirect(url_for('venta.inicio'))
