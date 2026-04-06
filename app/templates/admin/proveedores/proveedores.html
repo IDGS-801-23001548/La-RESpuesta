@@ -81,16 +81,6 @@
             <option value="activo">Activos</option>
             <option value="inactivo">Inactivos</option>
         </select>
-        <!-- Filtro producto -->
-        <select id="filtro-producto" class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg
-                       outline-none focus:border-green-400 transition-all">
-            <option value="">Todos los productos</option>
-            <option>Res</option>
-            <option>Cerdo</option>
-            <option>Pollo</option>
-            <option>Borrego</option>
-            <option>Otro</option>
-        </select>
         <a href="{{ url_for('proveedor.proveedores') }}" class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg
                        outline-none focus:border-green-400 transition-all">
             Limpiar
@@ -113,7 +103,6 @@
                     </th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">RFC</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Contacto</th>
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Provee</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Pago</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Estatus</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
@@ -125,7 +114,7 @@
                 <tr class="hover:bg-gray-50/70 transition-colors group
                            {% if p.estatus == 'inactivo' %}opacity-60{% endif %}" data-nombre="{{ p.nombre | lower }}"
                     data-rfc="{{ p.rfc | lower }}" data-contacto="{{ p.contacto | lower }}"
-                    data-estatus="{{ p.estatus }}" data-productos="{{ p.productos | lower }}">
+                    data-estatus="{{ p.estatus }}">
 
                     <!-- Proveedor -->
                     <td class="px-4 py-3">
@@ -151,22 +140,6 @@
                     <td class="px-4 py-3">
                         <p class="text-xs font-medium text-gray-700">{{ p.contacto }}</p>
                         <p class="text-[10px] text-gray-400">{{ p.telefono }}</p>
-                    </td>
-
-                    <!-- Productos que provee -->
-                    <td class="px-4 py-3">
-                        <div class="flex flex-wrap gap-1">
-                            {% for prod in p.productos_lista %}
-                            <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full
-                                {% if prod == 'Res' %}bg-red-50 text-red-600 border border-red-200
-                                {% elif prod == 'Cerdo' %}bg-pink-50 text-pink-600 border border-pink-200
-                                {% elif prod == 'Pollo' %}bg-amber-50 text-amber-600 border border-amber-200
-                                {% elif prod == 'Borrego' %}bg-purple-50 text-purple-600 border border-purple-200
-                                {% else %}bg-gray-50 text-gray-600 border border-gray-200{% endif %}">
-                                {{ prod }}
-                            </span>
-                            {% endfor %}
-                        </div>
                     </td>
 
                     <!-- Condición de pago -->
@@ -252,7 +225,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-400">
+                    <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400">
                         No hay proveedores registrados.
                     </td>
                 </tr>
@@ -327,14 +300,12 @@
     // ── Filtros ──────────────────────────────────────────────────────
     const buscar = document.getElementById('buscar');
     const filtroEstatus = document.getElementById('filtro-estatus');
-    const filtroProducto = document.getElementById('filtro-producto');
     const cuerpo = document.getElementById('tabla-body');
     const conteo = document.getElementById('conteo');
 
     function filtrar() {
         const texto = buscar.value.toLowerCase().trim();
         const estatus = filtroEstatus.value;
-        const producto = filtroProducto.value.toLowerCase();
 
         let visibles = 0;
         cuerpo.querySelectorAll('tr[data-nombre]').forEach(fila => {
@@ -345,10 +316,7 @@
 
             const coincideEstatus = !estatus || fila.dataset.estatus === estatus;
 
-            const coincideProducto = !producto ||
-                fila.dataset.productos.split(',').some(p => p.trim() === producto);
-
-            const mostrar = coincideTexto && coincideEstatus && coincideProducto;
+            const mostrar = coincideTexto && coincideEstatus;
             fila.classList.toggle('hidden', !mostrar);
             if (mostrar) visibles++;
         });
@@ -358,7 +326,6 @@
 
     buscar.addEventListener('input', filtrar);
     filtroEstatus.addEventListener('change', filtrar);
-    filtroProducto.addEventListener('change', filtrar);
 </script>
 
 {% endblock %}

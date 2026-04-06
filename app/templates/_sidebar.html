@@ -97,10 +97,10 @@
 
                 {{ ui.sidebar_item( "Compras", url_for('compras.compra'), endpoint_prefix="compras.compra") }}
                 {{ ui.sidebar_item( "Materia Prima", url_for('materia.materias'), endpoint_prefix="materia.materias") }}
-                {{ ui.sidebar_item( "Recetas", url_for('admin.recetas'), endpoint_prefix="admin.recetas") }}
+                {{ ui.sidebar_item( "Recetas", url_for('receta.recetas'), endpoint_prefix="receta.recetas") }}
 
                 {{ ui.sidebar_item( "Solicitudes de Producción",
-                url_for('admin.solicitudes'),endpoint_prefix="admin.solicitud") }}
+                url_for('solicitud_de_produccion.solicitudes'),endpoint_prefix="solicitud_de_produccion.solicitudes") }}
                 {{ ui.sidebar_item( "Producción", url_for('admin.produccion'), endpoint_prefix="admin.produccion") }}
                 {{ ui.sidebar_item( "Producto Terminado", url_for('admin.productos'), endpoint_prefix="admin.productos")
                 }}

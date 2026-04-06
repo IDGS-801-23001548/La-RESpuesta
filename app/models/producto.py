@@ -17,3 +17,9 @@ class Producto(db.Model):
         backref='producto',
         lazy='dynamic'
     )
+
+    materiasPrimas         = db.relationship(
+        'MateriaPrima',
+        backref='producto',
+        lazy='dynamic'
+    )

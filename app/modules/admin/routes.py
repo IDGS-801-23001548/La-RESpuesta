@@ -23,37 +23,6 @@ def index():
 def dashboard():
     return render_template("admin/dashboard.html")
 
-@admin.route('/recetas')
-def recetas():
-    return render_template('admin/recetas.html', recetas=[])
-
-@admin.route('/recetas/nueva')
-def recetas_nueva():
-    return render_template('admin/recetas_form.html', receta=None)
-
-@admin.route('/recetas/<int:id>/editar')
-def recetas_editar(id):
-    return render_template('admin/recetas_form.html', receta=None)
-
-@admin.route('/recetas/<int:id>/eliminar', methods=['POST'])
-def recetas_eliminar(id):
-    return redirect(url_for('recetas'))
-
-@admin.route('/solicitudes')
-def solicitudes():
-    return render_template('admin/solicitudes.html', solicitudes=[])
-
-@admin.route('/solicitudes/nueva')
-def solicitudes_nueva():
-    return render_template('admin/solicitudes_form.html', solicitud=None)
-
-@admin.route('/solicitudes/<int:id>/editar')
-def solicitudes_editar(id):
-    return render_template('admin/solicitudes_form.html', solicitud=None)
-
-@admin.route('/solicitudes/<int:id>/cancelar', methods=['POST'])
-def solicitudes_cancelar(id):
-    return redirect(url_for('admin.solicitudes'))
 
 @admin.route('/produccion')
 def produccion():

@@ -12,306 +12,97 @@
         </svg>
     </a>
     <div>
-        <h2 class="text-lg font-semibold text-gray-800">
-            {% if materia %}Editar materia prima{% else %}Nueva materia prima{% endif %}
-        </h2>
-        <p class="text-xs text-gray-400 mt-0.5">
-            {% if materia %}Modifica los datos del registro{% else %}Agrega un canal, insumo o producto de reventa{% endif %}
-        </p>
+        <h2 class="text-lg font-semibold text-gray-800">Editar materia prima</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Modifica los datos del registro</p>
     </div>
 </div>
 
-<form method="POST"
-      action="{{ url_for('materia.materia_editar', id=materia.id_materia) if materia else url_for('materia.materia_nueva') }}">
+<form method="POST" action="{{ url_for('materia.materia_editar', id=materia.idMateriaPrima) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
 
-        <!-- ── Columna principal (2/3) ── -->
+        <!-- Columna principal -->
         <div class="xl:col-span-2 space-y-5">
 
-            <!-- Card: Identificación -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
-                    <h3 class="text-sm font-semibold text-gray-700">Identificación</h3>
+                    <h3 class="text-sm font-semibold text-gray-700">Datos de la materia prima</h3>
                 </div>
-                <div class="p-5 space-y-4">
 
-                    <div>
+                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <!-- Nombre -->
+                    <div class="sm:col-span-2">
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Nombre <span class="text-red-400">*</span>
                         </label>
-                        <input type="text" name="nombre" required
-                            value="{{ materia.nombre if materia else '' }}"
-                            placeholder="Ej. Canal de res entera"
+                        <input type="text" name="nombreMateriaPrima" required maxlength="25"
+                            value="{{ materia.nombreMateriaPrima }}"
+                            placeholder="Ej. Res en canal"
                             class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
                                    rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
                                    transition-all placeholder-gray-300">
                     </div>
 
+                    <!-- Categoría -->
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Descripción
+                            Categoría
                         </label>
-                        <textarea name="descripcion" rows="2"
-                            placeholder="Características, especificaciones, observaciones..."
+                        <select name="idCategoria"
                             class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                                   transition-all resize-none placeholder-gray-300">{{ materia.descripcion if materia else '' }}</textarea>
-                    </div>
-
-                    <!-- Selector de categoría -->
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
-                            Categoría <span class="text-red-400">*</span>
-                        </label>
-                        <div class="grid grid-cols-3 gap-2">
-
-                            <!-- Canal -->
-                            <label id="lbl-Canal"
-                                class="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2
-                                       cursor-pointer transition-all
-                                       {% if materia and materia.categoria == 'Canal' %}border-red-400 bg-red-50
-                                       {% else %}border-gray-200 hover:border-gray-300{% endif %}">
-                                <input type="radio" name="categoria" value="Canal"
-                                    {% if (materia and materia.categoria == 'Canal') or not materia %}checked{% endif %}
-                                    class="sr-only" onchange="actualizarCategoria()">
-                                <svg class="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z"/>
-                                </svg>
-                                <span class="text-xs font-semibold text-gray-700">Canal</span>
-                                <span class="text-[10px] text-gray-400 text-center">Res, cerdo, pollo entero</span>
-                            </label>
-
-                            <!-- Insumo -->
-                            <label id="lbl-Insumo"
-                                class="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2
-                                       cursor-pointer transition-all
-                                       {% if materia and materia.categoria == 'Insumo' %}border-amber-400 bg-amber-50
-                                       {% else %}border-gray-200 hover:border-gray-300{% endif %}">
-                                <input type="radio" name="categoria" value="Insumo"
-                                    {% if materia and materia.categoria == 'Insumo' %}checked{% endif %}
-                                    class="sr-only" onchange="actualizarCategoria()">
-                                <svg class="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
-                                </svg>
-                                <span class="text-xs font-semibold text-gray-700">Insumo</span>
-                                <span class="text-[10px] text-gray-400 text-center">Sal, especias, empaque</span>
-                            </label>
-
-                            <!-- Reventa -->
-                            <label id="lbl-Reventa"
-                                class="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2
-                                       cursor-pointer transition-all
-                                       {% if materia and materia.categoria == 'Reventa' %}border-blue-400 bg-blue-50
-                                       {% else %}border-gray-200 hover:border-gray-300{% endif %}">
-                                <input type="radio" name="categoria" value="Reventa"
-                                    {% if materia and materia.categoria == 'Reventa' %}checked{% endif %}
-                                    class="sr-only" onchange="actualizarCategoria()">
-                                <svg class="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
-                                </svg>
-                                <span class="text-xs font-semibold text-gray-700">Reventa</span>
-                                <span class="text-[10px] text-gray-400 text-center">Productos sin transformar</span>
-                            </label>
-
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Card: Conversión de unidades (Canal e Insumo) -->
-            <div id="card-conversion" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden transition-all">
-                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
-                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                    </svg>
-                    <h3 class="text-sm font-semibold text-gray-700">Conversión de unidades</h3>
-                    <span class="ml-auto text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                        No aplica para reventa
-                    </span>
-                </div>
-                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Unidad de compra <span class="text-red-400">*</span>
-                        </label>
-                        <select name="unidad_compra" id="sel-u-compra"
-                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-                            onchange="actualizarEjemplo()">
-                            <option value="">Seleccionar...</option>
-                            <optgroup label="Por pieza/canal">
-                                <option value="canal"      {% if materia and materia.unidad_compra == 'canal'      %}selected{% endif %}>Canal entera</option>
-                                <option value="media_canal"{% if materia and materia.unidad_compra == 'media_canal'%}selected{% endif %}>Media canal</option>
-                                <option value="pieza"      {% if materia and materia.unidad_compra == 'pieza'      %}selected{% endif %}>Pieza</option>
-                            </optgroup>
-                            <optgroup label="Por peso">
-                                <option value="kg" {% if materia and materia.unidad_compra == 'kg' %}selected{% endif %}>Kilogramo (kg)</option>
-                                <option value="ton"{% if materia and materia.unidad_compra == 'ton'%}selected{% endif %}>Tonelada (ton)</option>
-                            </optgroup>
-                            <optgroup label="Por volumen">
-                                <option value="litro"{% if materia and materia.unidad_compra == 'litro'%}selected{% endif %}>Litro (L)</option>
-                            </optgroup>
-                            <optgroup label="Empaque">
-                                <option value="bulto"  {% if materia and materia.unidad_compra == 'bulto'  %}selected{% endif %}>Bulto</option>
-                                <option value="caja"   {% if materia and materia.unidad_compra == 'caja'   %}selected{% endif %}>Caja</option>
-                                <option value="bolsa"  {% if materia and materia.unidad_compra == 'bolsa'  %}selected{% endif %}>Bolsa</option>
-                                <option value="paquete"{% if materia and materia.unidad_compra == 'paquete'%}selected{% endif %}>Paquete</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Unidad estándar <span class="text-red-400">*</span>
-                            <span class="normal-case font-normal tracking-normal text-gray-300 ml-1">(almacenamiento)</span>
-                        </label>
-                        <select name="unidad_estandar" id="sel-u-estandar"
-                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-                            onchange="actualizarEjemplo()">
-                            <option value="g"  {% if not materia or materia.unidad_estandar == 'g'  %}selected{% endif %}>Gramos (g)</option>
-                            <option value="ml" {% if materia and materia.unidad_estandar == 'ml'    %}selected{% endif %}>Mililitros (mL)</option>
-                            <option value="pza"{% if materia and materia.unidad_estandar == 'pza'   %}selected{% endif %}>Piezas (pza)</option>
-                        </select>
-                    </div>
-
-                    <!-- Factor de conversión -->
-                    <div class="sm:col-span-2">
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Factor de conversión <span class="text-red-400">*</span>
-                        </label>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 bg-gray-100 px-3 py-2.5 rounded-lg whitespace-nowrap">
-                                1 <span id="lbl-u-compra" class="font-semibold text-gray-700">unidad</span>
-                            </span>
-                            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                            </svg>
-                            <input type="number" name="factor_conversion" id="inp-factor"
-                                min="0.0001" step="any"
-                                value="{{ materia.factor_conversion if materia else '' }}"
-                                placeholder="Ej. 200000"
-                                class="w-36 px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                                       transition-all text-right"
-                                oninput="actualizarEjemplo()">
-                            <span id="lbl-u-estandar"
-                                class="text-xs font-semibold text-green-700 bg-green-50 px-3 py-2.5 rounded-lg">g</span>
-                        </div>
-                        <p id="ejemplo-conversion" class="mt-2 text-[11px] text-gray-400 italic"></p>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Card: Merma (Canal e Insumo) -->
-            <div id="card-merma" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
-                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
-                    </svg>
-                    <h3 class="text-sm font-semibold text-gray-700">Merma</h3>
-                    <span class="ml-auto text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                        No aplica para reventa
-                    </span>
-                </div>
-                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
-                            Tipo de merma
-                        </label>
-                        <div class="space-y-2">
-                            {% for valor, etiqueta in [
-                                ('produccion', 'Por producción / desposte'),
-                                ('manejo',     'Por manejo / almacenamiento'),
-                                ('desperdicio','Por desperdicio general'),
-                            ] %}
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" name="tipo_merma" value="{{ valor }}"
-                                    {% if materia and valor in materia.tipo_merma_lista %}checked{% endif %}
-                                    class="w-3.5 h-3.5 accent-green-600">
-                                <span class="text-xs text-gray-600">{{ etiqueta }}</span>
-                            </label>
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                            <option value="">Sin categoría</option>
+                            {% for cat in categorias %}
+                            <option value="{{ cat.idCategoria }}"
+                                {% if materia.idCategoria == cat.idCategoria %}selected{% endif %}>
+                                {{ cat.nombreCategoria }}
+                            </option>
                             {% endfor %}
-                        </div>
+                        </select>
                     </div>
 
+                    <!-- Tipo -->
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            % de merma total
+                            Tipo <span class="text-red-400">*</span>
                         </label>
-                        <div class="relative">
-                            <input type="number" name="pct_merma" id="inp-merma"
-                                min="0" max="100" step="0.1"
-                                value="{{ materia.pct_merma if materia else '0' }}"
-                                placeholder="0.0"
-                                class="w-full px-3 py-2.5 pr-10 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-                                oninput="actualizarEjemplo()">
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-medium">%</span>
-                        </div>
-                        <p id="ejemplo-merma" class="mt-2 text-[11px] text-gray-400 italic"></p>
+                        <select name="tipo" id="sel-tipo" required
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                            <option value="">Seleccionar...</option>
+                            <option value="Materia" {% if materia.tipo == 'Materia' %}selected{% endif %}>Materia</option>
+                            <option value="Producto" {% if materia.tipo == 'Producto' %}selected{% endif %}>Producto</option>
+                        </select>
                     </div>
 
-                </div>
-            </div>
-
-            <!-- Card: Stock y costo -->
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
-                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                    <h3 class="text-sm font-semibold text-gray-700">Stock y costo</h3>
-                </div>
-                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    <div>
+                    <!-- Producto vinculado (condicional) -->
+                    <div class="sm:col-span-2" id="div-producto"
+                        style="{{ '' if materia.tipo == 'Producto' else 'opacity:0.4' }}">
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Stock mínimo de alerta <span class="text-red-400">*</span>
+                            Producto vinculado
+                            <span class="text-gray-300 font-normal normal-case tracking-normal">
+                                — solo aplica cuando el tipo es Producto
+                            </span>
                         </label>
-                        <div class="flex items-center gap-2">
-                            <input type="number" name="stock_minimo"
-                                min="0" step="any"
-                                value="{{ materia.stock_minimo if materia else '0' }}"
-                                placeholder="0"
-                                class="flex-1 px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
-                            <span id="badge-u-min"
-                                class="text-xs font-medium text-green-700 bg-green-50 border border-green-200
-                                       px-2 py-2.5 rounded-lg">g</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Costo promedio inicial
-                        </label>
-                        <div class="flex items-center gap-2">
-                            <div class="relative flex-1">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
-                                <input type="number" name="costo_promedio"
-                                    min="0" step="0.0001"
-                                    value="{{ materia.costo_promedio if materia else '0' }}"
-                                    placeholder="0.0000"
-                                    class="w-full pl-7 pr-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                           rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
-                            </div>
-                            <span class="text-xs text-gray-500">por</span>
-                            <span id="badge-u-costo"
-                                class="text-xs font-medium text-green-700 bg-green-50 border border-green-200
-                                       px-2 py-2.5 rounded-lg">g</span>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Se recalcula automáticamente con cada compra.</p>
+                        <select name="idProducto" id="sel-producto"
+                            {% if materia.tipo != 'Producto' %}disabled{% endif %}
+                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all
+                                   disabled:opacity-40 disabled:cursor-not-allowed">
+                            <option value="">Seleccionar producto...</option>
+                            {% for prod in productos %}
+                            <option value="{{ prod.idProducto }}"
+                                {% if materia.idProducto == prod.idProducto %}selected{% endif %}>
+                                {{ prod.NombreProducto }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
 
                 </div>
@@ -319,67 +110,24 @@
 
         </div>
 
-        <!-- ── Columna guía (1/3) ── -->
-        <div>
+        <!-- Columna lateral -->
+        <div class="space-y-4">
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <h3 class="text-sm font-semibold text-gray-700">Guía</h3>
+                    <h3 class="text-sm font-semibold text-gray-700">Guardar cambios</h3>
                 </div>
-
-                <div class="p-5">
-                    <div id="guia-Canal" class="space-y-2.5 text-xs text-gray-500">
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z"/>
-                            </svg>
-                            <p class="font-semibold text-gray-700">Canal</p>
-                        </div>
-                        <p>Define cómo se convierte la unidad de compra a gramos en inventario y el % de merma por manejo.</p>
-                        <div class="bg-gray-50 rounded-lg p-3 text-[10px] space-y-1">
-                            <p class="font-semibold text-gray-600">Ejemplo:</p>
-                            <p>1 canal de res → 200,000 g</p>
-                            <p>Con 3.5% merma</p>
-                            <p class="text-green-700 font-medium">= 193,000 g netos disponibles</p>
-                        </div>
-                    </div>
-                    <div id="guia-Insumo" class="hidden space-y-2.5 text-xs text-gray-500">
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
-                            </svg>
-                            <p class="font-semibold text-gray-700">Insumo</p>
-                        </div>
-                        <p>Conversión de empaque a unidad mínima de almacenamiento.</p>
-                        <div class="bg-gray-50 rounded-lg p-3 text-[10px] space-y-1">
-                            <p class="font-semibold text-gray-600">Ejemplo:</p>
-                            <p>1 bulto de sal → 50,000 g</p>
-                            <p>Con 0.5% merma</p>
-                            <p class="text-green-700 font-medium">= 49,750 g netos</p>
-                        </div>
-                    </div>
-                    <div id="guia-Reventa" class="hidden space-y-2.5 text-xs text-gray-500">
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
-                            </svg>
-                            <p class="font-semibold text-gray-700">Reventa</p>
-                        </div>
-                        <p>No se transforma ni tiene merma. Solo define stock mínimo y costo de compra.</p>
-                        <div class="bg-blue-50 rounded-lg p-3 text-[10px] text-blue-700">
-                            Los campos de conversión y merma quedarán deshabilitados.
-                        </div>
-                    </div>
+                <div class="p-5 text-xs text-gray-500 space-y-2">
+                    <p>Modifica los campos necesarios y guarda. Si cambias el tipo de <strong class="text-gray-700">Producto</strong> a <strong class="text-gray-700">Materia</strong>, el producto vinculado se limpiará automáticamente.</p>
                 </div>
-
                 <div class="px-5 pb-5 space-y-2">
                     <button type="submit"
                         class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
-                               rounded-lg shadow-sm shadow-green-200 transition-all hover:-translate-y-px">
-                        {{ 'Guardar cambios' if materia else 'Registrar materia prima' }}
+                               rounded-lg shadow-sm shadow-green-200 transition-all duration-150
+                               hover:-translate-y-px active:translate-y-0">
+                        Guardar cambios
                     </button>
                     <a href="{{ url_for('materia.materias') }}"
                         class="block w-full py-2.5 text-center text-sm text-gray-500 hover:text-gray-700
@@ -394,85 +142,16 @@
 </form>
 
 <script>
-    const catColors = {
-        Canal:   { border: 'border-red-400',   bg: 'bg-red-50'   },
-        Insumo:  { border: 'border-amber-400',  bg: 'bg-amber-50' },
-        Reventa: { border: 'border-blue-400',   bg: 'bg-blue-50'  },
-    };
+    const selTipo    = document.getElementById('sel-tipo');
+    const selProd    = document.getElementById('sel-producto');
+    const divProd    = document.getElementById('div-producto');
 
-    function actualizarCategoria() {
-        const cat = document.querySelector('input[name="categoria"]:checked')?.value;
-        const esReventa = cat === 'Reventa';
-
-        // Resaltar la tarjeta seleccionada y quitar resaltado de las demás
-        Object.keys(catColors).forEach(c => {
-            const lbl = document.getElementById('lbl-' + c);
-            if (!lbl) return;
-            const { border, bg } = catColors[c];
-            if (c === cat) {
-                lbl.classList.remove('border-gray-200', 'hover:border-gray-300');
-                lbl.classList.add(border, bg);
-            } else {
-                lbl.classList.remove(border, bg);
-                lbl.classList.add('border-gray-200', 'hover:border-gray-300');
-            }
-        });
-
-        // Deshabilitar visualmente conversión y merma para reventa
-        ['card-conversion', 'card-merma'].forEach(id => {
-            const el = document.getElementById(id);
-            el.classList.toggle('opacity-40', esReventa);
-            el.classList.toggle('pointer-events-none', esReventa);
-        });
-
-        // Guía lateral
-        ['Canal', 'Insumo', 'Reventa'].forEach(c => {
-            document.getElementById('guia-' + c).classList.toggle('hidden', c !== cat);
-        });
-
-        actualizarEjemplo();
-    }
-
-    document.getElementById('sel-u-compra').addEventListener('change', function() {
-        document.getElementById('lbl-u-compra').textContent =
-            this.options[this.selectedIndex]?.text.split(' ')[0] || 'unidad';
-        actualizarEjemplo();
+    selTipo.addEventListener('change', function () {
+        const esProducto = this.value === 'Producto';
+        selProd.disabled = !esProducto;
+        divProd.style.opacity = esProducto ? '1' : '0.4';
+        if (!esProducto) selProd.value = '';
     });
-
-    document.getElementById('sel-u-estandar').addEventListener('change', function() {
-        const u = this.value;
-        ['lbl-u-estandar', 'badge-u-min', 'badge-u-costo'].forEach(id => {
-            document.getElementById(id).textContent = u;
-        });
-        actualizarEjemplo();
-    });
-
-    function actualizarEjemplo() {
-        const factor = parseFloat(document.getElementById('inp-factor')?.value) || 0;
-        const merma  = parseFloat(document.getElementById('inp-merma')?.value)  || 0;
-        const uComp  = document.getElementById('lbl-u-compra')?.textContent || 'unidad';
-        const uStd   = document.getElementById('lbl-u-estandar')?.textContent || 'g';
-
-        const ejConv = document.getElementById('ejemplo-conversion');
-        const ejMerm = document.getElementById('ejemplo-merma');
-
-        if (factor > 0) {
-            ejConv.textContent = `1 ${uComp} → ${factor.toLocaleString('es-MX')} ${uStd} brutos`;
-            if (merma > 0) {
-                const neto = factor * (1 - merma / 100);
-                ejMerm.textContent =
-                    `Con ${merma}% de merma → ${neto.toLocaleString('es-MX', { maximumFractionDigits: 1 })} ${uStd} netos`;
-            } else {
-                ejMerm.textContent = '';
-            }
-        } else {
-            ejConv.textContent = '';
-            ejMerm.textContent = '';
-        }
-    }
-
-    // Inicializar al cargar
-    actualizarCategoria();
 </script>
 
 {% endblock %}
