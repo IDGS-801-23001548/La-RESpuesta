@@ -1,10 +1,11 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, FloatField, TextAreaField, SelectField
 from wtforms.validators import DataRequired, NumberRange, Optional, Length
 
 
 class ProductoForm(FlaskForm):
+    """Formulario base — foto opcional (usado en edición)."""
     NombreProducto = StringField(
         'Nombre del producto',
         validators=[
@@ -41,6 +42,17 @@ class ProductoForm(FlaskForm):
     foto = FileField(
         'Foto del producto',
         validators=[
+            FileAllowed(['jpg', 'jpeg', 'png', 'webp'], 'Solo imágenes JPG, PNG o WEBP.')
+        ]
+    )
+
+
+class ProductoNuevoForm(ProductoForm):
+    """Formulario para alta — foto obligatoria."""
+    foto = FileField(
+        'Foto del producto',
+        validators=[
+            FileRequired(message='La foto del producto es obligatoria.'),
             FileAllowed(['jpg', 'jpeg', 'png', 'webp'], 'Solo imágenes JPG, PNG o WEBP.')
         ]
     )

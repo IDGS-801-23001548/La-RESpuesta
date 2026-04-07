@@ -119,9 +119,9 @@
                         <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
+                <tbody class="divide-y divide-gray-50" id="tbody-materias">
                     {% for m in materias %}
-                    <tr class="hover:bg-gray-50/70 transition-colors group">
+                    <tr class="hover:bg-gray-50/70 transition-colors group" data-row>
                         <td class="px-4 py-3">
                             <span class="text-xs font-semibold text-gray-800">{{ m.nombreMateriaPrima }}</span>
                         </td>
@@ -194,6 +194,11 @@
                 </tbody>
             </table>
         </div>
+        {% if materias|length > 5 %}
+        <div id="pag-materias"
+            class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        </div>
+        {% endif %}
     </div>
 
 </div>
@@ -320,9 +325,9 @@
                         <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
+                <tbody class="divide-y divide-gray-50" id="tbody-proveidas">
                     {% for mp in materias_proveidas %}
-                    <tr class="hover:bg-gray-50/70 transition-colors group">
+                    <tr class="hover:bg-gray-50/70 transition-colors group" data-row>
                         <td class="px-4 py-3">
                             <span class="text-xs font-semibold text-gray-800">{{ mp.nombreMateriaProveida }}</span>
                         </td>
@@ -371,6 +376,11 @@
                 </tbody>
             </table>
         </div>
+        {% if materias_proveidas|length > 5 %}
+        <div id="pag-proveidas"
+            class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        </div>
+        {% endif %}
     </div>
 
 </div>
@@ -401,8 +411,73 @@
         if (!esProducto) selProductoNuevo.value = '';
     });
 
-    // Quitar flash duplicados (ya se renderizan en el sidebar)
+    // ── Paginación genérica para tablas de materia ────────────────────────
+    function initPaginacion(tbodyId, pagContainerId, porPagina) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
 
+        const filas = [...tbody.querySelectorAll('tr[data-row]')];
+        if (filas.length === 0) return;
+
+        let paginaActual = 1;
+        const totalPags  = Math.ceil(filas.length / porPagina);
+
+        function render() {
+            filas.forEach(r => r.style.display = 'none');
+            const inicio = (paginaActual - 1) * porPagina;
+            filas.slice(inicio, inicio + porPagina).forEach(r => r.style.display = '');
+
+            const container = document.getElementById(pagContainerId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            // Info
+            const info = document.createElement('span');
+            info.className = 'text-xs text-gray-400';
+            info.textContent = `${inicio + 1}–${Math.min(inicio + porPagina, filas.length)} de ${filas.length}`;
+            container.appendChild(info);
+
+            const btns = document.createElement('div');
+            btns.className = 'flex items-center gap-1';
+
+            // Botón Prev
+            const prev = document.createElement('button');
+            prev.textContent = '‹';
+            prev.disabled = paginaActual <= 1;
+            prev.className = 'w-6 h-6 rounded text-xs font-semibold text-gray-400 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors';
+            prev.onclick = () => { paginaActual--; render(); };
+            btns.appendChild(prev);
+
+            // Números
+            for (let p = 1; p <= totalPags; p++) {
+                const btn = document.createElement('button');
+                btn.textContent = p;
+                btn.className = [
+                    'w-6 h-6 rounded text-xs font-semibold transition-colors',
+                    p === paginaActual ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-100'
+                ].join(' ');
+                btn.onclick = ((page) => () => { paginaActual = page; render(); })(p);
+                btns.appendChild(btn);
+            }
+
+            // Botón Next
+            const next = document.createElement('button');
+            next.textContent = '›';
+            next.disabled = paginaActual >= totalPags;
+            next.className = 'w-6 h-6 rounded text-xs font-semibold text-gray-400 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors';
+            next.onclick = () => { paginaActual++; render(); };
+            btns.appendChild(next);
+
+            container.appendChild(btns);
+        }
+
+        render();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initPaginacion('tbody-materias',  'pag-materias',  5);
+        initPaginacion('tbody-proveidas', 'pag-proveidas', 5);
+    });
 </script>
 
 {% endblock %}

@@ -22,34 +22,58 @@
     </a>
 </div>
 
-<!-- KPI cards -->
+<!-- KPI cards — clickeables para filtrar -->
 <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white rounded-xl border border-gray-100 px-4 py-4 shadow-sm">
+
+    <button onclick="filtrarEstatus('Todos')" id="kpi-todos"
+        class="kpi-card text-left bg-white rounded-xl border border-gray-100 px-4 py-4 shadow-sm
+               ring-2 ring-transparent hover:ring-gray-200 transition-all duration-150 cursor-pointer">
         <p class="text-xs text-gray-400 font-medium uppercase tracking-wider">Total órdenes</p>
         <p class="text-2xl font-bold text-gray-800 mt-1">{{ ordenes|length }}</p>
         <p class="text-xs text-gray-400 mt-1">Registradas</p>
-    </div>
-    <div class="bg-white rounded-xl border border-amber-100 px-4 py-4 shadow-sm">
+    </button>
+
+    <button onclick="filtrarEstatus('EnCurso')" id="kpi-encurso"
+        class="kpi-card text-left bg-white rounded-xl border border-amber-100 px-4 py-4 shadow-sm
+               ring-2 ring-transparent hover:ring-amber-200 transition-all duration-150 cursor-pointer">
         <p class="text-xs text-amber-500 font-medium uppercase tracking-wider">En Curso</p>
         <p class="text-2xl font-bold text-amber-600 mt-1">{{ total_en_curso }}</p>
         <p class="text-xs text-gray-400 mt-1">Por recibir</p>
-    </div>
-    <div class="bg-white rounded-xl border border-green-100 px-4 py-4 shadow-sm">
+    </button>
+
+    <button onclick="filtrarEstatus('Recibida')" id="kpi-recibida"
+        class="kpi-card text-left bg-white rounded-xl border border-green-100 px-4 py-4 shadow-sm
+               ring-2 ring-transparent hover:ring-green-200 transition-all duration-150 cursor-pointer">
         <p class="text-xs text-green-600 font-medium uppercase tracking-wider">Recibidas</p>
         <p class="text-2xl font-bold text-green-700 mt-1">{{ total_recibida }}</p>
         <p class="text-xs text-gray-400 mt-1">Confirmadas</p>
-    </div>
-    <div class="bg-white rounded-xl border border-red-100 px-4 py-4 shadow-sm">
+    </button>
+
+    <button onclick="filtrarEstatus('Cancelada')" id="kpi-cancelada"
+        class="kpi-card text-left bg-white rounded-xl border border-red-100 px-4 py-4 shadow-sm
+               ring-2 ring-transparent hover:ring-red-200 transition-all duration-150 cursor-pointer">
         <p class="text-xs text-red-400 font-medium uppercase tracking-wider">Canceladas</p>
         <p class="text-2xl font-bold text-red-500 mt-1">{{ total_cancelada }}</p>
         <p class="text-xs text-gray-400 mt-1">Anuladas</p>
-    </div>
+    </button>
+
+</div>
+
+<!-- Indicador de filtro activo -->
+<div id="filtro-activo" class="hidden mb-3 flex items-center gap-2">
+    <span class="text-xs text-gray-500">Filtrando por:</span>
+    <span id="filtro-label"
+        class="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"></span>
+    <button onclick="filtrarEstatus('Todos')"
+        class="text-xs text-gray-400 hover:text-red-500 transition-colors underline ml-1">
+        Limpiar filtro
+    </button>
 </div>
 
 <!-- Tabla -->
 <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="w-full text-sm" id="tabla-ordenes">
             <thead>
                 <tr class="text-left border-b border-gray-100">
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">N° Lote</th>
@@ -61,9 +85,10 @@
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-50">
+            <tbody class="divide-y divide-gray-50" id="tbody-ordenes">
                 {% for orden in ordenes %}
-                <tr class="hover:bg-gray-50/70 transition-colors group">
+                <tr class="hover:bg-gray-50/70 transition-colors group orden-row"
+                    data-estatus="{{ orden.estatus }}">
 
                     <td class="px-4 py-3">
                         <span class="font-mono text-xs font-semibold text-gray-700">{{ orden.numeroLote or '—' }}</span>
@@ -86,7 +111,7 @@
                     </td>
 
                     <td class="px-4 py-3">
-                        {% set n = orden.materiasPrimasUnitarias.count() %}
+                        {% set n = articulos_count.get(orden.idOrdenCompra, 0) %}
                         <span class="text-xs text-gray-500">{{ n }} artículo{{ 's' if n != 1 }}</span>
                     </td>
 
@@ -129,7 +154,7 @@
 
                 </tr>
                 {% else %}
-                <tr>
+                <tr id="row-vacia">
                     <td colspan="7" class="px-4 py-10 text-center text-xs text-gray-400">
                         No hay órdenes de compra registradas.
                     </td>
@@ -138,6 +163,138 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Paginación -->
+    <div id="paginacion"
+        class="flex items-center justify-between px-4 py-3 border-t border-gray-100 hidden">
+        <span class="text-xs text-gray-400" id="pag-info"></span>
+        <div class="flex items-center gap-1">
+            <button id="btn-prev" onclick="cambiarPagina(-1)"
+                class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400
+                       hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed
+                       transition-colors text-xs font-semibold">
+                ‹
+            </button>
+            <div id="pag-nums" class="flex items-center gap-1"></div>
+            <button id="btn-next" onclick="cambiarPagina(1)"
+                class="w-7 h-7 flex items-center justify-center rounded-md text-gray-400
+                       hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed
+                       transition-colors text-xs font-semibold">
+                ›
+            </button>
+        </div>
+    </div>
+
+    <!-- Empty state dinámico -->
+    <div id="empty-filtro" class="hidden px-4 py-10 text-center text-xs text-gray-400">
+        No hay órdenes con este estatus.
+    </div>
 </div>
+
+<script>
+const POR_PAGINA = 10;
+let filtroActual = 'Todos';
+let paginaActual = 1;
+let filasFiltradas = [];
+
+const kpiMap = {
+    'Todos':    { el: 'kpi-todos',    label: 'Todas las órdenes',   ring: 'ring-gray-300' },
+    'EnCurso':  { el: 'kpi-encurso',  label: 'En Curso',            ring: 'ring-amber-300' },
+    'Recibida': { el: 'kpi-recibida', label: 'Recibidas',           ring: 'ring-green-300' },
+    'Cancelada':{ el: 'kpi-cancelada',label: 'Canceladas',          ring: 'ring-red-300' },
+};
+
+function filtrarEstatus(estatus) {
+    filtroActual = estatus;
+    paginaActual = 1;
+
+    // Resaltar KPI activo
+    Object.entries(kpiMap).forEach(([key, cfg]) => {
+        const el = document.getElementById(cfg.el);
+        el.classList.remove('ring-gray-300','ring-amber-300','ring-green-300','ring-red-300');
+        if (key === estatus) el.classList.add(cfg.ring);
+    });
+
+    // Indicador de filtro
+    const indicador = document.getElementById('filtro-activo');
+    if (estatus === 'Todos') {
+        indicador.classList.add('hidden');
+    } else {
+        indicador.classList.remove('hidden');
+        document.getElementById('filtro-label').textContent = kpiMap[estatus].label;
+    }
+
+    // Filtrar filas
+    const todasLasFilas = [...document.querySelectorAll('#tbody-ordenes .orden-row')];
+    filasFiltradas = estatus === 'Todos'
+        ? todasLasFilas
+        : todasLasFilas.filter(r => r.dataset.estatus === estatus);
+
+    renderPagina();
+}
+
+function renderPagina() {
+    const todasLasFilas = [...document.querySelectorAll('#tbody-ordenes .orden-row')];
+
+    // Ocultar todas
+    todasLasFilas.forEach(r => r.style.display = 'none');
+
+    const totalPags = Math.ceil(filasFiltradas.length / POR_PAGINA);
+    const inicio    = (paginaActual - 1) * POR_PAGINA;
+    const fin       = inicio + POR_PAGINA;
+
+    // Mostrar solo las de esta página
+    filasFiltradas.slice(inicio, fin).forEach(r => r.style.display = '');
+
+    // Empty state
+    const emptyEl = document.getElementById('empty-filtro');
+    if (filasFiltradas.length === 0) {
+        emptyEl.classList.remove('hidden');
+    } else {
+        emptyEl.classList.add('hidden');
+    }
+
+    // Paginación
+    const pagDiv = document.getElementById('paginacion');
+    if (filasFiltradas.length <= POR_PAGINA) {
+        pagDiv.classList.add('hidden');
+    } else {
+        pagDiv.classList.remove('hidden');
+        document.getElementById('pag-info').textContent =
+            `Mostrando ${inicio + 1}–${Math.min(fin, filasFiltradas.length)} de ${filasFiltradas.length}`;
+
+        // Botones prev/next
+        document.getElementById('btn-prev').disabled = paginaActual <= 1;
+        document.getElementById('btn-next').disabled = paginaActual >= totalPags;
+
+        // Numeración de páginas
+        const numsDiv = document.getElementById('pag-nums');
+        numsDiv.innerHTML = '';
+        for (let p = 1; p <= totalPags; p++) {
+            const btn = document.createElement('button');
+            btn.textContent = p;
+            btn.onclick = () => { paginaActual = p; renderPagina(); };
+            btn.className = [
+                'w-6 h-6 rounded text-xs font-semibold transition-colors',
+                p === paginaActual
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-500 hover:bg-gray-100'
+            ].join(' ');
+            numsDiv.appendChild(btn);
+        }
+    }
+}
+
+function cambiarPagina(delta) {
+    const totalPags = Math.ceil(filasFiltradas.length / POR_PAGINA);
+    paginaActual = Math.max(1, Math.min(paginaActual + delta, totalPags));
+    renderPagina();
+}
+
+// Inicializar al cargar: mostrar todo, activar KPI "Todos"
+document.addEventListener('DOMContentLoaded', () => {
+    filtrarEstatus('Todos');
+});
+</script>
 
 {% endblock %}

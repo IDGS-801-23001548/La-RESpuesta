@@ -11,6 +11,7 @@ from app.models import (
 from flask_security import login_required
 from flask_security.decorators import roles_required
 from datetime import date
+from sqlalchemy import func
 
 # ── Mapa de meses en español ──────────────────────────────────────────────────
 MESES = {
@@ -65,6 +66,48 @@ def compra():
         .order_by(OrdenCompra.fechaDeOrden.desc(), OrdenCompra.idOrdenCompra.desc())
         .all()
     )
+
+    # ── Conteo de artículos por orden (3 queries en batch) ───────────────────
+    # Tipo Materia: suma de cantidadDeUnidad (ej: 15 cajas)
+    mpu_sums = dict(
+        db.session.query(
+            MateriaPrimaUnitaria.idOrdenCompra,
+            func.sum(MateriaPrimaUnitaria.cantidadDeUnidad)
+        ).group_by(MateriaPrimaUnitaria.idOrdenCompra).all()
+    )
+
+    lotes = [o.numeroLote for o in ordenes if o.numeroLote]
+
+    # Tipo Canal: conteo de canales por lote (cada registro = 1 canal)
+    canal_counts = {}
+    if lotes:
+        canal_counts = dict(
+            db.session.query(Canal.numeroLote, func.count(Canal.idCanal))
+            .filter(Canal.numeroLote.in_(lotes))
+            .group_by(Canal.numeroLote)
+            .all()
+        )
+
+    # Tipo Producto: conteo de productos distintos por lote
+    pu_counts = {}
+    if lotes:
+        pu_counts = dict(
+            db.session.query(
+                ProductoUnitario.NumeroLote,
+                func.count(func.distinct(ProductoUnitario.idProducto))
+            )
+            .filter(ProductoUnitario.NumeroLote.in_(lotes))
+            .group_by(ProductoUnitario.NumeroLote)
+            .all()
+        )
+
+    articulos_count = {}
+    for o in ordenes:
+        total = int(mpu_sums.get(o.idOrdenCompra, 0) or 0)
+        total += canal_counts.get(o.numeroLote, 0)
+        total += pu_counts.get(o.numeroLote, 0)
+        articulos_count[o.idOrdenCompra] = total
+
     total_en_curso  = sum(1 for o in ordenes if o.estatus == 'EnCurso')
     total_recibida  = sum(1 for o in ordenes if o.estatus == 'Recibida')
     total_cancelada = sum(1 for o in ordenes if o.estatus == 'Cancelada')
@@ -74,6 +117,7 @@ def compra():
         total_en_curso=total_en_curso,
         total_recibida=total_recibida,
         total_cancelada=total_cancelada,
+        articulos_count=articulos_count,
     )
 
 
@@ -143,10 +187,13 @@ def compra_nueva():
 
     if request.method == 'POST':
         if not form.validate_on_submit():
-            flash('Token de seguridad inválido. Intenta de nuevo.', 'danger')
+            errores = '; '.join(
+                e for field in form for e in field.errors
+            ) or 'Token de seguridad inválido.'
+            flash(errores, 'danger')
             return redirect(url_for('compras.compra_nueva'))
 
-        proveedor_id = request.form.get('proveedor_id', type=int)
+        proveedor_id = form.proveedor_id.data
         fecha_str    = request.form.get('fecha', '')
         notas        = request.form.get('notas', '').strip()
         estatus      = request.form.get('estatus', 'EnCurso')
@@ -165,13 +212,13 @@ def compra_nueva():
             fecha_orden = date.today()
 
         # Arrays de líneas
-        mp_ids           = request.form.getlist('materia_proveida_id[]')
-        cantidades_u     = request.form.getlist('cantidad_de_unidad[]')
-        cantidades_x     = request.form.getlist('cantidad_por_unidad[]')
-        precios          = request.form.getlist('precio_por_unidad[]')
-        fechas_caducidad = request.form.getlist('fecha_caducidad[]')    # Producto
-        fechas_sacrificio = request.form.getlist('fecha_sacrificio[]')  # Canal
-        pesos_canal      = request.form.getlist('peso_canal[]')         # Canal
+        mp_ids            = request.form.getlist('materia_proveida_id[]')
+        cantidades_u      = request.form.getlist('cantidad_de_unidad[]')
+        cantidades_x      = request.form.getlist('cantidad_por_unidad[]')
+        precios           = request.form.getlist('precio_por_unidad[]')
+        fechas_caducidad  = request.form.getlist('fecha_caducidad[]')
+        fechas_sacrificio = request.form.getlist('fecha_sacrificio[]')
+        pesos_canal       = request.form.getlist('peso_canal[]')
 
         if not mp_ids:
             flash('Debes agregar al menos una materia prima.', 'danger')
@@ -179,11 +226,55 @@ def compra_nueva():
 
         total_orden = 0.0
         lineas = []
+        errores_linea = []
+
         for i, mp_id in enumerate(mp_ids):
+            num = i + 1
             mp_id  = int(mp_id) if mp_id else 0
-            cant_u = float(cantidades_u[i])  if i < len(cantidades_u)  and cantidades_u[i]  else 0
-            cant_x = float(cantidades_x[i])  if i < len(cantidades_x)  and cantidades_x[i]  else 0
-            precio = float(precios[i])        if i < len(precios)       and precios[i]        else 0
+            cant_u_raw = cantidades_u[i] if i < len(cantidades_u) else ''
+            cant_x_raw = cantidades_x[i] if i < len(cantidades_x) else ''
+            precio_raw = precios[i]       if i < len(precios)      else ''
+
+            if not mp_id:
+                errores_linea.append(f'Línea {num}: selecciona una materia proveída.')
+                continue
+
+            if not cant_u_raw or cant_u_raw.strip() == '':
+                errores_linea.append(f'Línea {num}: la cantidad de unidades es obligatoria.')
+                continue
+            if not precio_raw or precio_raw.strip() == '':
+                errores_linea.append(f'Línea {num}: el precio por unidad es obligatorio.')
+                continue
+
+            cant_u = float(cant_u_raw)
+            cant_x = float(cant_x_raw) if cant_x_raw.strip() else 0.0
+            precio = float(precio_raw)
+
+            if cant_u <= 0:
+                errores_linea.append(f'Línea {num}: la cantidad debe ser mayor a 0.')
+                continue
+            if precio <= 0:
+                errores_linea.append(f'Línea {num}: el precio debe ser mayor a 0.')
+                continue
+
+            # Validar campos condicionales según tipo de materia
+            mp_proveida_check = MateriaProveida.query.get(mp_id)
+            if mp_proveida_check:
+                tipo_check = mp_proveida_check.materiaPrima.tipo or 'Materia'
+                if tipo_check == 'Producto':
+                    if cant_x <= 0:
+                        errores_linea.append(f'Línea {num}: la cantidad por unidad es obligatoria para tipo Producto.')
+                        continue
+                    fec = fechas_caducidad[i] if i < len(fechas_caducidad) else ''
+                    if not fec:
+                        errores_linea.append(f'Línea {num}: la fecha de caducidad es obligatoria para tipo Producto.')
+                        continue
+                elif tipo_check == 'Canal':
+                    fec = fechas_sacrificio[i] if i < len(fechas_sacrificio) else ''
+                    if not fec:
+                        errores_linea.append(f'Línea {num}: la fecha de sacrificio es obligatoria para tipo Canal.')
+                        continue
+
             fecha_cad = _parse_date(fechas_caducidad[i]  if i < len(fechas_caducidad)  else '')
             fecha_sac = _parse_date(fechas_sacrificio[i] if i < len(fechas_sacrificio) else '')
             peso_c    = float(pesos_canal[i]) if i < len(pesos_canal) and pesos_canal[i] else 0.0
@@ -193,6 +284,15 @@ def compra_nueva():
             total_orden  += total_costo
             lineas.append((mp_id, cant_u, cant_x, precio, total_costo, total_materia,
                            fecha_cad, fecha_sac, peso_c))
+
+        if errores_linea:
+            for err in errores_linea:
+                flash(err, 'danger')
+            return redirect(url_for('compras.compra_nueva'))
+
+        if not lineas:
+            flash('No se pudo procesar ninguna línea. Revisa los datos ingresados.', 'danger')
+            return redirect(url_for('compras.compra_nueva'))
 
         numero_lote = _generar_lote()
 

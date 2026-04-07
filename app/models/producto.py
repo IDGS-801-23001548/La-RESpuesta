@@ -12,6 +12,12 @@ class Producto(db.Model):
     StockProducto          = db.Column(db.Integer, default=0, nullable=False)
     idCategoria            = db.Column(db.Integer, db.ForeignKey('categoria.idCategoria'), nullable=True)
 
+    categoria              = db.relationship(
+        'Categoria',
+        foreign_keys=[idCategoria],
+        back_populates='productos'
+    )
+
     unidadesProducto       = db.relationship(
         'ProductoUnitario',
         backref='producto',

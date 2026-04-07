@@ -1,7 +1,7 @@
 import base64
 from flask import render_template, redirect, url_for, flash, request
 from . import productos
-from .forms import ProductoForm
+from .forms import ProductoForm, ProductoNuevoForm
 from app.extensions import db, mongo_fotos
 from app.models.producto import Producto
 from app.models.categoria import Categoria
@@ -193,7 +193,7 @@ def catalogo():
 @login_required
 @roles_required('admin')
 def productos_nuevo():
-    form = ProductoForm()
+    form = ProductoNuevoForm()
     form.idCategoria.choices = _choices_categorias()
 
     if form.validate_on_submit():

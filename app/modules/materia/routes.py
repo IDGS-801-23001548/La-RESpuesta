@@ -15,8 +15,8 @@ from flask_security import roles_required
 @login_required
 @roles_required('admin')
 def materias():
-    todas = MateriaPrima.query.order_by(MateriaPrima.nombreMateriaPrima).all()
-    materias_proveidas = MateriaProveida.query.all()
+    todas = MateriaPrima.query.order_by(MateriaPrima.idMateriaPrima.desc()).all()
+    materias_proveidas = MateriaProveida.query.order_by(MateriaProveida.idMateriaProveida.desc()).all()
     categorias = Categoria.query.all()
     productos = Producto.query.all()
     proveedores = Proveedor.query.filter_by(estatus='activo').order_by(Proveedor.nombre).all()

@@ -14,6 +14,6 @@ class Categoria(db.Model):
 
     productos       = db.relationship(
         'Producto',
-        backref='categoria',
+        back_populates='categoria',
         lazy='dynamic'
     )
