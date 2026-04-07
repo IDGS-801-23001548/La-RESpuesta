@@ -394,7 +394,8 @@
     <div class="productos-grid" id="productos-grid">
 
       {% if productos %}
-        {% for p in productos %}
+        {% for item in items %}
+        {% set p = item.producto %}
 
           {# Stock badge #}
           {% if p.StockProducto <= 0 %}
@@ -415,7 +416,13 @@
 
             <span class="stock-badge {{ badge_cls }}">{{ badge_txt }}</span>
 
-            <div class="producto-img">🥩</div>
+            <div class="producto-img">
+  {% if item.foto_b64 %}
+    <img src="{{ item.foto_b64 }}" style="width:100%; height:100%; object-fit:cover;">
+  {% else %}
+    🥩
+  {% endif %}
+</div>
 
             <div class="producto-info">
               <div class="producto-nombre">{{ p.NombreProducto }}</div>

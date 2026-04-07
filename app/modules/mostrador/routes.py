@@ -4,7 +4,7 @@ from flask_security.decorators import roles_required
 from . import mostrador
 from datetime import datetime
 import uuid
-from app.extensions import db
+from app.extensions import db, mongo_fotos
 from app.models.producto import Producto
 from app.models.pedido import Pedido
 from app.models.ticket import Ticket
@@ -34,6 +34,27 @@ def _build_carrito():
     return carrito_items, round(total, 2)
 
 
+def _enrich_productos_con_fotos(productos):
+    """
+    Recibe una lista de objetos Producto (SQLAlchemy) y devuelve una lista
+    de dicts enriquecidos con la foto en base64 obtenida de MongoDB.
+    """
+    resultado = []
+    for p in productos:
+        foto_b64 = None
+        if p.idFoto and mongo_fotos is not None:
+            try:
+                doc = mongo_fotos.find_one({'idFoto': str(p.idFoto)})
+                if doc and doc.get('foto'):
+                    raw = doc['foto']
+                    if not raw.startswith('data:'):
+                        raw = f'data:image/jpeg;base64,{raw}'
+                    foto_b64 = raw
+            except Exception:
+                pass
+        resultado.append({'producto': p, 'foto_b64': foto_b64})
+    return resultado    
+
 @mostrador.route("/venta", methods=['GET'])
 @login_required
 @roles_required('Cajero')
@@ -50,11 +71,14 @@ def mostradorVenta():
     vaciar_form = VaciarCarritoForm()
     cobrar_form = CobrarForm()
 
+    items = _enrich_productos_con_fotos(productos)
+
     return render_template(
         "mostrador/mostrador.html",
         productos = productos,
         carrito = carrito_items,
         total = total,
+        items=items,
         agregar_form = agregar_form,
         modificar_form = modificar_form,
         eliminar_form = eliminar_form,
