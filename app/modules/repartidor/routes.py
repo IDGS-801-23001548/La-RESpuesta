@@ -83,7 +83,6 @@ def entregar_pedido(id_pedido):
     # Cambiamos a Finalizado (como lo tienen tus compañeros)
     pedido_db.Estatus = 'Finalizado'
     db.session.commit()
-    flash("¡Pedido entregado con éxito!", "success")
     
     return redirect(url_for("repartidor.pedidos"))
 
@@ -91,32 +90,38 @@ def entregar_pedido(id_pedido):
 @repartidor_bp.route("/cerrar-ruta")
 @login_required
 def cerrar_ruta():
-    # 1. BUSCAR CUALQUIER PEDIDO NO FINALIZADO (Pendiente o EnCurso)
-    # Si existe al menos uno, bloqueamos la salida.
-    pedido_incompleto = Pedido.query.filter(
+    # 1. BUSCAR CUALQUIER PEDIDO QUE NO ESTÉ NI ENTREGADO NI CANCELADO
+    # Buscamos 'Pendiente' o 'EnCurso'. Si existe aunque sea uno, Isaac no se va.
+    pedido_abierto = Pedido.query.filter(
         Pedido.idRepartidor == current_user.id,
         Pedido.Estatus.in_(['Pendiente', 'EnCurso'])
     ).first()
+    
+    if pedido_abierto:
+        # Si encuentra uno, le mandamos el mensaje de error y lo regresamos
+        flash("¡DENEGADO! No puedes finalizar jornada. Tienes pedidos pendientes o en curso que debes entregar o cancelar.", "error")
+        return redirect(url_for('repartidor.pedidos'))
 
-    # 2. CALCULAR EL EFECTIVO (Solo para el mensaje de confirmación)
-    pedidos_finalizados = Pedido.query.filter_by(
+    # 2. CALCULAR EL EFECTIVO (Solo los que sí entregó y eran cash)
+    pedidos_del_dia = Pedido.query.filter_by(
         idRepartidor=current_user.id, 
         Estatus='Finalizado', 
         Tipo='Efectivo'
     ).all()
     
-    total_cobrado = sum(p.Total for p in pedidos_finalizados)
+    total_efectivo = sum(p.Total for p in pedidos_del_dia)
 
-    # 3. "BORRAR EL DASHBOARD" (Lógica de Negocio)
-    # En lugar de borrar físicamente los datos, lo que hacemos es desvincular al repartidor.
-    # Así, mañana que Isaac entre, su dashboard estará limpio (0 pedidos).
+    # 3. LIMPIEZA DEL DASHBOARD
+    # Desvinculamos al repartidor de sus pedidos finalizados para que mañana empiece de cero
     for p in Pedido.query.filter_by(idRepartidor=current_user.id).all():
-        p.idRepartidor = None # El pedido ya se entregó, el repartidor queda libre
+        p.idRepartidor = None 
     
     db.session.commit()
 
-    # 4. LOGOUT LIMPIO
+    # 4. LOGOUT TÉCNICO (Sin mensaje de flash para que sea limpio, como pediste)
     from flask_login import logout_user
     logout_user()
     
+    # Solo mandamos el mensaje de la liquidación de caja al login
+    flash(f"Ruta finalizada. Entrega ${total_efectivo:.2f} en caja.", "success")
     return redirect(url_for('auth.login'))

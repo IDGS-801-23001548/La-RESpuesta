@@ -135,19 +135,66 @@
             </div>
         </div>
     </div>
+    <div id="modalBloqueo" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-[110] items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl text-center border-t-8 border-yellow-500">
+        <div class="bg-yellow-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl">
+            ⚠️
+        </div>
+        
+        <h3 class="text-3xl font-black text-gray-900 mb-2">Ruta Incompleta</h3>
+        <p class="text-gray-500 font-medium mb-8 italic">
+            "todavía tienes cortes de carne en la moto o pedidos sin gestionar."
+        </p>
+
+        <div class="bg-yellow-50 rounded-3xl p-6 mb-8 border border-yellow-100 text-left">
+            <p class="text-xs font-bold text-yellow-800 uppercase tracking-widest mb-2 text-center">Acción requerida:</p>
+            <ul class="text-sm text-yellow-700 space-y-2 font-medium">
+                <li>• Entrega los pedidos en curso.</li>
+                <li>• Cancela los que no pudieron entregarse.</li>
+            </ul>
+        </div>
+
+        <button onclick="cerrarModalBloqueo()" class="w-full bg-gray-900 text-white font-black py-5 rounded-2xl text-lg shadow-xl hover:bg-gray-800 transition-all active:scale-95">
+            ENTENDIDO, VOLVER
+        </button>
+    </div>
+</div>
 
     <script>
-        function abrirModalLiquidacion() {
-            const modal = document.getElementById('modalLiquidacion');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
+    function abrirModalLiquidacion() {
+        // --- LA LLAVE MAESTRA ---
+        // Contamos cuántos pedidos NO están finalizados ni cancelados
+        let pendientes = 0;
+        {% for p in pedidos_db %}
+            {% if p.Estatus in ['Pendiente', 'EnCurso'] %}
+                pendientes++;
+            {% endif %}
+        {% endfor %}
 
-        function cerrarModalLiquidacion() {
-            const modal = document.getElementById('modalLiquidacion');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+        if (pendientes > 0) {
+            // Si hay bronca, abrimos el modal de advertencia
+            const modalB = document.getElementById('modalBloqueo');
+            modalB.classList.remove('hidden');
+            modalB.classList.add('flex');
+        } else {
+            // Si todo está limpio, abrimos el de liquidación de lana
+            const modalL = document.getElementById('modalLiquidacion');
+            modalL.classList.remove('hidden');
+            modalL.classList.add('flex');
         }
-    </script>
+    }
+
+    function cerrarModalBloqueo() {
+        const modalB = document.getElementById('modalBloqueo');
+        modalB.classList.add('hidden');
+        modalB.classList.remove('flex');
+    }
+
+    function cerrarModalLiquidacion() {
+        const modalL = document.getElementById('modalLiquidacion');
+        modalL.classList.add('hidden');
+        modalL.classList.remove('flex');
+    }
+</script>
 </body>
 </html>
