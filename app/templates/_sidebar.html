@@ -115,11 +115,9 @@
                 ) %}
 
 
-                {{ ui.sidebar_item( "Corte Diario", url_for('finanzas.corte_diario'), endpoint_prefix="finanzas.corte_diario")
+                {{ ui.sidebar_item( "Balance del dia", url_for('finanzas.corte_diario'), endpoint_prefix="finanzas.corte_diario")
                 }}
                 {{ ui.sidebar_item( "Pagos a Proveedores", url_for('finanzas.pago_proveedores'), endpoint_prefix="finanzas.pago_proveedores") }}
-                {{ ui.sidebar_item( "Utilidad Diaria", url_for('admin.utilidad'), endpoint_prefix="admin.utilidad") }}
-                {{ ui.sidebar_item( "Reportes", url_for('admin.reportes'), endpoint_prefix="admin.reportes") }}
 
                 {% endcall %}
 
