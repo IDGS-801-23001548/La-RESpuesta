@@ -102,9 +102,8 @@
                 {{ ui.sidebar_item( "Solicitudes de Producción",
                 url_for('solicitud_de_produccion.solicitudes'),endpoint_prefix="solicitud_de_produccion.solicitudes") }}
                 {{ ui.sidebar_item( "Producción", url_for('admin.produccion'), endpoint_prefix="admin.produccion") }}
-                {{ ui.sidebar_item( "Productos", url_for('productos.catalogo'), endpoint_prefix="productos.catalogo")
-                }}
-                {{ ui.sidebar_item( "Ventas", url_for('admin.ventas'), endpoint_prefix="admin.ventas") }}
+                {{ ui.sidebar_item( "Productos", url_for('productos.catalogo'), endpoint_prefix="productos.catalogo")}}
+                
 
                 {% endcall %}
 
@@ -116,9 +115,9 @@
                 ) %}
 
 
-                {{ ui.sidebar_item( "Corte Diario", url_for('admin.corte_diario'), endpoint_prefix="admin.corte_diario")
+                {{ ui.sidebar_item( "Corte Diario", url_for('finanzas.corte_diario'), endpoint_prefix="finanzas.corte_diario")
                 }}
-                {{ ui.sidebar_item( "Pagos a Proveedores", url_for('admin.pago'), endpoint_prefix="admin.pago") }}
+                {{ ui.sidebar_item( "Pagos a Proveedores", url_for('finanzas.pago_proveedores'), endpoint_prefix="finanzas.pago_proveedores") }}
                 {{ ui.sidebar_item( "Utilidad Diaria", url_for('admin.utilidad'), endpoint_prefix="admin.utilidad") }}
                 {{ ui.sidebar_item( "Reportes", url_for('admin.reportes'), endpoint_prefix="admin.reportes") }}
 

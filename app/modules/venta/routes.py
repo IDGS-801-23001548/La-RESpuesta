@@ -65,10 +65,26 @@ def _calcular_totales(items):
     return total_con_iva, base_sin_iva, iva_desglosado
 
 
-def _enrich_productos_con_fotos(productos):
+EMOJI_MAP = {
+    'Res':     '🐄',
+    'Cerdo':   '🐷',
+    'Pollo':   '🐔',
+    'Borrego': '🐑',
+}
+
+COLOR_MAP = {
+    'Res':     'red',
+    'Cerdo':   'pink',
+    'Pollo':   'amber',
+    'Borrego': 'purple',
+}
+
+
+def _enrich_productos_con_fotos(productos, categorias_map=None):
     """
     Recibe una lista de objetos Producto (SQLAlchemy) y devuelve una lista
-    de dicts enriquecidos con la foto en base64 obtenida de MongoDB.
+    de dicts enriquecidos con la foto en base64 obtenida de MongoDB y datos
+    de categoría para usar en filtros.
     """
     resultado = []
     for p in productos:
@@ -83,7 +99,19 @@ def _enrich_productos_con_fotos(productos):
                     foto_b64 = raw
             except Exception:
                 pass
-        resultado.append({'producto': p, 'foto_b64': foto_b64})
+
+        cat_nombre = '—'
+        cat_filtro = 'sin'
+        if categorias_map and p.idCategoria and p.idCategoria in categorias_map:
+            cat_nombre = categorias_map[p.idCategoria]
+            cat_filtro = str(p.idCategoria)
+
+        resultado.append({
+            'producto':   p,
+            'foto_b64':   foto_b64,
+            'cat_nombre': cat_nombre,
+            'cat_filtro': cat_filtro,
+        })
     return resultado
 
 
@@ -107,70 +135,73 @@ def inicio():
 
 
 # ─────────────────────────────────────────────
-#  CATÁLOGO — SELECCIÓN DE ANIMAL
+#  CATÁLOGO UNIFICADO
+# ─────────────────────────────────────────────
+
+@venta.route("/catalogo", methods=['GET'])
+@login_required
+def catalogo():
+    form = AgregarAlCarritoForm()
+
+    productos_db = (Producto.query
+                    .filter(Producto.StockProducto > 0)
+                    .order_by(Producto.NombreProducto)
+                    .all())
+
+    categorias_map = {c.idCategoria: c.nombreCategoria for c in Categoria.query.all()}
+    items = _enrich_productos_con_fotos(productos_db, categorias_map=categorias_map)
+
+    precios    = [i['producto'].PrecioVentaProducto for i in items]
+    precio_min = int(min(precios)) if precios else 0
+    precio_max = int(max(precios)) if precios else 9999
+
+    categorias_lista = Categoria.query.order_by(Categoria.nombreCategoria).all()
+
+    return render_template(
+        "venta/catalogo.html",
+        items=items,
+        precio_min=precio_min,
+        precio_max=precio_max,
+        categorias_lista=categorias_lista,
+        emoji_map=EMOJI_MAP,
+        color_map=COLOR_MAP,
+        form=form,
+        carrito_count=_carrito_count(),
+    )
+
+
+# ─────────────────────────────────────────────
+#  REDIRECTS LEGACY → catálogo unificado
 # ─────────────────────────────────────────────
 
 @venta.route("/seleccionar_animal", methods=['GET'])
 @login_required
 def seleccionar_animal():
-    return render_template(
-        "venta/selector_animal.html",
-        carrito_count=_carrito_count()
-    )
-
-
-# ─────────────────────────────────────────────
-#  CATÁLOGOS POR ANIMAL
-# ─────────────────────────────────────────────
-
-def _catalogo_view(categoria, template, emoji, label):
-    form = AgregarAlCarritoForm()
-    productos_db = Producto.query \
-        .join(Categoria, Producto.idCategoria == Categoria.idCategoria) \
-        .filter(Categoria.nombreCategoria == categoria) \
-        .filter(Producto.StockProducto > 0) \
-        .order_by(Producto.NombreProducto).all()
-
-    items = _enrich_productos_con_fotos(productos_db)
-
-    precios   = [p['producto'].PrecioVentaProducto for p in items]
-    precio_min = int(min(precios)) if precios else 0
-    precio_max = int(max(precios)) if precios else 9999
-
-    return render_template(
-        template,
-        items=items,
-        precio_min=precio_min,
-        precio_max=precio_max,
-        emoji=emoji,
-        label=label,
-        form=form,
-        carrito_count=_carrito_count()
-    )
+    return redirect(url_for('venta.catalogo'))
 
 
 @venta.route("/catalogo_res", methods=['GET'])
 @login_required
 def catalogo_res():
-    return _catalogo_view('Res', 'venta/catalogo_res.html', '🐄', 'Res')
+    return redirect(url_for('venta.catalogo'))
 
 
 @venta.route("/catalogo_cerdo", methods=['GET'])
 @login_required
 def catalogo_cerdo():
-    return _catalogo_view('Cerdo', 'venta/catalogo_cerdo.html', '🐷', 'Cerdo')
+    return redirect(url_for('venta.catalogo'))
 
 
 @venta.route("/catalogo_pollo", methods=['GET'])
 @login_required
 def catalogo_pollo():
-    return _catalogo_view('Pollo', 'venta/catalogo_pollo.html', '🐔', 'Pollo')
+    return redirect(url_for('venta.catalogo'))
 
 
 @venta.route("/catalogo_borrego", methods=['GET'])
 @login_required
 def catalogo_borrego():
-    return _catalogo_view('Borrego', 'venta/catalogo_borrego.html', '🐑', 'Borrego')
+    return redirect(url_for('venta.catalogo'))
 
 
 # ─────────────────────────────────────────────
@@ -185,34 +216,47 @@ def agregar_al_carrito(id_producto):
         if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'ok': False, 'msg': 'Token CSRF inválido'}), 400
         flash('Solicitud inválida.', 'error')
-        return redirect(request.referrer or url_for('venta.seleccionar_animal'))
+        return redirect(request.referrer or url_for('venta.catalogo'))
+
+    try:
+        cantidad = int(request.form.get('cantidad') or 1)
+    except ValueError:
+        cantidad = 1
+    cantidad = max(1, cantidad)
 
     producto    = Producto.query.get_or_404(id_producto)
     carrito_obj = _get_or_create_carrito()
 
-    unidad = ProductoUnitario.query.filter_by(
-        idProducto=id_producto,
-        estatus='Disponible'
-    ).first()
+    unidades_disponibles = (ProductoUnitario.query
+                            .filter_by(idProducto=id_producto, estatus='Disponible')
+                            .limit(cantidad)
+                            .all())
 
-    if not unidad:
+    if not unidades_disponibles:
         if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'ok': False, 'msg': 'Sin stock disponible'}), 400
         flash('No hay unidades disponibles de ese producto.', 'warning')
-        return redirect(request.referrer or url_for('venta.seleccionar_animal'))
+        return redirect(request.referrer or url_for('venta.catalogo'))
 
-    unidad.estatus   = 'EnCarrito'
-    unidad.idCarrito = carrito_obj.idCarrito
+    for u in unidades_disponibles:
+        u.estatus   = 'EnCarrito'
+        u.idCarrito = carrito_obj.idCarrito
     db.session.commit()
+
+    n = len(unidades_disponibles)
+    msg = f'{n} × "{producto.NombreProducto}" agregado(s) al carrito'
+    if n < cantidad:
+        msg += f' (solo había {n} disponibles)'
 
     if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({
             'ok':            True,
             'carrito_count': _carrito_count(),
-            'msg':           f'"{producto.NombreProducto}" agregado al carrito'
+            'agregados':     n,
+            'msg':           msg,
         })
 
-    flash(f'"{producto.NombreProducto}" agregado al carrito.', 'success')
+    flash(msg, 'success')
     return redirect(request.referrer or url_for('venta.carrito'))
 
 
@@ -268,7 +312,7 @@ def vaciar_carrito():
         db.session.commit()
 
     flash('Carrito vaciado.', 'success')
-    return redirect(url_for('venta.seleccionar_animal'))
+    return redirect(url_for('venta.catalogo'))
 
 
 # ─────────────────────────────────────────────
@@ -313,12 +357,12 @@ def pago():
     carrito_obj = Carrito.query.filter_by(idUsuario=current_user.id).first()
     if not carrito_obj:
         flash('Tu carrito está vacío.', 'warning')
-        return redirect(url_for('venta.seleccionar_animal'))
+        return redirect(url_for('venta.catalogo'))
 
     unidades = carrito_obj.productos.filter_by(estatus='EnCarrito').all()
     if not unidades:
         flash('Tu carrito está vacío.', 'warning')
-        return redirect(url_for('venta.seleccionar_animal'))
+        return redirect(url_for('venta.catalogo'))
 
     items = _agrupar_unidades(unidades)
     total_con_iva, base_sin_iva, iva_desglosado = _calcular_totales(items)

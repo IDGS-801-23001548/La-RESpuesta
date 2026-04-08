@@ -16,3 +16,4 @@ from .materia_prima_unitaria import MateriaPrimaUnitaria
 from .orden_compra import OrdenCompra
 from .unidad_medida import UnidadMedida
 from .canal import Canal
+from .retiro import Retiro
