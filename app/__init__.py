@@ -108,6 +108,8 @@ def create_app():
     from .modules.productos                 import productos
     from .modules.finanzas                  import finanzas
 
+    from .modules.mostrador import mostrador
+
     app.register_blueprint(auth)
     app.register_blueprint(admin)
     app.register_blueprint(user)
@@ -121,6 +123,9 @@ def create_app():
     app.register_blueprint(productos)
     app.register_blueprint(finanzas)
     
+    
+    app.register_blueprint(mostrador)
+
     # ==============================
     # MANEJO DE ERRORES
     # ==============================

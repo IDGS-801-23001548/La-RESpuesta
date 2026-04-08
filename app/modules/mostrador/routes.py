@@ -1,0 +1,379 @@
+from flask import render_template, redirect, url_for, flash, request, session, jsonify
+from flask_login import login_required
+from flask_security.decorators import roles_required
+from . import mostrador
+from datetime import datetime
+import uuid
+from app.extensions import db, mongo_fotos
+from app.models.producto import Producto
+from app.models.pedido import Pedido
+from app.models.ticket import Ticket
+from app.models.detallesTicket import DetalleTicket
+from .forms import (
+    AgregarProductoForm,
+    ModificarCantidadForm,
+    EliminarProductoForm,
+    VaciarCarritoForm,
+    CobrarForm,
+    EntregarPedidoForm
+)
+
+
+def _calcular_subtotal(item):
+    return round(item['precio'] * item['cantidad'], 2)
+
+
+def _build_carrito():
+    carrito_raw = session.get('carrito', [])
+    carrito_items = []
+    total = 0.0
+    for item in carrito_raw:
+        subtotal = _calcular_subtotal(item)
+        total += subtotal
+        carrito_items.append({**item, 'subtotal': subtotal})
+    return carrito_items, round(total, 2)
+
+
+def _enrich_productos_con_fotos(productos):
+    """
+    Recibe una lista de objetos Producto (SQLAlchemy) y devuelve una lista
+    de dicts enriquecidos con la foto en base64 obtenida de MongoDB.
+    """
+    resultado = []
+    for p in productos:
+        foto_b64 = None
+        if p.idFoto and mongo_fotos is not None:
+            try:
+                doc = mongo_fotos.find_one({'idFoto': str(p.idFoto)})
+                if doc and doc.get('foto'):
+                    raw = doc['foto']
+                    if not raw.startswith('data:'):
+                        raw = f'data:image/jpeg;base64,{raw}'
+                    foto_b64 = raw
+            except Exception:
+                pass
+        resultado.append({'producto': p, 'foto_b64': foto_b64})
+    return resultado    
+
+@mostrador.route("/venta", methods=['GET'])
+@login_required
+@roles_required('Cajero')
+def mostradorVenta():
+    if 'carrito' not in session:
+        session['carrito'] = []
+
+    productos = Producto.query.order_by(Producto.NombreProducto).all()
+    carrito_items, total = _build_carrito()
+
+    agregar_form = AgregarProductoForm()
+    modificar_form = ModificarCantidadForm()
+    eliminar_form = EliminarProductoForm()
+    vaciar_form = VaciarCarritoForm()
+    cobrar_form = CobrarForm()
+
+    items = _enrich_productos_con_fotos(productos)
+
+    return render_template(
+        "mostrador/mostrador.html",
+        productos = productos,
+        carrito = carrito_items,
+        total = total,
+        items=items,
+        agregar_form = agregar_form,
+        modificar_form = modificar_form,
+        eliminar_form = eliminar_form,
+        vaciar_form = vaciar_form,
+        cobrar_form = cobrar_form,
+    )
+
+
+@mostrador.route("/venta/agregar/<int:id_producto>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def agregarProducto(id_producto):
+    form = AgregarProductoForm()
+
+    if not form.validate_on_submit():
+        flash('Cantidad inválida.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    cantidad = form.cantidad.data
+    producto = Producto.query.get_or_404(id_producto)
+
+    if producto.StockProducto <= 0:
+        flash(f'"{producto.NombreProducto}" no tiene stock disponible.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    carrito = session.get('carrito', [])
+
+    for item in carrito:
+        if item['id_producto'] == id_producto:
+            nueva_cantidad = round(item['cantidad'] + cantidad, 3)
+            if nueva_cantidad > producto.StockProducto:
+                flash(
+                    f'Stock insuficiente. Máximo disponible: '
+                    f'{producto.StockProducto} {item["unidad"]}.',
+                    'warning'
+                )
+                return redirect(url_for('mostrador.mostradorVenta'))
+            item['cantidad'] = nueva_cantidad
+            session['carrito'] = carrito
+            session.modified = True
+            flash(f'"{producto.NombreProducto}" actualizado en el carrito.', 'success')
+            return redirect(url_for('mostrador.mostradorVenta'))
+
+    
+
+    if cantidad > producto.StockProducto:
+        flash(
+            f'Stock insuficiente. Máximo disponible: '
+            f'{producto.StockProducto}.',
+            'warning'
+        )
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    carrito.append({
+        'id_producto': id_producto,
+        'nombre':      producto.NombreProducto,
+        'precio':      producto.PrecioVentaProducto,
+        'cantidad':    round(cantidad, 3),
+        'stock':       producto.StockProducto,
+    })
+
+    session['carrito'] = carrito
+    session.modified = True
+    flash(f'"{producto.NombreProducto}" agregado al carrito.', 'success')
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+
+@mostrador.route("/venta/modificar/<int:id_producto>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def modificarCantidad(id_producto):
+    form = ModificarCantidadForm()
+
+    if not form.validate_on_submit():
+        flash('Cantidad inválida.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    cantidad = form.cantidad.data
+    accion   = request.form.get('accion')   # 'sumar' | 'restar' | None
+    carrito  = session.get('carrito', [])
+
+    for item in carrito:
+        if item['id_producto'] == id_producto:
+            if accion == 'sumar':
+                nueva_cantidad = cantidad + 1
+            elif accion == 'restar':
+                nueva_cantidad = cantidad - 1
+            else:
+                nueva_cantidad = cantidad
+
+            if nueva_cantidad <= 0:
+                carrito.remove(item)
+                session['carrito'] = carrito
+                session.modified = True
+                flash(f'"{item["nombre"]}" eliminado del carrito.', 'info')
+                return redirect(url_for('mostrador.mostradorVenta'))
+
+            if nueva_cantidad > item['stock']:
+                flash(
+                    f'Stock insuficiente. Máximo: {item["stock"]}.',
+                    'warning'
+                )
+                return redirect(url_for('mostrador.mostradorVenta'))
+
+            item['cantidad'] = round(nueva_cantidad, 3)
+            session['carrito'] = carrito
+            session.modified = True
+            return redirect(url_for('mostrador.mostradorVenta'))
+
+    flash('Producto no encontrado en el carrito.', 'warning')
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+
+@mostrador.route("/venta/eliminar/<int:id_producto>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def eliminarProducto(id_producto):
+    form = EliminarProductoForm()
+
+    if not form.validate_on_submit():
+        flash('Acción no válida.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    carrito = session.get('carrito', [])
+    nombre  = ''
+
+    for item in carrito:
+        if item['id_producto'] == id_producto:
+            nombre = item['nombre']
+            carrito.remove(item)
+            break
+
+    session['carrito'] = carrito
+    session.modified = True
+
+    if nombre:
+        flash(f'"{nombre}" eliminado del carrito.', 'info')
+
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+
+@mostrador.route("/venta/vaciar", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def vaciarCarrito():
+    form = VaciarCarritoForm()
+
+    if not form.validate_on_submit():
+        flash('Acción no válida.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    session.pop('carrito', None)
+    session.modified = True
+    flash('Carrito vaciado.', 'info')
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+
+@mostrador.route("/venta/cobrar", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def cobrar():
+    form = CobrarForm()
+
+    if not form.validate_on_submit():
+        flash('Acción no válida.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    carrito_items, total = _build_carrito()
+
+    if not carrito_items:
+        flash('El carrito está vacío.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    try:
+        # Generar folio único: TK-YYYYMMDD-XXXX
+        folio = f"TK-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+        ticket = Ticket(
+            folioTicket = folio,
+            fechaCompra = datetime.now(),
+            totalCompra = total,
+        )
+        db.session.add(ticket)
+        db.session.flush()
+
+        for item in carrito_items:
+            detalle = DetalleTicket(
+                idTicket = ticket.idTicket,
+                idProducto = item['id_producto'],
+                cantidad = item['cantidad'],
+                subtotal = item['subtotal'],
+            )
+            db.session.add(detalle)
+
+        db.session.commit()
+
+        session.pop('carrito', None)
+        session.modified = True
+
+        flash(f'Venta registrada correctamente. Folio: {folio}', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al registrar la venta: {str(e)}', 'error')
+
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+# ─────────────────────────────────────────────────────────────
+#  PEDIDOS — VISTA PRINCIPAL
+# ─────────────────────────────────────────────────────────────
+@mostrador.route("/pedidos", methods=['GET'])
+@login_required
+@roles_required('Cajero')
+def mostradorPedido():
+    # Solo pedidos de tipo Mostrador que no estén finalizados ni cancelados
+    pedidos = (
+        Pedido.query
+        .filter(
+            Pedido.Entrega == 'Mostrador',
+            Pedido.Estatus == 'EnCurso'
+        )
+        .order_by(Pedido.idPedido.asc())
+        .all()
+    )
+
+    entregar_form = EntregarPedidoForm()
+
+    return render_template(
+        "mostrador/pedidos.html",
+        pedidos       = pedidos,
+        entregar_form = entregar_form,
+    )
+
+
+# ─────────────────────────────────────────────────────────────
+#  PEDIDOS — DETALLE (JSON para el panel derecho)
+# ─────────────────────────────────────────────────────────────
+@mostrador.route("/pedidos/detalle/<int:id_pedido>", methods=['GET'])
+@login_required
+@roles_required('Cajero')
+def detallePedido(id_pedido):
+    pedido = Pedido.query.filter(
+        Pedido.idPedido == id_pedido,
+        Pedido.Entrega  == 'Mostrador',
+        Pedido.Estatus  == 'EnCurso'
+    ).first_or_404()
+
+    # Nombre del cliente desde la relación con User
+    cliente = pedido.user.name if pedido.user.name else 'Cliente desconocido'
+
+    # Unidades del pedido — placeholder hasta que se defina el modelo completo
+    unidades = []
+    for u in pedido.unidadesPedido:
+        unidades.append({
+            'nombre':   getattr(u, 'nombre',   '—'),
+            'cantidad': getattr(u, 'cantidad', 0),
+            'precio':   getattr(u, 'precio',   0),
+            'subtotal': getattr(u, 'subtotal', 0),
+        })
+
+    return jsonify({
+        'idPedido': pedido.idPedido,
+        'cliente':  pedido.user.name,
+        'total':    pedido.Total,
+        'tipo':     pedido.Tipo,
+        'estatus':  pedido.Estatus,
+        'unidades': unidades,
+    })
+
+
+# ─────────────────────────────────────────────────────────────
+#  PEDIDOS — ENTREGAR
+# ─────────────────────────────────────────────────────────────
+@mostrador.route("/pedidos/entregar/<int:id_pedido>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def entregarPedido(id_pedido):
+    form = EntregarPedidoForm()
+
+    if not form.validate_on_submit():
+        flash('Acción no válida.', 'warning')
+        return redirect(url_for('mostrador.mostradorPedido'))
+
+    pedido = Pedido.query.filter(
+        Pedido.idPedido == id_pedido,
+        Pedido.Entrega  == 'Mostrador',
+        Pedido.Estatus  == 'EnCurso'
+    ).first_or_404()
+
+    try:
+        pedido.Estatus = 'Finalizado'
+        db.session.commit()
+        flash(f'Pedido #{id_pedido:04d} marcado como entregado.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar el pedido: {str(e)}', 'error')
+
+    return redirect(url_for('mostrador.mostradorPedido'))
