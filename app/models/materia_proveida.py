@@ -10,5 +10,5 @@ class MateriaProveida(db.Model):
     idMateriaPrima          = db.Column(db.Integer, db.ForeignKey('materia_prima.idMateriaPrima'), nullable=False)
     idUnidadMedida          = db.Column(db.Integer, db.ForeignKey('unidad_medida.idUnidadMedida'), nullable=False)
 
-    # Relación inversa definida via backref en MateriaPrimaUnitaria
-    # Acceso: materiaProveida.materiasPrimasUnitarias.all()
+    # Relación inversa definida via backref en Lote
+    # Acceso: materiaProveida.lotes.all()

@@ -21,7 +21,6 @@ def _lotes_disponibles_query():
     return (
         Lote.query
         .filter(Lote.estatus == 'Disponible')
-        .filter(Lote.totalMateria > 0)
     )
 
 

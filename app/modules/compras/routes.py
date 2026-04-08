@@ -90,11 +90,10 @@ def compra():
     total_recibida  = sum(1 for o in ordenes if o.estatus == 'Recibida')
     total_cancelada = sum(1 for o in ordenes if o.estatus == 'Cancelada')
 
-    # ── Conteo de artículos por orden ─────────────────────────────────────────
     order_ids = [o.idOrdenCompra for o in ordenes]
     lotes     = [o.numeroLote for o in ordenes if o.numeroLote]
 
-    # Materia Prima: suma cantidadDeUnidad por orden
+    # Materia Prima: suma cantidadDeUnidad por orden (desde Lote)
     mp_sums = {}
     if order_ids:
         mp_sums = {
@@ -106,30 +105,34 @@ def compra():
             .group_by(Lote.idOrdenCompra).all()
         }
 
-    # Canal: conteo de canales por lote
+    # Canal: conteo de canales por idOrdenCompra
     canal_counts = {}
-    if lotes:
+    if order_ids:
         canal_counts = {
-            lote: cnt
-            for lote, cnt in db.session.query(Canal.numeroLote, func.count(Canal.idMateriaProveida))
-            .filter(Canal.numeroLote.in_(lotes))
-            .group_by(Canal.numeroLote).all()
+            oc_id: cnt
+            for oc_id, cnt in db.session.query(
+                Canal.idOrdenCompra,
+                func.count(Canal.idCanal)
+            ).filter(Canal.idOrdenCompra.in_(order_ids))
+            .group_by(Canal.idOrdenCompra).all()
         }
 
-    # Producto Unitario: conteo por lote
+    # Producto Unitario: conteo por numeroLote (sigue usando numeroLote)
     pu_counts = {}
     if lotes:
         pu_counts = {
             lote: cnt
-            for lote, cnt in db.session.query(ProductoUnitario.NumeroLote, func.count(ProductoUnitario.idProductoUnitario))
-            .filter(ProductoUnitario.NumeroLote.in_(lotes))
+            for lote, cnt in db.session.query(
+                ProductoUnitario.NumeroLote,
+                func.count(ProductoUnitario.idProductoUnitario)
+            ).filter(ProductoUnitario.NumeroLote.in_(lotes))
             .group_by(ProductoUnitario.NumeroLote).all()
         }
 
     articulos_por_orden = {
         o.idOrdenCompra: (
             int(mp_sums.get(o.idOrdenCompra, 0)) +
-            canal_counts.get(o.numeroLote, 0) +
+            canal_counts.get(o.idOrdenCompra, 0) +
             pu_counts.get(o.numeroLote, 0)
         )
         for o in ordenes
@@ -153,7 +156,7 @@ def compra_detalle(id):
     orden = OrdenCompra.query.get_or_404(id)
 
     # Ítems Materia (Lote)
-    items_materia = orden.materiasPrimasUnitarias.all()
+    items_materia = orden.lotes.all()
 
     # Ítems Producto agrupados por idProducto
     pu_lista = ProductoUnitario.query.filter_by(NumeroLote=orden.numeroLote).all()
@@ -173,7 +176,7 @@ def compra_detalle(id):
         })
 
     # Ítems Canal agrupados por idMateriaProveida
-    canal_lista = Canal.query.filter_by(numeroLote=orden.numeroLote).all()
+    canal_lista = Canal.query.filter_by(idOrdenCompra=orden.idOrdenCompra).all()
     canal_por_mp = defaultdict(list)
     for c in canal_lista:
         canal_por_mp[c.idMateriaProveida].append(c)
@@ -233,13 +236,13 @@ def compra_nueva():
             fecha_orden = date.today()
 
         # Arrays de líneas
-        mp_ids           = request.form.getlist('materia_proveida_id[]')
-        cantidades_u     = request.form.getlist('cantidad_de_unidad[]')
-        cantidades_x     = request.form.getlist('cantidad_por_unidad[]')
-        precios          = request.form.getlist('precio_por_unidad[]')
-        fechas_caducidad = request.form.getlist('fecha_caducidad[]')    # Producto
-        fechas_sacrificio = request.form.getlist('fecha_sacrificio[]')  # Canal
-        pesos_canal      = request.form.getlist('peso_canal[]')         # Canal
+        mp_ids            = request.form.getlist('materia_proveida_id[]')
+        cantidades_u      = request.form.getlist('cantidad_de_unidad[]')
+        cantidades_x      = request.form.getlist('cantidad_por_unidad[]')
+        precios           = request.form.getlist('precio_por_unidad[]')
+        fechas_caducidad  = request.form.getlist('fecha_caducidad[]')
+        fechas_sacrificio = request.form.getlist('fecha_sacrificio[]')
+        pesos_canal       = request.form.getlist('peso_canal[]')
 
         if not mp_ids:
             flash('Debes agregar al menos una materia prima.', 'danger')
@@ -253,14 +256,13 @@ def compra_nueva():
                 mp_id = int(mp_id) if mp_id else 0
             except ValueError:
                 mp_id = 0
-            cant_u    = _parse_int(cantidades_u[i]      if i < len(cantidades_u)    else '')
-            cant_x    = _parse_int(cantidades_x[i]      if i < len(cantidades_x)    else '')
-            precio    = _parse_float(precios[i]          if i < len(precios)         else '')
-            fecha_cad = _parse_date(fechas_caducidad[i]  if i < len(fechas_caducidad)  else '')
-            fecha_sac = _parse_date(fechas_sacrificio[i] if i < len(fechas_sacrificio) else '')
-            peso_c    = _parse_float(pesos_canal[i]      if i < len(pesos_canal)     else '')
+            cant_u    = _parse_int(cantidades_u[i]       if i < len(cantidades_u)     else '')
+            cant_x    = _parse_int(cantidades_x[i]       if i < len(cantidades_x)     else '')
+            precio    = _parse_float(precios[i]           if i < len(precios)          else '')
+            fecha_cad = _parse_date(fechas_caducidad[i]   if i < len(fechas_caducidad)  else '')
+            fecha_sac = _parse_date(fechas_sacrificio[i]  if i < len(fechas_sacrificio) else '')
+            peso_c    = _parse_float(pesos_canal[i]       if i < len(pesos_canal)      else '')
 
-            # Validación por línea
             if not mp_id:
                 flash(f'Línea {num_linea}: debes seleccionar la materia proveída.', 'danger')
                 return redirect(url_for('compras.compra_nueva'))
@@ -271,7 +273,6 @@ def compra_nueva():
                 flash(f'Línea {num_linea}: el precio no puede ser negativo.', 'danger')
                 return redirect(url_for('compras.compra_nueva'))
 
-            # Determinar tipo para validar campos condicionales
             mp_proveida_check = MateriaProveida.query.get(mp_id)
             if mp_proveida_check and mp_proveida_check.materiaPrima:
                 tipo_check = mp_proveida_check.materiaPrima.tipo or 'Materia'
@@ -286,12 +287,12 @@ def compra_nueva():
                     if cant_x <= 0:
                         flash(f'Línea {num_linea}: la cantidad por unidad debe ser mayor a 0.', 'danger')
                         return redirect(url_for('compras.compra_nueva'))
-                    if not _parse_date(fechas_caducidad[i] if i < len(fechas_caducidad) else ''):
+                    if not fecha_cad:
                         flash(f'Línea {num_linea} (Materia): la fecha de caducidad es obligatoria.', 'danger')
                         return redirect(url_for('compras.compra_nueva'))
 
             total_costo   = cant_u * precio
-            total_materia = cant_u * cant_x   # ambos int → resultado int
+            total_materia = cant_u * cant_x
             total_orden  += total_costo
             lineas.append((mp_id, cant_u, cant_x, precio, total_costo, total_materia,
                            fecha_cad, fecha_sac, peso_c))
@@ -344,27 +345,27 @@ def compra_nueva():
                     canal = Canal(
                         idMateriaProveida = mp_id,
                         idCategoria       = materia.idCategoria,
-                        numeroLote        = numero_lote,
+                        idOrdenCompra     = orden.idOrdenCompra,
                         peso              = peso_c if peso_c else None,
                         fechaSacrificio   = fecha_sac,
                         estatus           = 'Disponible' if estatus == 'Recibida' else 'EnEspera',
                     )
                     db.session.add(canal)
 
-            # ── Tipo Materia → insert en materia_prima_unitaria ──────────────
+            # ── Tipo Materia → insert en lote ────────────────────────────────
             else:
-                item = Lote(
-                    idMateriaProveida = mp_id,
+                lote = Lote(
                     idOrdenCompra     = orden.idOrdenCompra,
+                    idMateriaProveida = mp_id,
                     cantidadDeUnidad  = cant_u,
-                    cantidadPorUnidad = cant_x,
+                    cantidadPorUnidad = float(cant_x),
                     precioPorUnidad   = precio,
                     totalCosto        = round(total_costo, 2),
-                    totalMateria      = total_materia,
+                    totalMateria      = float(total_materia),
                     fechaCaducidad    = fecha_cad,
                     estatus           = estatus_item,
                 )
-                db.session.add(item)
+                db.session.add(lote)
 
         db.session.commit()
         flash(f'Orden {numero_lote} registrada correctamente.', 'success')
@@ -389,20 +390,20 @@ def compra_recibir(id):
     if orden.estatus == 'EnCurso':
         orden.estatus = 'Recibida'
 
-        # Materias primas unitarias
-        for item in orden.materiasPrimasUnitarias.all():
-            if item.estatus == 'EnEspera':
-                item.estatus = 'Disponible'
+        # Lotes de materia prima
+        for lote in orden.lotes.all():
+            if lote.estatus == 'EnEspera':
+                lote.estatus = 'Disponible'
 
-        # Productos unitarios (lote de la orden)
+        # Productos unitarios en espera
         for pu in ProductoUnitario.query.filter_by(
             NumeroLote=orden.numeroLote, estatus='EnEspera'
         ).all():
             pu.estatus = 'Disponible'
 
-        # Canales (lote de la orden)
+        # Canales en espera
         for canal in Canal.query.filter_by(
-            numeroLote=orden.numeroLote, estatus='EnEspera'
+            idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
         ).all():
             canal.estatus = 'Disponible'
 
@@ -423,10 +424,10 @@ def compra_cancelar(id):
     if orden.estatus == 'EnCurso':
         orden.estatus = 'Cancelada'
 
-        # Materias primas unitarias
-        for item in orden.materiasPrimasUnitarias.all():
-            if item.estatus == 'EnEspera':
-                item.estatus = 'Cancelado'
+        # Lotes de materia prima en espera
+        for lote in orden.lotes.all():
+            if lote.estatus == 'EnEspera':
+                lote.estatus = 'Cancelado'
 
         # Productos unitarios en espera → Desechado
         for pu in ProductoUnitario.query.filter_by(
@@ -436,7 +437,7 @@ def compra_cancelar(id):
 
         # Canales en espera → Cancelado
         for canal in Canal.query.filter_by(
-            numeroLote=orden.numeroLote, estatus='EnEspera'
+            idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
         ).all():
             canal.estatus = 'Cancelado'
 
@@ -451,9 +452,9 @@ def compra_cancelar(id):
 @roles_required('admin')
 def compra_imprimir(id):
     orden = OrdenCompra.query.get_or_404(id)
-    items = orden.materiasPrimasUnitarias.all()
+    items = orden.lotes.all()
 
-    # Para impresión también mostramos resumen de producto y canal
+    # Resumen de productos unitarios
     pu_lista = ProductoUnitario.query.filter_by(NumeroLote=orden.numeroLote).all()
     pu_por_producto = defaultdict(list)
     for pu in pu_lista:
@@ -467,7 +468,8 @@ def compra_imprimir(id):
         for id_prod, unidades in pu_por_producto.items()
     ]
 
-    canal_lista = Canal.query.filter_by(numeroLote=orden.numeroLote).all()
+    # Resumen de canales
+    canal_lista = Canal.query.filter_by(idOrdenCompra=orden.idOrdenCompra).all()
     canal_por_mp = defaultdict(list)
     for c in canal_lista:
         canal_por_mp[c.idMateriaProveida].append(c)
@@ -537,9 +539,9 @@ def api_materias_proveidas(proveedor_id, materia_prima_id):
 @roles_required('admin')
 def api_detalle_mp(materia_proveida_id):
     """
-    Devuelve unidad, conversor y ── nuevo ── tipo de la materia prima.
+    Devuelve unidad, conversor y tipo de la materia prima.
     El campo tipo es usado por el frontend para mostrar campos condicionales
-    (fecha_caducidad para Producto, fecha_sacrificio + peso para Canal).
+    (fecha_caducidad para Materia, fecha_sacrificio + peso para Canal).
     """
     mp        = MateriaProveida.query.get_or_404(materia_proveida_id)
     unidad    = mp.unidadMedida
