@@ -269,16 +269,17 @@
   </div>
 </div>
 
-<!-- FILTROS POR ANIMAL -->
+<!-- FILTROS POR CATEGORÍA -->
 <div class="animal-pills" id="animal-pills">
-  <button class="pill active" data-animal="Todos" onclick="setAnimal(this)">Todos</button>
-  {% for animal in animales %}
-  <button class="pill" data-animal="{{ animal }}" onclick="setAnimal(this)">
-    <span class="pill-emoji">{{ emoji_map[animal] }}</span>
-    {{ animal }}
+  <button class="pill active" data-cat="Todos" onclick="setAnimal(this)">Todos</button>
+  {% for cat in categorias_lista %}
+  <button class="pill" data-cat="{{ cat.idCategoria }}" onclick="setAnimal(this)">
+    {% if emoji_map.get(cat.nombreCategoria) %}
+      <span class="pill-emoji">{{ emoji_map[cat.nombreCategoria] }}</span>
+    {% endif %}
+    {{ cat.nombreCategoria }}
   </button>
   {% endfor %}
-  <button class="pill" data-animal="Otro" onclick="setAnimal(this)">Otro</button>
 </div>
 
 <!-- TOOLBAR: búsqueda + precio -->
@@ -336,11 +337,10 @@
 
   {% for item in items %}
   {% set p = item.producto %}
-  {% set cat_nombre = p.categoria.nombreCategoria if p.categoria else 'Otro' %}
-  {# cat_filtro normaliza categorías no-animal a 'Otro' para que el pill funcione #}
-  {% set cat_filtro = cat_nombre if cat_nombre in ['Res','Cerdo','Pollo','Borrego'] else 'Otro' %}
-  {% set badge_color = color_map.get(cat_nombre, 'gray') %}
-  {% set emoji = emoji_map.get(cat_nombre, '') %}
+  {% set cat_filtro = item.cat_filtro %}
+  {% set cat_nombre = item.cat_nombre %}
+  {% set badge_color = color_map.get(cat_filtro, 'gray') %}
+  {% set emoji = emoji_map.get(cat_filtro, '') %}
 
   <div class="product-card {% if p.StockProducto == 0 %}sin-stock{% endif %}"
        data-nombre="{{ p.NombreProducto | lower }}"
@@ -417,7 +417,7 @@ let animalActivo = 'Todos';
 function setAnimal(btn) {
   document.querySelectorAll('#animal-pills .pill').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  animalActivo = btn.dataset.animal;
+  animalActivo = btn.dataset.cat;
   filtrar();
 }
 
@@ -495,7 +495,7 @@ function resetFiltros() {
 
   // Reset pill animal
   document.querySelectorAll('#animal-pills .pill').forEach(p => p.classList.remove('active'));
-  document.querySelector('#animal-pills .pill[data-animal="Todos"]').classList.add('active');
+  document.querySelector('#animal-pills .pill[data-cat="Todos"]').classList.add('active');
   animalActivo = 'Todos';
 
   filtrar();

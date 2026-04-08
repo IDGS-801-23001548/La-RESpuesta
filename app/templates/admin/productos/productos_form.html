@@ -298,8 +298,8 @@
     <div>
       <div class="form-card">
         <div class="form-card-header">
-          <h3>Foto del producto</h3>
-          <p>JPG, PNG o WEBP · recomendado 4:3</p>
+          <h3>Foto del producto{% if modo == 'nuevo' %} <span style="color:#dc2626;font-size:.75rem;">*</span>{% endif %}</h3>
+          <p>JPG, PNG o WEBP · recomendado 4:3{% if modo == 'nuevo' %} · obligatoria{% endif %}</p>
         </div>
         <div class="form-card-body">
 

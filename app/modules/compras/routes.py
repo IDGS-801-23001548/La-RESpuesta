@@ -11,6 +11,7 @@ from app.models import (
 from flask_security import login_required
 from flask_security.decorators import roles_required
 from datetime import date
+from sqlalchemy import func
 
 # ── Mapa de meses en español ──────────────────────────────────────────────────
 MESES = {
@@ -55,6 +56,26 @@ def _parse_date(s):
         return None
 
 
+def _parse_float(s):
+    """Convierte string a float tolerando comas como separador decimal."""
+    if not s:
+        return 0.0
+    try:
+        return float(str(s).replace(',', '.'))
+    except ValueError:
+        return 0.0
+
+
+def _parse_int(s):
+    """Convierte string a int truncando cualquier parte decimal."""
+    if not s:
+        return 0
+    try:
+        return int(float(str(s).replace(',', '.')))
+    except ValueError:
+        return 0
+
+
 # ── Lista de órdenes ──────────────────────────────────────────────────────────
 @compras.route("/compras", methods=['GET'])
 @login_required
@@ -68,12 +89,59 @@ def compra():
     total_en_curso  = sum(1 for o in ordenes if o.estatus == 'EnCurso')
     total_recibida  = sum(1 for o in ordenes if o.estatus == 'Recibida')
     total_cancelada = sum(1 for o in ordenes if o.estatus == 'Cancelada')
+
+    # ── Conteo de artículos por orden ─────────────────────────────────────────
+    order_ids = [o.idOrdenCompra for o in ordenes]
+    lotes     = [o.numeroLote for o in ordenes if o.numeroLote]
+
+    # Materia Prima: suma cantidadDeUnidad por orden
+    mp_sums = {}
+    if order_ids:
+        mp_sums = {
+            oc_id: float(val or 0)
+            for oc_id, val in db.session.query(
+                MateriaPrimaUnitaria.idOrdenCompra,
+                func.sum(MateriaPrimaUnitaria.cantidadDeUnidad)
+            ).filter(MateriaPrimaUnitaria.idOrdenCompra.in_(order_ids))
+            .group_by(MateriaPrimaUnitaria.idOrdenCompra).all()
+        }
+
+    # Canal: conteo de canales por lote
+    canal_counts = {}
+    if lotes:
+        canal_counts = {
+            lote: cnt
+            for lote, cnt in db.session.query(Canal.numeroLote, func.count(Canal.idMateriaProveida))
+            .filter(Canal.numeroLote.in_(lotes))
+            .group_by(Canal.numeroLote).all()
+        }
+
+    # Producto Unitario: conteo por lote
+    pu_counts = {}
+    if lotes:
+        pu_counts = {
+            lote: cnt
+            for lote, cnt in db.session.query(ProductoUnitario.NumeroLote, func.count(ProductoUnitario.idProductoUnitario))
+            .filter(ProductoUnitario.NumeroLote.in_(lotes))
+            .group_by(ProductoUnitario.NumeroLote).all()
+        }
+
+    articulos_por_orden = {
+        o.idOrdenCompra: (
+            int(mp_sums.get(o.idOrdenCompra, 0)) +
+            canal_counts.get(o.numeroLote, 0) +
+            pu_counts.get(o.numeroLote, 0)
+        )
+        for o in ordenes
+    }
+
     return render_template(
         "admin/compras/compras.html",
         ordenes=ordenes,
         total_en_curso=total_en_curso,
         total_recibida=total_recibida,
         total_cancelada=total_cancelada,
+        articulos_por_orden=articulos_por_orden,
     )
 
 
@@ -180,16 +248,50 @@ def compra_nueva():
         total_orden = 0.0
         lineas = []
         for i, mp_id in enumerate(mp_ids):
-            mp_id  = int(mp_id) if mp_id else 0
-            cant_u = float(cantidades_u[i])  if i < len(cantidades_u)  and cantidades_u[i]  else 0
-            cant_x = float(cantidades_x[i])  if i < len(cantidades_x)  and cantidades_x[i]  else 0
-            precio = float(precios[i])        if i < len(precios)       and precios[i]        else 0
+            num_linea = i + 1
+            try:
+                mp_id = int(mp_id) if mp_id else 0
+            except ValueError:
+                mp_id = 0
+            cant_u    = _parse_int(cantidades_u[i]      if i < len(cantidades_u)    else '')
+            cant_x    = _parse_int(cantidades_x[i]      if i < len(cantidades_x)    else '')
+            precio    = _parse_float(precios[i]          if i < len(precios)         else '')
             fecha_cad = _parse_date(fechas_caducidad[i]  if i < len(fechas_caducidad)  else '')
             fecha_sac = _parse_date(fechas_sacrificio[i] if i < len(fechas_sacrificio) else '')
-            peso_c    = float(pesos_canal[i]) if i < len(pesos_canal) and pesos_canal[i] else 0.0
+            peso_c    = _parse_float(pesos_canal[i]      if i < len(pesos_canal)     else '')
+
+            # Validación por línea
+            if not mp_id:
+                flash(f'Línea {num_linea}: debes seleccionar la materia proveída.', 'danger')
+                return redirect(url_for('compras.compra_nueva'))
+            if cant_u <= 0:
+                flash(f'Línea {num_linea}: la cantidad debe ser mayor a 0.', 'danger')
+                return redirect(url_for('compras.compra_nueva'))
+            if precio < 0:
+                flash(f'Línea {num_linea}: el precio no puede ser negativo.', 'danger')
+                return redirect(url_for('compras.compra_nueva'))
+
+            # Determinar tipo para validar campos condicionales
+            mp_proveida_check = MateriaProveida.query.get(mp_id)
+            if mp_proveida_check and mp_proveida_check.materiaPrima:
+                tipo_check = mp_proveida_check.materiaPrima.tipo or 'Materia'
+                if tipo_check == 'Canal':
+                    if not fecha_sac:
+                        flash(f'Línea {num_linea} (Canal): la fecha de sacrificio es obligatoria.', 'danger')
+                        return redirect(url_for('compras.compra_nueva'))
+                    if peso_c <= 0:
+                        flash(f'Línea {num_linea} (Canal): el peso por canal debe ser mayor a 0.', 'danger')
+                        return redirect(url_for('compras.compra_nueva'))
+                elif tipo_check == 'Materia':
+                    if cant_x <= 0:
+                        flash(f'Línea {num_linea}: la cantidad por unidad debe ser mayor a 0.', 'danger')
+                        return redirect(url_for('compras.compra_nueva'))
+                    if not _parse_date(fechas_caducidad[i] if i < len(fechas_caducidad) else ''):
+                        flash(f'Línea {num_linea} (Materia): la fecha de caducidad es obligatoria.', 'danger')
+                        return redirect(url_for('compras.compra_nueva'))
 
             total_costo   = cant_u * precio
-            total_materia = cant_u * cant_x
+            total_materia = cant_u * cant_x   # ambos int → resultado int
             total_orden  += total_costo
             lineas.append((mp_id, cant_u, cant_x, precio, total_costo, total_materia,
                            fecha_cad, fecha_sac, peso_c))
@@ -258,7 +360,8 @@ def compra_nueva():
                     cantidadPorUnidad = cant_x,
                     precioPorUnidad   = precio,
                     totalCosto        = round(total_costo, 2),
-                    totalMateria      = round(total_materia, 4),
+                    totalMateria      = total_materia,
+                    fechaCaducidad    = fecha_cad,
                     estatus           = estatus_item,
                 )
                 db.session.add(item)

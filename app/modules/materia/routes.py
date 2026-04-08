@@ -1,6 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request
 from . import materia
 from app.extensions import db
+from sqlalchemy.exc import IntegrityError
 from app.models.materia_prima import MateriaPrima
 from app.models.materia_proveida import MateriaProveida
 from app.models.categoria import Categoria
@@ -15,8 +16,8 @@ from flask_security import roles_required
 @login_required
 @roles_required('admin')
 def materias():
-    todas = MateriaPrima.query.order_by(MateriaPrima.nombreMateriaPrima).all()
-    materias_proveidas = MateriaProveida.query.all()
+    todas = MateriaPrima.query.order_by(MateriaPrima.idMateriaPrima.desc()).all()
+    materias_proveidas = MateriaProveida.query.order_by(MateriaProveida.idMateriaProveida.desc()).all()
     categorias = Categoria.query.all()
     productos = Producto.query.all()
     proveedores = Proveedor.query.filter_by(estatus='activo').order_by(Proveedor.nombre).all()
@@ -55,8 +56,12 @@ def materia_nueva():
         idProducto=int(id_producto) if id_producto else None,
     )
     db.session.add(nueva)
-    db.session.commit()
-    flash('Materia prima registrada correctamente.', 'success')
+    try:
+        db.session.commit()
+        flash('Materia prima registrada correctamente.', 'success')
+    except IntegrityError:
+        db.session.rollback()
+        flash(f'Ya existe una materia prima con el nombre "{nombre}".', 'danger')
     return redirect(url_for('materia.materias'))
 
 
@@ -97,9 +102,21 @@ def materia_editar(id):
 @roles_required('admin')
 def materia_eliminar(id):
     mat = MateriaPrima.query.get_or_404(id)
+    if mat.materiasProveidas.count() > 0:
+        flash(
+            f'No se puede eliminar "{mat.nombreMateriaPrima}" porque tiene '
+            f'{mat.materiasProveidas.count()} materia(s) proveída(s) asignada(s). '
+            'Elimínalas primero.',
+            'danger'
+        )
+        return redirect(url_for('materia.materias'))
     db.session.delete(mat)
-    db.session.commit()
-    flash('Materia prima eliminada.', 'info')
+    try:
+        db.session.commit()
+        flash('Materia prima eliminada.', 'info')
+    except IntegrityError:
+        db.session.rollback()
+        flash('No se puede eliminar porque tiene registros relacionados.', 'danger')
     return redirect(url_for('materia.materias'))
 
 
@@ -123,8 +140,12 @@ def materia_proveida_nueva():
         idUnidadMedida=int(id_unidad),
     )
     db.session.add(nueva)
-    db.session.commit()
-    flash('Materia proveida registrada correctamente.', 'success')
+    try:
+        db.session.commit()
+        flash('Materia proveida registrada correctamente.', 'success')
+    except IntegrityError:
+        db.session.rollback()
+        flash(f'Ya existe una materia proveida con el nombre "{nombre}".', 'danger')
     return redirect(url_for('materia.materias'))
 
 
