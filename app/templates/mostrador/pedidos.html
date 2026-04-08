@@ -207,6 +207,15 @@
       </svg>
     </div>
     <span class="nav-brand-text">La <span>RESpuesta</span></span>
+    <a href="{{ url_for('auth.logout') }}" class="btn-logout">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24"
+           stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7
+             a2 2 0 012-2h6a2 2 0 012 2v1"/>
+      </svg>
+      Salir
+    </a>
   </div>
   <div class="nav-tabs">
     <a href="{{ url_for('mostrador.mostradorVenta') }}" class="nav-tab">
@@ -290,14 +299,25 @@
 
             <div class="pedido-cliente">{{ nombre_cliente }}</div>
 
-            <div class="pedido-meta">
-              {{ num_unidades }} producto{{ 's' if num_unidades != 1 else '' }}
+            <div class="pedido-meta" id="meta-{{ p.idPedido }}">
+            Ver detalle
             </div>
 
-            {# Preview de ítems — placeholder hasta que se defina el modelo de detalle #}
-            <div class="pedido-items-preview">
-              Sin detalle disponible
-            </div>
+           {# Preview de ítems desde la vista #}
+{% set items_preview = resumen_por_pedido.get(p.idPedido, []) %}
+<div class="pedido-items-preview">
+  {% if items_preview %}
+    {% for r in items_preview %}
+      · {{ r.NombreProducto }} — {{ r.cantidad }} pza{{ 's' if r.cantidad != 1 else '' }}<br>
+    {% endfor %}
+  {% else %}
+    Sin productos registrados
+  {% endif %}
+</div>
+
+<div class="pedido-meta" id="meta-{{ p.idPedido }}">
+  {{ items_preview | length }} producto{{ 's' if items_preview | length != 1 else '' }}
+</div>
 
             <button class="btn-ver" onclick="verPedido({{ p.idPedido }}, this)">
               Ver pedido
@@ -419,8 +439,16 @@
 
     // Cliente y meta
     document.getElementById('det-cliente').textContent = d.cliente;
-    document.getElementById('det-meta').textContent    =
-      (d.unidades.length) + ' producto' + (d.unidades.length !== 1 ? 's' : '');
+    const metaCard = document.getElementById('meta-' + d.idPedido);
+    if (metaCard) {
+        metaCard.textContent =
+            d.num_productos + ' producto' + (d.num_productos !== 1 ? 's' : '');
+    }
+
+    // Meta en el panel derecho
+    document.getElementById('det-meta').textContent =
+        d.num_productos + ' producto' + (d.num_productos !== 1 ? 's' : '');
+
 
     // Total
     document.getElementById('det-total').textContent =
