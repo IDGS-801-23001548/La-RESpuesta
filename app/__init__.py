@@ -107,6 +107,8 @@ def create_app():
     from .modules.solicitud_de_produccion   import solicitud_de_produccion
     from .modules.productos                 import productos
 
+    from .modules.mostrador import mostrador
+
     app.register_blueprint(auth)
     app.register_blueprint(admin)
     app.register_blueprint(user)
@@ -118,6 +120,8 @@ def create_app():
     app.register_blueprint(receta)
     app.register_blueprint(solicitud_de_produccion)
     app.register_blueprint(productos)
+    
+    app.register_blueprint(mostrador)
 
     # ==============================
     # MANEJO DE ERRORES

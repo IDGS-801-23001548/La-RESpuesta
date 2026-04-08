@@ -56,6 +56,24 @@ if __name__ == '__main__':
             )
 
             db.session.add(persona)
+        if not user_datastore.find_user(email='emiliano@example.com'):
+            user = user_datastore.create_user(
+                name        = 'emiliano', 
+                email       = 'emiliano@example.com', 
+                password    = encrypted_password)
+            
+            user_datastore.add_role_to_user(user, 'admin')
+            
+            persona = Persona(
+                nombre              ='Emiliano',
+                apellido_paterno    ='Mendoza',
+                apellido_materno    ='Maldonado',
+                telefono            ='4779189172',
+                direccion           ='León, Gto',
+                user=user
+            )
+
+            db.session.add(persona)
 
         if not user_datastore.find_user(email='emmanuel@example.com'):
             user = user_datastore.create_user(
@@ -80,6 +98,10 @@ if __name__ == '__main__':
         user = user_datastore.find_user(email='emmanuel@example.com')
         if user:
             user_datastore.add_role_to_user(user, 'admin')
+
+        user2 = user_datastore.find_user(email='emiliano@example.com')
+        if user2:
+            user_datastore.add_role_to_user(user, 'Cajero')
 
     @app.before_request
     def before_request():
