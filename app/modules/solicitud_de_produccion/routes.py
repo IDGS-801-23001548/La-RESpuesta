@@ -4,7 +4,7 @@ from app.extensions import db
 from app.models import (
     Receta, RecetaMateriaPrima,
     SolicitudProduccion, SolicitudProduccionDetalle,
-    MateriaPrima, MateriaProveida, MateriaPrimaUnitaria,
+    MateriaPrima, MateriaProveida, Lote,
     UnidadMedida, Proveedor, Producto,
 )
 from flask_login import login_required, current_user
@@ -17,11 +17,11 @@ from datetime import datetime
 # ─────────────────────────────────────────────
 
 def _lotes_disponibles_query():
-    """Lotes (MateriaPrimaUnitaria) Disponible y con totalMateria > 0."""
+    """Lotes (Lote) Disponible y con totalMateria > 0."""
     return (
-        MateriaPrimaUnitaria.query
-        .filter(MateriaPrimaUnitaria.estatus == 'Disponible')
-        .filter(MateriaPrimaUnitaria.totalMateria > 0)
+        Lote.query
+        .filter(Lote.estatus == 'Disponible')
+        .filter(Lote.totalMateria > 0)
     )
 
 
@@ -30,24 +30,24 @@ def _lotes_para_materia_prima(id_materia_prima):
     (atravesando MateriaProveida)."""
     return (
         _lotes_disponibles_query()
-        .join(MateriaProveida, MateriaPrimaUnitaria.idMateriaProveida == MateriaProveida.idMateriaProveida)
+        .join(MateriaProveida, Lote.idMateriaProveida == MateriaProveida.idMateriaProveida)
         .filter(MateriaProveida.idMateriaPrima == id_materia_prima)
-        .order_by(MateriaPrimaUnitaria.fechaCaducidad.is_(None),
-                  MateriaPrimaUnitaria.fechaCaducidad.asc(),
-                  MateriaPrimaUnitaria.idMateriaPrimaUnitaria.asc())
+        .order_by(Lote.fechaCaducidad.is_(None),
+                  Lote.fechaCaducidad.asc(),
+                  Lote.idLote.asc())
         .all()
     )
 
 
 def _serializar_lote(lote):
-    """Convierte un MateriaPrimaUnitaria a dict para mostrar en select."""
+    """Convierte un Lote a dict para mostrar en select."""
     mp = lote.materiaProveida
     unidad = mp.unidadMedida.nombreUnidadMedida if mp and mp.unidadMedida else '—'
     proveedor = mp.proveedor.nombre if mp and mp.proveedor else '—'
     orden = lote.ordenCompra
     return {
-        'id':         lote.idMateriaPrimaUnitaria,
-        'lote':       orden.numeroLote if orden else f'#{lote.idMateriaPrimaUnitaria}',
+        'id':         lote.idLote,
+        'lote':       orden.numeroLote if orden else f'#{lote.idLote}',
         'totalMateria': lote.totalMateria,
         'unidad':     unidad,
         'proveedor':  proveedor,
@@ -66,7 +66,10 @@ def solicitudes():
     # Lotes disponibles (panel superior)
     lotes_raw = (
         _lotes_disponibles_query()
-        .order_by(MateriaPrimaUnitaria.fechaCaducidad.asc().nullslast())
+        .order_by(
+            Lote.fechaCaducidad.is_(None),
+            Lote.fechaCaducidad.asc()
+        )
         .all()
     )
 
@@ -77,8 +80,8 @@ def solicitudes():
         unidad  = mp.unidadMedida.nombreUnidadMedida if mp and mp.unidadMedida else '—'
         orden   = l.ordenCompra
         lotes.append({
-            'id':            l.idMateriaPrimaUnitaria,
-            'lote':          orden.numeroLote if orden else f'#{l.idMateriaPrimaUnitaria}',
+            'id':            l.idLote,
+            'lote':          orden.numeroLote if orden else f'#{l.idLote}',
             'materia':       materia.nombreMateriaPrima if materia else '—',
             'totalMateria':  l.totalMateria,
             'unidad':        unidad,
@@ -146,7 +149,7 @@ def solicitudes_nueva():
                 errores.append(f'Falta seleccionar lote para "{rmp.materiaPrima.nombreMateriaPrima}".')
                 continue
 
-            lote = MateriaPrimaUnitaria.query.get(lote_id)
+            lote = Lote.query.get(lote_id)
             if not lote or lote.estatus != 'Disponible':
                 errores.append(f'El lote elegido para "{rmp.materiaPrima.nombreMateriaPrima}" ya no esta disponible.')
                 continue
@@ -159,7 +162,7 @@ def solicitudes_nueva():
             cantidad_necesaria = rmp.cantidadUsada * cantidad_producir
             if lote.totalMateria < cantidad_necesaria:
                 errores.append(
-                    f'Stock insuficiente en lote {lote.ordenCompra.numeroLote if lote.ordenCompra else lote.idMateriaPrimaUnitaria} '
+                    f'Stock insuficiente en lote {lote.ordenCompra.numeroLote if lote.ordenCompra else lote.idLote} '
                     f'para "{rmp.materiaPrima.nombreMateriaPrima}". '
                     f'Necesario: {cantidad_necesaria:g}, disponible: {lote.totalMateria:g}.'
                 )
@@ -190,7 +193,7 @@ def solicitudes_nueva():
                 db.session.add(SolicitudProduccionDetalle(
                     idSolicitud            = nueva.idSolicitud,
                     idMateriaPrima         = rmp.idMateriaPrima,
-                    idMateriaPrimaUnitaria = lote.idMateriaPrimaUnitaria,
+                    idLote = lote.idLote,
                     cantidadConsumida      = cant,
                 ))
                 # Descontar del lote

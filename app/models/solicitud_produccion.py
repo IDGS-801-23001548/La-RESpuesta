@@ -36,15 +36,28 @@ class SolicitudProduccion(db.Model):
 
 
 class SolicitudProduccionDetalle(db.Model):
-    """Por cada materia prima de la receta, registra el lote (MateriaPrimaUnitaria)
-    elegido y la cantidad consumida (descontada de totalMateria)."""
 
-    __tablename__              = 'solicitud_produccion_detalle'
-    idDetalle                  = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    idSolicitud                = db.Column(db.Integer, db.ForeignKey('solicitud_produccion.idSolicitud'), nullable=False)
-    idMateriaPrima             = db.Column(db.Integer, db.ForeignKey('materia_prima.idMateriaPrima'), nullable=False)
-    idMateriaPrimaUnitaria     = db.Column(db.Integer, db.ForeignKey('materia_prima_unitaria.idMateriaPrimaUnitaria'), nullable=False)
-    cantidadConsumida          = db.Column(db.Float, nullable=False, default=0.0)
+    __tablename__ = 'solicitud_produccion_detalle'
 
-    materiaPrima               = db.relationship('MateriaPrima')
-    lote                       = db.relationship('MateriaPrimaUnitaria')
+    idDetalle   = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    idSolicitud = db.Column(
+        db.Integer,
+        db.ForeignKey('solicitud_produccion.idSolicitud'),
+        nullable=False
+    )
+
+    idLote = db.Column(
+        db.Integer,
+        db.ForeignKey('lote.idLote'),
+        nullable=False
+    )
+
+    cantidadConsumida = db.Column(
+        db.Float,
+        nullable=False,
+        default=0.0
+    )
+
+    # Relaciones correctas
+    lote = db.relationship('Lote')

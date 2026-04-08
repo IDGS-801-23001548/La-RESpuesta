@@ -10,6 +10,8 @@ from app.models.proveedor import Proveedor
 from app.models.unidad_medida import UnidadMedida
 from flask_login import login_required
 from flask_security import roles_required
+from app.models import MateriaPrima, MateriaProveida, Lote, Categoria
+from sqlalchemy import func
 
 
 @materia.route('/materia-prima')
@@ -32,6 +34,55 @@ def materias():
         unidades=unidades,
     )
 
+@materia.route('/inventario')
+@login_required
+@roles_required('admin')
+def inventario():
+    materias = MateriaPrima.query.order_by(MateriaPrima.nombreMateriaPrima).all()
+    categorias = Categoria.query.all()
+
+    # ── Calcular stock por MateriaPrima ─────────────────────────────────────
+    # Stock disponible = sum(totalMateria) de MPU con estatus='Disponible'
+    # agrupado por idMateriaPrima a través de MateriaProveida
+    stock_query = (
+        db.session.query(
+            MateriaProveida.idMateriaPrima,
+            func.sum(Lote.totalMateria).label('stock_total'),
+            func.sum(Lote.totalCosto).label('costo_total'),
+            func.count(Lote.idLote).label('n_lotes'),
+        )
+        .join(Lote,
+              Lote.idMateriaProveida == MateriaProveida.idMateriaProveida)
+        .filter(Lote.estatus == 'Disponible')
+        .group_by(MateriaProveida.idMateriaPrima)
+        .all()
+    )
+
+    # Convertir a dict keyed por idMateriaPrima
+    stock_map = {
+        row.idMateriaPrima: {
+            'stock_total': row.stock_total or 0,
+            'costo_total': row.costo_total or 0.0,
+            'n_lotes':     row.n_lotes or 0,
+            # Costo promedio por unidad de conversor
+            'costo_promedio': (float(row.costo_total) / float(row.stock_total))
+            if row.stock_total and row.stock_total > 0 else 0.0
+        }
+        for row in stock_query
+    }
+
+    # Calcular totales generales para KPI cards
+    total_valor = sum(v['costo_total'] for v in stock_map.values())
+    total_lotes = sum(v['n_lotes']     for v in stock_map.values())
+
+    return render_template(
+        'admin/materia/inventario_materias.html',
+        materias=materias,
+        categorias=categorias,
+        stock_map=stock_map,
+        total_valor=total_valor,
+        total_lotes=total_lotes,
+    )
 
 @materia.route('/materia-prima/nueva', methods=['POST'])
 @login_required
