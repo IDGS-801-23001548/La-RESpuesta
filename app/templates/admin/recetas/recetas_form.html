@@ -16,18 +16,18 @@
             {% if receta %}Editar receta{% else %}Nueva receta{% endif %}
         </h2>
         <p class="text-xs text-gray-400 mt-0.5">
-            {% if receta %}Modifica la receta{% else %}Define una tabla de desposte o receta de producto procesado{% endif %}
+            La receta toma su nombre y foto del producto vinculado
         </p>
     </div>
 </div>
 
 <form method="POST"
-      action="{{ url_for('receta.recetas_editar', id=receta.id_receta) if receta else url_for('receta.recetas_nueva') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      action="{{ url_for('receta.recetas_editar', id=receta.idReceta) if receta else url_for('receta.recetas_nueva') }}">
+    {{ form.hidden_tag() }}
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
 
-        <!-- ── Columna principal (2/3) ── -->
+        <!-- ── Columna principal ── -->
         <div class="xl:col-span-2 space-y-5">
 
             <!-- Card: Datos generales -->
@@ -40,91 +40,39 @@
                 </div>
                 <div class="p-5 space-y-4">
 
-                    <!-- Nombre -->
+                    <!-- Producto -->
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Nombre de la receta <span class="text-red-400">*</span>
+                            Producto a producir <span class="text-red-400">*</span>
                         </label>
-                        <input type="text" name="nombre" required
-                            value="{{ receta.nombre if receta else '' }}"
-                            placeholder="Ej. Desposte canal de res, Chorizo verde..."
-                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                                   transition-all placeholder-gray-300">
+                        {{ form.idProducto(class_="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all") }}
+                        <p class="text-[10px] text-gray-400 mt-1">
+                            La receta tomara automaticamente el nombre y la foto del producto seleccionado.
+                        </p>
+                        {% for err in form.idProducto.errors %}
+                        <p class="text-[10px] text-red-500 mt-1">{{ err }}</p>
+                        {% endfor %}
                     </div>
 
-                    <!-- Descripción -->
+                    <!-- Descripcion -->
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                            Descripción / Notas del proceso
+                            Descripcion / Notas
                         </label>
-                        <textarea name="descripcion" rows="2"
-                            placeholder="Instrucciones, observaciones, condiciones especiales..."
-                            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                                   transition-all resize-none placeholder-gray-300">{{ receta.descripcion if receta else '' }}</textarea>
-                    </div>
-
-                    <!-- Tipo + Merma en misma fila -->
-                    <div class="grid grid-cols-2 gap-4">
-
-                        <!-- Tipo -->
-                        <div>
-                            <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
-                                Tipo <span class="text-red-400">*</span>
-                            </label>
-                            <div class="flex gap-2">
-                                <label class="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 border-gray-200
-                                              cursor-pointer transition-all
-                                              has-[:checked]:border-red-400 has-[:checked]:bg-red-50">
-                                    <input type="radio" name="tipo" value="Desposte"
-                                        {% if not receta or receta.tipo == 'Desposte' %}checked{% endif %}
-                                        class="sr-only" onchange="actualizarTipo()">
-                                    <span class="text-base">🔪</span>
-                                    <span class="text-xs font-semibold text-gray-700">Desposte</span>
-                                </label>
-                                <label class="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 border-gray-200
-                                              cursor-pointer transition-all
-                                              has-[:checked]:border-purple-400 has-[:checked]:bg-purple-50">
-                                    <input type="radio" name="tipo" value="Procesado"
-                                        {% if receta and receta.tipo == 'Procesado' %}checked{% endif %}
-                                        class="sr-only" onchange="actualizarTipo()">
-                                    <span class="text-base">⚗️</span>
-                                    <span class="text-xs font-semibold text-gray-700">Procesado</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Merma global -->
-                        <div>
-                            <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                                % Merma global
-                            </label>
-                            <div class="relative">
-                                <input type="number" name="pct_merma"
-                                    min="0" max="100" step="0.1"
-                                    value="{{ receta.pct_merma if receta else '0' }}"
-                                    placeholder="0.0"
-                                    class="w-full px-3 py-2.5 pr-10 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                                           rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-                                    oninput="actualizarResumen()">
-                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
-                            </div>
-                        </div>
-
+                        {{ form.descripcion(rows=2, placeholder="Notas del proceso, observaciones...", class_="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all resize-none placeholder-gray-300") }}
                     </div>
 
                 </div>
             </div>
 
-            <!-- Card: Materia(s) prima(s) de entrada -->
+            <!-- Card: Materias primas -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                         </svg>
-                        <h3 class="text-sm font-semibold text-gray-700">Materias primas de entrada</h3>
+                        <h3 class="text-sm font-semibold text-gray-700">Materias primas requeridas</h3>
                     </div>
                     <button type="button" onclick="agregarIngrediente()"
                         class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-600
@@ -136,51 +84,38 @@
                     </button>
                 </div>
 
-                <!-- Cabecera tabla ingredientes -->
                 <div class="grid grid-cols-12 gap-2 px-5 py-2 bg-gray-50/30 border-b border-gray-100
                             text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                    <div class="col-span-5">Materia prima</div>
-                    <div class="col-span-3">Cantidad</div>
-                    <div class="col-span-3">Unidad</div>
+                    <div class="col-span-7">Materia prima</div>
+                    <div class="col-span-4">Cantidad por unidad producida</div>
                     <div class="col-span-1"></div>
                 </div>
 
                 <div id="tabla-ingredientes" class="divide-y divide-gray-50 px-5">
-                    <!-- Fila inicial -->
+                    {% set rows = ingredientes_actuales if ingredientes_actuales else [{'idMateriaPrima': 0, 'cantidadUsada': ''}] %}
+                    {% for ing in rows %}
                     <div class="fila-ingrediente grid grid-cols-12 gap-2 py-3 items-center">
-                        <div class="col-span-5">
+                        <div class="col-span-7">
                             <select name="ingrediente_id[]"
                                 class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                                        rounded-lg outline-none focus:border-green-400 transition-all">
-                                <option value="">Seleccionar...</option>
-                                {# En producción: {% for m in materias %}<option value="{{ m.id_materia }}">{{ m.nombre }}</option>{% endfor %} #}
-                                <option value="1">Canal de res entera</option>
-                                <option value="2">Canal de cerdo</option>
-                                <option value="3">Pollo entero</option>
-                                <option value="4">Sal de mesa</option>
-                                <option value="5">Especias mixtas</option>
+                                <option value="">Seleccionar materia prima...</option>
+                                {% for m in materias %}
+                                <option value="{{ m.idMateriaPrima }}" {% if m.idMateriaPrima == ing.idMateriaPrima %}selected{% endif %}>
+                                    {{ m.nombreMateriaPrima }}{% if m.tipo %} ({{ m.tipo }}){% endif %}
+                                </option>
+                                {% endfor %}
                             </select>
                         </div>
-                        <div class="col-span-3">
+                        <div class="col-span-4">
                             <input type="number" name="ingrediente_cantidad[]"
-                                min="0.001" step="any" placeholder="1"
+                                min="0.001" step="any" placeholder="0"
+                                value="{{ ing.cantidadUsada }}"
                                 class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                                        rounded-lg outline-none focus:border-green-400 transition-all text-right">
                         </div>
-                        <div class="col-span-3">
-                            <select name="ingrediente_unidad[]"
-                                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                                       rounded-lg outline-none focus:border-green-400 transition-all">
-                                <option value="canal">Canal</option>
-                                <option value="pieza">Pieza</option>
-                                <option value="kg">kg</option>
-                                <option value="g">g</option>
-                                <option value="litro">litro</option>
-                                <option value="bulto">bulto</option>
-                            </select>
-                        </div>
                         <div class="col-span-1 flex justify-center">
-                            <button type="button" onclick="quitarFila(this, 'tabla-ingredientes')"
+                            <button type="button" onclick="quitarFila(this)"
                                 class="w-6 h-6 flex items-center justify-center rounded text-gray-300
                                        hover:text-red-400 hover:bg-red-50 transition-colors">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -189,106 +124,20 @@
                             </button>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
 
                 <div class="px-5 py-3 border-t border-gray-50 bg-gray-50/30">
                     <p class="text-[10px] text-gray-400">
-                        Para <strong>Desposte</strong> generalmente es 1 canal. Para <strong>Procesado</strong> pueden ser varias materias combinadas.
+                        La cantidad indica cuanto de esta materia prima se necesita para producir <strong>una unidad</strong> del producto.
+                        Al crear la solicitud de produccion se multiplicara por las unidades que quieras producir.
                     </p>
-                </div>
-            </div>
-
-            <!-- Card: Productos resultantes (salida) -->
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                        </svg>
-                        <h3 class="text-sm font-semibold text-gray-700">Productos resultantes</h3>
-                    </div>
-                    <button type="button" onclick="agregarProducto()"
-                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-600
-                               bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
-                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        Agregar corte / producto
-                    </button>
-                </div>
-
-                <!-- Cabecera -->
-                <div class="grid grid-cols-12 gap-2 px-5 py-2 bg-gray-50/30 border-b border-gray-100
-                            text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                    <div class="col-span-4">Nombre del corte / producto</div>
-                    <div class="col-span-2">Rendimiento</div>
-                    <div class="col-span-2">Unidad</div>
-                    <div class="col-span-3">Destino</div>
-                    <div class="col-span-1"></div>
-                </div>
-
-                <div id="tabla-productos" class="divide-y divide-gray-50 px-5">
-                    <!-- Fila inicial -->
-                    <div class="fila-producto grid grid-cols-12 gap-2 py-3 items-center">
-                        <div class="col-span-4">
-                            <input type="text" name="producto_nombre[]"
-                                placeholder="Ej. Arrachera, Costilla..."
-                                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                                       rounded-lg outline-none focus:border-green-400 transition-all placeholder-gray-300">
-                        </div>
-                        <div class="col-span-2">
-                            <input type="number" name="producto_rendimiento[]"
-                                min="0.001" step="any" placeholder="0"
-                                oninput="actualizarResumen()"
-                                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                                       rounded-lg outline-none focus:border-green-400 transition-all text-right">
-                        </div>
-                        <div class="col-span-2">
-                            <select name="producto_unidad[]"
-                                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                                       rounded-lg outline-none focus:border-green-400 transition-all">
-                                <option value="kg">kg</option>
-                                <option value="g">g</option>
-                                <option value="pza">pza</option>
-                                <option value="litro">litro</option>
-                            </select>
-                        </div>
-                        <div class="col-span-3">
-                            <!-- Va a inventario de venta o es intermedio -->
-                            <select name="producto_destino[]"
-                                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                                       rounded-lg outline-none focus:border-green-400 transition-all">
-                                <option value="venta">→ Inventario venta</option>
-                                <option value="intermedio">→ Uso interno</option>
-                            </select>
-                        </div>
-                        <div class="col-span-1 flex justify-center">
-                            <button type="button" onclick="quitarFila(this, 'tabla-productos')"
-                                class="w-6 h-6 flex items-center justify-center rounded text-gray-300
-                                       hover:text-red-400 hover:bg-red-50 transition-colors">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Totalizador -->
-                <div class="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                    <p class="text-[10px] text-gray-400">
-                        El rendimiento total debe ser menor a la entrada (la diferencia es la merma).
-                    </p>
-                    <div class="text-right">
-                        <p class="text-[10px] text-gray-400">Rendimiento total declarado</p>
-                        <p id="total-rendimiento" class="text-sm font-bold text-gray-800">0.00 kg</p>
-                    </div>
                 </div>
             </div>
 
         </div>
 
-        <!-- ── Columna guía (1/3) ── -->
+        <!-- ── Columna lateral ── -->
         <div>
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
@@ -298,46 +147,20 @@
                     <h3 class="text-sm font-semibold text-gray-700">Resumen</h3>
                 </div>
 
-                <!-- Guía por tipo -->
-                <div class="p-5 space-y-3">
+                <div class="p-5 space-y-3 text-xs text-gray-500">
+                    <p>Una receta enlaza un <strong>producto terminado</strong> con las <strong>materias primas</strong> necesarias para fabricarlo.</p>
 
-                    <div id="guia-Desposte" class="space-y-2 text-xs text-gray-500">
-                        <p class="font-semibold text-gray-700">Desposte 🔪</p>
-                        <p>Una canal entra y se transforma en múltiples cortes. Define cada corte con su rendimiento esperado en kg.</p>
-                        <div class="bg-gray-50 rounded-lg p-3 text-[10px] space-y-1">
-                            <p class="font-semibold text-gray-600">Ejemplo canal de res:</p>
-                            <p>Entrada: 1 canal (≈200 kg)</p>
-                            <p>→ Arrachera: 8 kg</p>
-                            <p>→ Costilla: 20 kg</p>
-                            <p>→ Bistec: 35 kg</p>
-                            <p>→ Carne molida: 60 kg</p>
-                            <p class="text-amber-600">→ Merma/hueso: ~77 kg</p>
-                        </div>
+                    {% if foto_actual %}
+                    <div class="rounded-lg overflow-hidden border border-gray-100">
+                        <img src="{{ foto_actual }}" alt="Foto producto" class="w-full h-32 object-cover">
                     </div>
+                    {% endif %}
 
-                    <div id="guia-Procesado" class="hidden space-y-2 text-xs text-gray-500">
-                        <p class="font-semibold text-gray-700">Procesado ⚗️</p>
-                        <p>Varias materias se combinan para producir un producto elaborado.</p>
-                        <div class="bg-gray-50 rounded-lg p-3 text-[10px] space-y-1">
-                            <p class="font-semibold text-gray-600">Ejemplo chorizo:</p>
-                            <p>Entrada: 800g carne molida</p>
-                            <p>+ 50g especias</p>
-                            <p>+ 20g sal</p>
-                            <p>→ Chorizo: 800g (venta)</p>
-                        </div>
-                    </div>
-
-                    <!-- Destino de productos -->
-                    <div class="border-t border-gray-100 pt-3 space-y-1.5 text-[10px] text-gray-500">
-                        <p class="font-semibold text-gray-600 text-xs">Destino de productos:</p>
-                        <div class="flex items-start gap-1.5">
-                            <span class="text-green-600 font-bold mt-0.5">→</span>
-                            <p><strong>Inventario venta</strong> — el corte pasa al stock disponible para vender</p>
-                        </div>
-                        <div class="flex items-start gap-1.5">
-                            <span class="text-amber-500 font-bold mt-0.5">→</span>
-                            <p><strong>Uso interno</strong> — es un insumo para otra receta (ej. carne molida para chorizo)</p>
-                        </div>
+                    <div class="bg-gray-50 rounded-lg p-3 text-[10px] space-y-1">
+                        <p class="font-semibold text-gray-600">Ejemplo "Docena de huevo":</p>
+                        <p>Producto: Docena de huevo</p>
+                        <p>→ Huevo: 12 piezas</p>
+                        <p class="text-gray-400">(produccion de 5 docenas → 60 huevos)</p>
                     </div>
                 </div>
 
@@ -359,87 +182,27 @@
     </div>
 </form>
 
-<!-- Template oculto para clonar filas — ingrediente -->
+<!-- Plantilla oculta para clonar -->
 <template id="tpl-ingrediente">
     <div class="fila-ingrediente grid grid-cols-12 gap-2 py-3 items-center">
-        <div class="col-span-5">
+        <div class="col-span-7">
             <select name="ingrediente_id[]"
                 class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                        rounded-lg outline-none focus:border-green-400 transition-all">
-                <option value="">Seleccionar...</option>
-                <option value="1">Canal de res entera</option>
-                <option value="2">Canal de cerdo</option>
-                <option value="3">Pollo entero</option>
-                <option value="4">Sal de mesa</option>
-                <option value="5">Especias mixtas</option>
+                <option value="">Seleccionar materia prima...</option>
+                {% for m in materias %}
+                <option value="{{ m.idMateriaPrima }}">{{ m.nombreMateriaPrima }}{% if m.tipo %} ({{ m.tipo }}){% endif %}</option>
+                {% endfor %}
             </select>
         </div>
-        <div class="col-span-3">
-            <input type="number" name="ingrediente_cantidad[]"
-                min="0.001" step="any" placeholder="1"
-                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                       rounded-lg outline-none focus:border-green-400 transition-all text-right">
-        </div>
-        <div class="col-span-3">
-            <select name="ingrediente_unidad[]"
-                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                       rounded-lg outline-none focus:border-green-400 transition-all">
-                <option value="canal">Canal</option>
-                <option value="pieza">Pieza</option>
-                <option value="kg">kg</option>
-                <option value="g">g</option>
-                <option value="litro">litro</option>
-                <option value="bulto">bulto</option>
-            </select>
-        </div>
-        <div class="col-span-1 flex justify-center">
-            <button type="button" onclick="quitarFila(this, 'tabla-ingredientes')"
-                class="w-6 h-6 flex items-center justify-center rounded text-gray-300
-                       hover:text-red-400 hover:bg-red-50 transition-colors">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-    </div>
-</template>
-
-<!-- Template oculto para clonar filas — producto -->
-<template id="tpl-producto">
-    <div class="fila-producto grid grid-cols-12 gap-2 py-3 items-center">
         <div class="col-span-4">
-            <input type="text" name="producto_nombre[]"
-                placeholder="Ej. Arrachera, Costilla..."
-                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                       rounded-lg outline-none focus:border-green-400 transition-all placeholder-gray-300">
-        </div>
-        <div class="col-span-2">
-            <input type="number" name="producto_rendimiento[]"
+            <input type="number" name="ingrediente_cantidad[]"
                 min="0.001" step="any" placeholder="0"
-                oninput="actualizarResumen()"
                 class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                        rounded-lg outline-none focus:border-green-400 transition-all text-right">
         </div>
-        <div class="col-span-2">
-            <select name="producto_unidad[]"
-                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                       rounded-lg outline-none focus:border-green-400 transition-all">
-                <option value="kg">kg</option>
-                <option value="g">g</option>
-                <option value="pza">pza</option>
-                <option value="litro">litro</option>
-            </select>
-        </div>
-        <div class="col-span-3">
-            <select name="producto_destino[]"
-                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
-                       rounded-lg outline-none focus:border-green-400 transition-all">
-                <option value="venta">→ Inventario venta</option>
-                <option value="intermedio">→ Uso interno</option>
-            </select>
-        </div>
         <div class="col-span-1 flex justify-center">
-            <button type="button" onclick="quitarFila(this, 'tabla-productos')"
+            <button type="button" onclick="quitarFila(this)"
                 class="w-6 h-6 flex items-center justify-center rounded text-gray-300
                        hover:text-red-400 hover:bg-red-50 transition-colors">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -451,54 +214,19 @@
 </template>
 
 <script>
-    // ── Tipo de receta ──
-    function actualizarTipo() {
-        const tipo = document.querySelector('input[name="tipo"]:checked')?.value;
-        document.getElementById('guia-Desposte').classList.toggle('hidden', tipo !== 'Desposte');
-        document.getElementById('guia-Procesado').classList.toggle('hidden', tipo !== 'Procesado');
-    }
-
-    // ── Agregar/quitar filas ──
     function agregarIngrediente() {
         const tpl  = document.getElementById('tpl-ingrediente');
         const cont = document.getElementById('tabla-ingredientes');
         cont.appendChild(tpl.content.cloneNode(true));
     }
 
-    function agregarProducto() {
-        const tpl  = document.getElementById('tpl-producto');
-        const cont = document.getElementById('tabla-productos');
-        cont.appendChild(tpl.content.cloneNode(true));
-        actualizarResumen();
-    }
-
-    function quitarFila(btn, tablaId) {
-        const fila = btn.closest('.fila-ingrediente, .fila-producto');
-        const tabla = document.getElementById(tablaId);
-        // No eliminar si es la única fila
-        const filas = tabla.querySelectorAll(tablaId === 'tabla-ingredientes' ? '.fila-ingrediente' : '.fila-producto');
-        if (filas.length > 1) {
+    function quitarFila(btn) {
+        const fila = btn.closest('.fila-ingrediente');
+        const cont = document.getElementById('tabla-ingredientes');
+        if (cont.querySelectorAll('.fila-ingrediente').length > 1) {
             fila.remove();
-            actualizarResumen();
         }
     }
-
-    // ── Calcular total rendimiento ──
-    function actualizarResumen() {
-        let total = 0;
-        document.querySelectorAll('input[name="producto_rendimiento[]"]').forEach(inp => {
-            const val = parseFloat(inp.value) || 0;
-            // Normalizar a kg según unidad seleccionada
-            const unidad = inp.closest('.fila-producto')?.querySelector('select[name="producto_unidad[]"]')?.value;
-            total += unidad === 'g' ? val / 1000 : val;
-        });
-        document.getElementById('total-rendimiento').textContent =
-            total.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kg';
-    }
-
-    // Inicializar
-    actualizarTipo();
-    actualizarResumen();
 </script>
 
 {% endblock %}

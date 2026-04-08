@@ -17,6 +17,9 @@ class OrdenCompra(db.Model):
     fechaDeOrden    = db.Column(db.Date, default=datetime.now, nullable=False)
     notas           = db.Column(db.String(500), nullable=True)
     totalOrden      = db.Column(db.Float, nullable=False, default=0.0)
+    PagoProveedor   = db.Column(db.String(20), nullable=False, default='Pendiente')  # 'Pendiente' | 'Pagado'
+    metodoPago      = db.Column(db.String(20), nullable=True)                          # 'Efectivo' | 'Transferencia'
+    fechaPago       = db.Column(db.DateTime, nullable=True)
 
     proveedor = db.relationship(
         'Proveedor',

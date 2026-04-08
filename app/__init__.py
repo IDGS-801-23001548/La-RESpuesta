@@ -106,6 +106,7 @@ def create_app():
     from .modules.recetas                   import receta
     from .modules.solicitud_de_produccion   import solicitud_de_produccion
     from .modules.productos                 import productos
+    from .modules.finanzas                  import finanzas
 
     from .modules.mostrador import mostrador
 
@@ -120,6 +121,8 @@ def create_app():
     app.register_blueprint(receta)
     app.register_blueprint(solicitud_de_produccion)
     app.register_blueprint(productos)
+    app.register_blueprint(finanzas)
+    
     
     app.register_blueprint(mostrador)
 

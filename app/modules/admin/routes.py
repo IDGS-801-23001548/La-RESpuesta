@@ -45,42 +45,6 @@ def produccion_detalle(id):
 def produccion_completar(id):
     return redirect(url_for('admin.produccion_detalle', id=id))
 
-@admin.route('/pago')
-def pago():
-    return render_template('admin/pagos.html',
-        proveedores=[], pagos=[],
-        total_pendiente='0.00', proveedores_con_saldo=0,
-        pagado_mes='0.00', num_pagos_mes=0)
-
-@admin.route('/pagos/nuevo', methods=['GET', 'POST'])
-def pagos_nuevo():
-    proveedor_id = request.args.get('proveedor_id')
-    return render_template('admin/pagos_form.html', proveedor_id=proveedor_id)
-
-@admin.route('/pagos/proveedor/<int:id>')
-def pagos_cuenta(id):
-    return render_template('admin/pagos_cuenta.html',
-        proveedor=None, movimientos=[])
-
-@admin.route('/corte')
-def corte_diario():
-    return render_template('admin/corte_diario.html',
-        cortes=[],
-        corte_hoy_existe=False,
-        corte_hoy_id=None,
-        ventas_mes='0.00',
-        utilidad_mes='0.00',
-        dias_sin_corte=0
-    )
-
-@admin.route('/corte/diario/<int:id>')
-def corte_detalle(id):
-    return render_template('admin/corte_detalle.html', corte=None)
-
-@admin.route('/corte-diario/generar', methods=['POST'])
-def corte_generar():
-    return redirect(url_for('admin.corte_diario'))
-
 # ── RUTAS A DESARROLLAR ──────────────────────────────────────────
 
 @admin.route("/utilidad", methods=['GET', 'POST'])
