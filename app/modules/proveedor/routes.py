@@ -7,6 +7,7 @@ from app.models.orden_compra import OrdenCompra
 from flask_login import login_required
 from flask_security import roles_required
 from datetime import date
+from sqlalchemy.exc import IntegrityError
 
 
 @proveedor.route('/proveedores')
@@ -36,9 +37,13 @@ def proveedores_nuevo():
             notas          = form.notas.data.strip() or None,
         )
         db.session.add(nuevo)
-        db.session.commit()
-        flash('Proveedor registrado correctamente.', 'success')
-        return redirect(url_for('proveedor.proveedores'))
+        try:
+            db.session.commit()
+            flash('Proveedor registrado correctamente.', 'success')
+            return redirect(url_for('proveedor.proveedores'))
+        except IntegrityError:
+            db.session.rollback()
+            flash(f'Ya existe un proveedor con el RFC "{form.rfc.data.strip().upper()}".', 'danger')
     return render_template('admin/proveedores/proveedores_form.html', proveedor=None, form=form)
 
 
@@ -103,9 +108,13 @@ def proveedores_editar(id):
         prov.condicion_pago = form.condicion_pago.data
         prov.dias_entrega   = ','.join(form.dias_entrega.data) if form.dias_entrega.data else None
         prov.notas          = form.notas.data.strip() or None
-        db.session.commit()
-        flash('Proveedor actualizado correctamente.', 'success')
-        return redirect(url_for('proveedor.proveedores_detalle', id=prov.id))
+        try:
+            db.session.commit()
+            flash('Proveedor actualizado correctamente.', 'success')
+            return redirect(url_for('proveedor.proveedores_detalle', id=prov.id))
+        except IntegrityError:
+            db.session.rollback()
+            flash(f'Ya existe un proveedor con el RFC "{form.rfc.data.strip().upper()}".', 'danger')
 
     return render_template('admin/proveedores/proveedores_form.html', proveedor=prov, form=form)
 

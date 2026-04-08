@@ -13,15 +13,17 @@ class MateriaPrimaUnitaria(db.Model):
     idOrdenCompra              = db.Column(db.Integer, db.ForeignKey('orden_compra.idOrdenCompra'), nullable=False)
 
     # Cuántas unidades de compra (ej: 5 cajas)
-    cantidadDeUnidad           = db.Column(db.Float, nullable=False, default=0.0)
+    cantidadDeUnidad           = db.Column(db.Integer, nullable=False, default=0)
     # Cuántas unidades del conversor hay en una unidad de compra (ej: 60 piezas por caja)
-    cantidadPorUnidad          = db.Column(db.Float, nullable=False, default=0.0)
+    cantidadPorUnidad          = db.Column(db.Integer, nullable=False, default=0)
     # Precio de una unidad de compra (ej: $250 por caja)
     precioPorUnidad            = db.Column(db.Float, nullable=False, default=0.0)
     # Total en cantidad del conversor (ej: 300 piezas)
-    totalMateria               = db.Column(db.Float, nullable=False, default=0.0)
+    totalMateria               = db.Column(db.Integer, nullable=False, default=0)
     # Total en dinero (ej: $1250)
     totalCosto                 = db.Column(db.Float, nullable=False, default=0.0)
+
+    fechaCaducidad             = db.Column(db.Date, nullable=True)
 
     # EnEspera  → orden EnCurso (aún no llega)
     # Disponible → orden Recibida (ya está en inventario)

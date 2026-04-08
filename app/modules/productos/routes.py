@@ -7,6 +7,7 @@ from app.models.producto import Producto
 from app.models.categoria import Categoria
 from flask_login import login_required
 from flask_security import roles_required
+from sqlalchemy.exc import IntegrityError
 
 
 # ─────────────────────────────────────────────
@@ -30,8 +31,9 @@ COLOR_MAP = {
 }
 
 
-def _enrich_productos_con_fotos(productos_list):
-    """Enriquece una lista de Producto con la foto base64 de MongoDB."""
+def _enrich_productos_con_fotos(productos_list, categorias_map=None):
+    """Enriquece una lista de Producto con la foto base64 de MongoDB y el filtro de categoría."""
+    animales_set = set(ANIMALES)
     resultado = []
     for p in productos_list:
         foto_b64 = None
@@ -45,7 +47,16 @@ def _enrich_productos_con_fotos(productos_list):
                     foto_b64 = raw
             except Exception:
                 pass
-        resultado.append({'producto': p, 'foto_b64': foto_b64})
+
+        # cat_nombre: nombre real para mostrar en el badge
+        # cat_filtro: ID de categoría como string para el filtro JS (sin ambigüedad)
+        cat_nombre = '—'
+        cat_filtro = 'sin'
+        if categorias_map and p.idCategoria and p.idCategoria in categorias_map:
+            cat_nombre = categorias_map[p.idCategoria]
+            cat_filtro = str(p.idCategoria)
+
+        resultado.append({'producto': p, 'foto_b64': foto_b64, 'cat_nombre': cat_nombre, 'cat_filtro': cat_filtro})
     return resultado
 
 
@@ -140,7 +151,8 @@ def _get_foto_actual(id_foto):
 
 
 def _choices_categorias():
-    return [(0, '— Sin categoría —')] + [
+    """Retorna solo categorías reales — categoría es obligatoria."""
+    return [
         (c.idCategoria, c.nombreCategoria)
         for c in Categoria.query.order_by(Categoria.nombreCategoria).all()
     ]
@@ -156,12 +168,14 @@ def _choices_categorias():
 def catalogo():
     todos_los_productos = (
         Producto.query
-        .join(Categoria, Producto.idCategoria == Categoria.idCategoria, isouter=True)
         .order_by(Producto.NombreProducto)
         .all()
     )
 
-    items = _enrich_productos_con_fotos(todos_los_productos)
+    # Precargar categorías en un dict para evitar N+1 queries en el template
+    categorias_map = {c.idCategoria: c.nombreCategoria for c in Categoria.query.all()}
+
+    items = _enrich_productos_con_fotos(todos_los_productos, categorias_map=categorias_map)
 
     precios    = [i['producto'].PrecioVentaProducto for i in items]
     precio_min = int(min(precios)) if precios else 0
@@ -171,6 +185,8 @@ def catalogo():
     sin_stock       = sum(1 for i in items if i['producto'].StockProducto == 0)
     con_foto        = sum(1 for i in items if i['foto_b64'])
 
+    categorias_lista = Categoria.query.order_by(Categoria.nombreCategoria).all()
+
     return render_template(
         'admin/productos/catalogo_productos.html',
         items=items,
@@ -179,7 +195,7 @@ def catalogo():
         total_productos=total_productos,
         sin_stock=sin_stock,
         con_foto=con_foto,
-        animales=ANIMALES,
+        categorias_lista=categorias_lista,
         emoji_map=EMOJI_MAP,
         color_map=COLOR_MAP,
     )
@@ -197,6 +213,14 @@ def productos_nuevo():
     form.idCategoria.choices = _choices_categorias()
 
     if form.validate_on_submit():
+        # Foto obligatoria al crear
+        if not form.foto.data or not form.foto.data.filename:
+            form.foto.errors.append('La foto del producto es obligatoria.')
+            return render_template(
+                'admin/productos/productos_form.html',
+                form=form, modo='nuevo', producto=None, foto_actual=None, emoji_map=EMOJI_MAP,
+            )
+
         id_categoria = form.idCategoria.data if form.idCategoria.data != 0 else None
         id_foto      = _guardar_foto(form.foto.data)
 
@@ -210,9 +234,13 @@ def productos_nuevo():
             idFoto               = id_foto,
         )
         db.session.add(nuevo)
-        db.session.commit()
-        flash(f'Producto "{nuevo.NombreProducto}" creado correctamente.', 'success')
-        return redirect(url_for('productos.catalogo'))
+        try:
+            db.session.commit()
+            flash(f'Producto "{nuevo.NombreProducto}" creado correctamente.', 'success')
+            return redirect(url_for('productos.catalogo'))
+        except IntegrityError:
+            db.session.rollback()
+            form.NombreProducto.errors.append(f'Ya existe un producto con el nombre "{nuevo.NombreProducto}".')
 
     return render_template(
         'admin/productos/productos_form.html',
