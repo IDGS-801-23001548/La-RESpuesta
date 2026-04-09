@@ -25,6 +25,8 @@ class User(db.Model, UserMixin):
     ultima_ip           = db.Column(db.String(45), nullable=True)
     session_token       = db.Column(db.String(255), nullable=True)
     session_expiration  = db.Column(db.DateTime, nullable=True)
+
+    autenticacion_doble_factor = db.Column(db.Boolean)
     
     persona             = db.relationship('Persona', 
                                     backref='user', 
