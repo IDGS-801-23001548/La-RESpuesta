@@ -10,6 +10,7 @@ from flask_login import LoginManager
 from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from app.extensions import mail
 
 from .models import User, Role, Categoria
 from app.extensions import db, limiter, _init_mongo
@@ -30,6 +31,7 @@ def create_app():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
+    
 
     # ==============================
     # LOGIN MANAGER
@@ -52,6 +54,16 @@ def create_app():
     app.config['SECRET_KEY']                     = os.getenv('SECRET_KEY')  # ← clave fija desde .env
     app.config['SECURITY_PASSWORD_HASH']         = 'pbkdf2_sha512'
     app.config['SECURITY_PASSWORD_SALT']         = 'thisissecretsalt'
+
+    # ==============================
+    # MAIL
+    # ==============================
+    app.config['MAIL_SERVER']         = os.getenv('MAIL_SERVER')
+    app.config['MAIL_PORT']           = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS']        = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+    app.config['MAIL_USERNAME']       = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD']       = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 
     # ==============================
     # CSRF
@@ -80,6 +92,7 @@ def create_app():
     # ==============================
     db.init_app(app)
     limiter.init_app(app)
+    mail.init_app(app)
     migrate = Migrate(app, db)
     security = Security(app, user_datastore)
     _init_mongo(app)

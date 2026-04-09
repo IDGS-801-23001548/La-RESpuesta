@@ -4,9 +4,11 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from flask_mail import Mail
 
 load_dotenv()
 
+mail = Mail()
 mongo_client = None
 mongo_fotos  = None
 

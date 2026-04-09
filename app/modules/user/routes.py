@@ -1,10 +1,14 @@
-from flask import render_template, redirect, url_for, flash, current_app, request
+from flask import render_template, redirect, url_for, flash, current_app, request, session
 from . import user
 from app.extensions import db
 from app.models import User, Role, Persona
 from app.modules.user.forms import UserForm
 from flask_security import login_required, roles_required, hash_password, current_user, roles_accepted
 import uuid
+from flask_mail import Message
+from app.extensions import mail
+import random
+from datetime import datetime, timedelta
 
 @user.route("/usuarios", methods=["GET", "POST"])
 @login_required
@@ -228,7 +232,6 @@ def registro_cliente():
 
 @user.route("/registro", methods=["POST"])
 def registro_cliente_post():
-    """Procesa el registro público. Asigna siempre el rol con id=5 (Cliente)."""
     from app.modules.user.forms import RegistroClienteForm
 
     form = RegistroClienteForm()
@@ -247,43 +250,179 @@ def registro_cliente_post():
     # Rol Cliente (id = 5)
     rol_cliente = Role.query.get(5)
     if not rol_cliente:
-        flash("Error de configuración: el rol de cliente no existe. Contacta al administrador.", "error")
-        current_app.logger.error("Registro público fallido: Role id=5 (Cliente) no encontrado en BD")
+        flash("Error de configuración: el rol de cliente no existe.", "error")
+        current_app.logger.error("Registro público fallido: Role id=5 no encontrado")
         return render_template("admin/user/registro_cliente.html", form=form)
 
-    nombre_completo = f"{form.nombre.data} {form.apellido_paterno.data} {form.apellido_materno.data or ''}".strip()
+    # ── Guardar datos en sesión temporalmente ──────────────────
+    session['registro_pendiente'] = {
+        'nombre':           form.nombre.data,
+        'apellido_paterno': form.apellido_paterno.data,
+        'apellido_materno': form.apellido_materno.data or '',
+        'telefono':         form.telefono.data,
+        'direccion':        form.direccion.data,
+        'email':            form.email.data,
+        'password':         form.password.data,
+    }
+
+    # ── Generar y enviar código ────────────────────────────────
+    codigo = str(random.randint(100000, 999999))
+    expira = datetime.now() + timedelta(minutes=5)
+
+    session['registro_2fa_codigo'] = codigo
+    session['registro_2fa_expira'] = expira.isoformat()
+    session.modified = True
+
+    nombre = form.nombre.data
+
+    try:
+        msg = Message(
+            subject='Confirma tu cuenta — La RESpuesta',
+            recipients=[form.email.data],
+            html=f"""
+            <div style="font-family:Inter,sans-serif;max-width:420px;margin:0 auto;padding:32px 24px;">
+              <h2 style="color:#111827;font-size:1.25rem;margin-bottom:8px;">
+                Confirma tu cuenta
+              </h2>
+              <p style="color:#6b7280;font-size:.875rem;margin-bottom:24px;">
+                Hola {nombre}, usa el siguiente código para completar tu registro.
+                Expira en <strong>5 minutos</strong>.
+              </p>
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;
+                          padding:24px;text-align:center;margin-bottom:24px;">
+                <span style="font-size:2.25rem;font-weight:700;letter-spacing:.25em;color:#16a34a;">
+                  {codigo}
+                </span>
+              </div>
+              <p style="color:#9ca3af;font-size:.75rem;">
+                Si no solicitaste este código, ignora este mensaje.
+              </p>
+            </div>
+            """
+        )
+        mail.send(msg)
+    except Exception as e:
+        current_app.logger.error(f"Error enviando código de registro | {str(e)}")
+        flash("Error al enviar el código de verificación. Intenta de nuevo.", "error")
+        return render_template("admin/user/registro_cliente.html", form=form)
+
+    return redirect(url_for("user.verificar_registro"))
+
+
+@user.route("/registro/verificar", methods=["GET"])
+def verificar_registro():
+    if 'registro_pendiente' not in session:
+        return redirect(url_for("user.registro_cliente"))
+    return render_template("admin/user/verificar_registro.html")
+
+
+@user.route("/registro/verificar", methods=["POST"])
+def verificar_registro_post():
+    from flask_security.utils import hash_password
+
+    if 'registro_pendiente' not in session:
+        return redirect(url_for("user.registro_cliente"))
+
+    codigo_ingresado = request.form.get('codigo', '').strip()
+    codigo_guardado  = session.get('registro_2fa_codigo')
+    expira_str       = session.get('registro_2fa_expira')
+
+    # ── Verificar expiración ──────────────────────────────────
+    if not expira_str or datetime.now() > datetime.fromisoformat(expira_str):
+        session.pop('registro_pendiente', None)
+        session.pop('registro_2fa_codigo', None)
+        session.pop('registro_2fa_expira', None)
+        session.modified = True
+        flash("El código ha expirado. Vuelve a registrarte.", "error")
+        return redirect(url_for("user.registro_cliente"))
+
+    # ── Verificar código ──────────────────────────────────────
+    if codigo_ingresado != codigo_guardado:
+        flash("Código incorrecto. Intenta de nuevo.", "error")
+        return redirect(url_for("user.verificar_registro"))
+
+    # ── Código correcto — crear la cuenta ─────────────────────
+    datos = session['registro_pendiente']
+    rol_cliente = Role.query.get(5)
+
+    nombre_completo = f"{datos['nombre']} {datos['apellido_paterno']} {datos['apellido_materno']}".strip()
 
     nuevo_u = User(
-        name=nombre_completo,
-        email=form.email.data,
-        password=hash_password(form.password.data),
-        active=True,
-        fs_uniquifier=uuid.uuid4().hex,
+        name         = nombre_completo,
+        email        = datos['email'],
+        password     = hash_password(datos['password']),
+        active       = True,
+        fs_uniquifier= uuid.uuid4().hex,
     )
     nuevo_u.roles.append(rol_cliente)
-
     db.session.add(nuevo_u)
-    db.session.flush()  # obtiene nuevo_u.id antes del commit
+    db.session.flush()
 
     nueva_persona = Persona(
-        nombre=form.nombre.data,
-        apellido_paterno=form.apellido_paterno.data,
-        apellido_materno=form.apellido_materno.data,
-        telefono=form.telefono.data,
-        direccion=form.direccion.data,
-        user_id=nuevo_u.id
+        nombre           = datos['nombre'],
+        apellido_paterno = datos['apellido_paterno'],
+        apellido_materno = datos['apellido_materno'],
+        telefono         = datos['telefono'],
+        direccion        = datos['direccion'],
+        user_id          = nuevo_u.id
     )
-
     db.session.add(nueva_persona)
 
     try:
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error al registrar cliente: {str(e)}")
-        flash("Ocurrió un error al crear tu cuenta. Intenta de nuevo.", "error")
-        return render_template("admin/user/registro_cliente.html", form=form)
+        current_app.logger.error(f"Error al crear cuenta verificada: {str(e)}")
+        flash("Error al crear la cuenta. Intenta de nuevo.", "error")
+        return redirect(url_for("user.registro_cliente"))
 
-    current_app.logger.info(f"Cliente registrado públicamente: {form.email.data}")
+    # Limpiar sesión de registro
+    session.pop('registro_pendiente', None)
+    session.pop('registro_2fa_codigo', None)
+    session.pop('registro_2fa_expira', None)
+    session.modified = True
+
+    current_app.logger.info(f"Cliente registrado con verificación: {datos['email']}")
     flash("¡Cuenta creada exitosamente! Ya puedes iniciar sesión.", "success")
     return redirect(url_for("auth.login"))
+
+
+@user.route("/registro/verificar/reenviar", methods=["POST"])
+def reenviar_registro():
+    if 'registro_pendiente' not in session:
+        return redirect(url_for("user.registro_cliente"))
+
+    datos  = session['registro_pendiente']
+    codigo = str(random.randint(100000, 999999))
+    expira = datetime.now() + timedelta(minutes=5)
+
+    session['registro_2fa_codigo'] = codigo
+    session['registro_2fa_expira'] = expira.isoformat()
+    session.modified = True
+
+    try:
+        msg = Message(
+            subject='Nuevo código de verificación — La RESpuesta',
+            recipients=[datos['email']],
+            html=f"""
+            <div style="font-family:Inter,sans-serif;max-width:420px;margin:0 auto;padding:32px 24px;">
+              <h2 style="color:#111827;font-size:1.25rem;margin-bottom:8px;">Nuevo código</h2>
+              <p style="color:#6b7280;font-size:.875rem;margin-bottom:24px;">
+                Tu nuevo código de verificación. Expira en <strong>5 minutos</strong>.
+              </p>
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;
+                          padding:24px;text-align:center;">
+                <span style="font-size:2.25rem;font-weight:700;letter-spacing:.25em;color:#16a34a;">
+                  {codigo}
+                </span>
+              </div>
+            </div>
+            """
+        )
+        mail.send(msg)
+        flash("Código reenviado correctamente.", "success")
+    except Exception as e:
+        current_app.logger.error(f"Error reenviando código de registro | {str(e)}")
+        flash("Error al reenviar el código.", "error")
+
+    return redirect(url_for("user.verificar_registro"))
