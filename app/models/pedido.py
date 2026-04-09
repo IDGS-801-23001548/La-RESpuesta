@@ -19,3 +19,6 @@ class Pedido(db.Model):
         backref='pedido',
         lazy='dynamic'
     )
+
+    user = db.relationship('User', backref='pedidos')
+

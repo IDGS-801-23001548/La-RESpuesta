@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, flash, request, session, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 from flask_security.decorators import roles_required
 from . import mostrador
 from datetime import datetime
@@ -8,6 +8,7 @@ from app.extensions import db, mongo_fotos
 from app.models.producto import Producto
 from app.models.pedido import Pedido
 from app.models.ticket import Ticket
+from app.models.vistaResumenPedido import VistaResumenPedido
 from app.models.detallesTicket import DetalleTicket
 from .forms import (
     AgregarProductoForm,
@@ -19,19 +20,48 @@ from .forms import (
 )
 
 
+# ─── HELPERS ────────────────────────────────────────────────
+
+def _normalizar_tickets(tickets):
+    """Garantiza que todas las claves del dict sean strings."""
+    return {str(k): v for k, v in tickets.items()}
+
+def _get_ticket_activo():
+    return str(session.get('ticket_activo', '1'))
+
+def _get_tickets():
+    raw = session.get('tickets', {'1': []})
+    return _normalizar_tickets(raw)
+
+def _save_tickets(tickets):
+    session['tickets'] = _normalizar_tickets(tickets)
+    session.modified = True
+
+def _get_carrito_activo():
+    tickets = _get_tickets()
+    activo  = _get_ticket_activo()
+    return list(tickets.get(activo, []))
+
+def _save_carrito_activo(carrito):
+    tickets = _get_tickets()
+    activo  = _get_ticket_activo()
+    tickets[activo] = carrito
+    _save_tickets(tickets)
+
 def _calcular_subtotal(item):
     return round(item['precio'] * item['cantidad'], 2)
 
-
-def _build_carrito():
-    carrito_raw = session.get('carrito', [])
+def _build_carrito_from(carrito_raw):
     carrito_items = []
     total = 0.0
     for item in carrito_raw:
         subtotal = _calcular_subtotal(item)
-        total += subtotal
+        total   += subtotal
         carrito_items.append({**item, 'subtotal': subtotal})
     return carrito_items, round(total, 2)
+
+def _build_carrito():
+    return _build_carrito_from(_get_carrito_activo())
 
 
 def _enrich_productos_con_fotos(productos):
@@ -59,31 +89,42 @@ def _enrich_productos_con_fotos(productos):
 @login_required
 @roles_required('Cajero')
 def mostradorVenta():
-    if 'carrito' not in session:
-        session['carrito'] = []
+    if 'tickets' not in session:
+        session['tickets'] = {'1': []}
+        session['ticket_activo'] = '1'
+        session.modified = True
+    else:
+        # Limpiar sesiones viejas con claves mixtas
+        session['tickets'] = {str(k): v for k, v in session['tickets'].items()}
+        session['ticket_activo'] = str(session.get('ticket_activo', '1'))
+        session.modified = True
 
-    productos = Producto.query.order_by(Producto.NombreProducto).all()
+
+    productos      = Producto.query.order_by(Producto.NombreProducto).all()
     carrito_items, total = _build_carrito()
+    tickets        = _get_tickets()
+    ticket_activo  = _get_ticket_activo()
 
-    agregar_form = AgregarProductoForm()
+    agregar_form   = AgregarProductoForm()
     modificar_form = ModificarCantidadForm()
-    eliminar_form = EliminarProductoForm()
-    vaciar_form = VaciarCarritoForm()
-    cobrar_form = CobrarForm()
-
-    items = _enrich_productos_con_fotos(productos)
+    eliminar_form  = EliminarProductoForm()
+    vaciar_form    = VaciarCarritoForm()
+    cobrar_form    = CobrarForm()
+    items          = _enrich_productos_con_fotos(productos)
 
     return render_template(
         "mostrador/mostrador.html",
-        productos = productos,
-        carrito = carrito_items,
-        total = total,
-        items=items,
-        agregar_form = agregar_form,
+        productos      = productos,
+        carrito        = carrito_items,
+        total          = total,
+        items          = items,
+        tickets        = tickets,
+        ticket_activo  = ticket_activo,
+        agregar_form   = agregar_form,
         modificar_form = modificar_form,
-        eliminar_form = eliminar_form,
-        vaciar_form = vaciar_form,
-        cobrar_form = cobrar_form,
+        eliminar_form  = eliminar_form,
+        vaciar_form    = vaciar_form,
+        cobrar_form    = cobrar_form,
     )
 
 
@@ -104,7 +145,7 @@ def agregarProducto(id_producto):
         flash(f'"{producto.NombreProducto}" no tiene stock disponible.', 'warning')
         return redirect(url_for('mostrador.mostradorVenta'))
 
-    carrito = session.get('carrito', [])
+    carrito = _get_carrito_activo()
 
     for item in carrito:
         if item['id_producto'] == id_producto:
@@ -117,8 +158,7 @@ def agregarProducto(id_producto):
                 )
                 return redirect(url_for('mostrador.mostradorVenta'))
             item['cantidad'] = nueva_cantidad
-            session['carrito'] = carrito
-            session.modified = True
+            _save_carrito_activo(carrito)
             flash(f'"{producto.NombreProducto}" actualizado en el carrito.', 'success')
             return redirect(url_for('mostrador.mostradorVenta'))
 
@@ -140,8 +180,7 @@ def agregarProducto(id_producto):
         'stock':       producto.StockProducto,
     })
 
-    session['carrito'] = carrito
-    session.modified = True
+    _save_carrito_activo(carrito)
     flash(f'"{producto.NombreProducto}" agregado al carrito.', 'success')
     return redirect(url_for('mostrador.mostradorVenta'))
 
@@ -158,7 +197,7 @@ def modificarCantidad(id_producto):
 
     cantidad = form.cantidad.data
     accion   = request.form.get('accion')   # 'sumar' | 'restar' | None
-    carrito  = session.get('carrito', [])
+    carrito  = _get_carrito_activo()
 
     for item in carrito:
         if item['id_producto'] == id_producto:
@@ -171,8 +210,7 @@ def modificarCantidad(id_producto):
 
             if nueva_cantidad <= 0:
                 carrito.remove(item)
-                session['carrito'] = carrito
-                session.modified = True
+                _save_carrito_activo(carrito)
                 flash(f'"{item["nombre"]}" eliminado del carrito.', 'info')
                 return redirect(url_for('mostrador.mostradorVenta'))
 
@@ -184,8 +222,7 @@ def modificarCantidad(id_producto):
                 return redirect(url_for('mostrador.mostradorVenta'))
 
             item['cantidad'] = round(nueva_cantidad, 3)
-            session['carrito'] = carrito
-            session.modified = True
+            _save_carrito_activo(carrito)
             return redirect(url_for('mostrador.mostradorVenta'))
 
     flash('Producto no encontrado en el carrito.', 'warning')
@@ -202,7 +239,7 @@ def eliminarProducto(id_producto):
         flash('Acción no válida.', 'warning')
         return redirect(url_for('mostrador.mostradorVenta'))
 
-    carrito = session.get('carrito', [])
+    carrito = _get_carrito_activo()
     nombre  = ''
 
     for item in carrito:
@@ -211,8 +248,7 @@ def eliminarProducto(id_producto):
             carrito.remove(item)
             break
 
-    session['carrito'] = carrito
-    session.modified = True
+    _save_carrito_activo(carrito)
 
     if nombre:
         flash(f'"{nombre}" eliminado del carrito.', 'info')
@@ -225,14 +261,12 @@ def eliminarProducto(id_producto):
 @roles_required('Cajero')
 def vaciarCarrito():
     form = VaciarCarritoForm()
-
     if not form.validate_on_submit():
         flash('Acción no válida.', 'warning')
         return redirect(url_for('mostrador.mostradorVenta'))
 
-    session.pop('carrito', None)
-    session.modified = True
-    flash('Carrito vaciado.', 'info')
+    _save_carrito_activo([])
+    flash('Ticket vaciado.', 'info')
     return redirect(url_for('mostrador.mostradorVenta'))
 
 
@@ -253,7 +287,7 @@ def cobrar():
         return redirect(url_for('mostrador.mostradorVenta'))
 
     try:
-        # Generar folio único: TK-YYYYMMDD-XXXX
+        # ── 1. Generar el ticket ──────────────────────────────
         folio = f"TK-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
         ticket = Ticket(
@@ -266,23 +300,101 @@ def cobrar():
 
         for item in carrito_items:
             detalle = DetalleTicket(
-                idTicket = ticket.idTicket,
+                idTicket   = ticket.idTicket,
                 idProducto = item['id_producto'],
-                cantidad = item['cantidad'],
-                subtotal = item['subtotal'],
+                cantidad   = item['cantidad'],
+                subtotal   = item['subtotal'],
             )
             db.session.add(detalle)
 
         db.session.commit()
 
-        session.pop('carrito', None)
-        session.modified = True
+        # ── 2. Crear el pedido via procedure ──────────────────
+        conn = db.engine.raw_connection()
+        try:
+            cursor = conn.cursor()
+
+            # Procedure 1: crear pedido
+            cursor.execute('CALL crear_pedido_mostrador(%s, %s)', (current_user.id, 'Efectivo'))
+            row = cursor.fetchone()
+
+            if not row:
+                raise Exception('El procedure no devolvió un idPedido válido.')
+
+            id_pedido = row[0]
+
+            # Procedure 2: asignar cada producto al pedido
+            for item in carrito_items:
+                cursor.nextset()  # limpiar resultset anterior antes del siguiente CALL
+                cursor.execute('CALL asignar_productos_a_pedido(%s, %s, %s)', (
+                    id_pedido,
+                    item['id_producto'],
+                    item['cantidad'],
+                ))
+
+            conn.commit()
+
+        finally:
+            cursor.close()
+            conn.close()
+        
+        # ── 3. Limpiar carrito ────────────────────────────────
+        _save_carrito_activo([])
 
         flash(f'Venta registrada correctamente. Folio: {folio}', 'success')
 
     except Exception as e:
         db.session.rollback()
         flash(f'Error al registrar la venta: {str(e)}', 'error')
+
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+# ─── GESTIÓN DE TICKETS ─────────────────────────────────────
+
+@mostrador.route("/venta/ticket/nuevo", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def nuevoTicket():
+    tickets = _get_tickets()
+    # El siguiente número es el máximo actual + 1
+    siguiente = str(max([int(k) for k in tickets.keys()]) + 1)
+    tickets[siguiente] = []
+    _save_tickets(tickets)
+    session['ticket_activo'] = siguiente
+    session.modified = True
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+
+@mostrador.route("/venta/ticket/cambiar/<int:num>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def cambiarTicket(num):
+    tickets = _get_tickets()
+    num = str(num)
+    if num in tickets:
+        session['ticket_activo'] = num
+        session.modified = True
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+
+@mostrador.route("/venta/ticket/cerrar/<int:num>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def cerrarTicket(num):
+    tickets = _get_tickets()
+    num = str(num)
+    # No permitir cerrar si es el único ticket
+    if len(tickets) <= 1:
+        flash('No puedes cerrar el único ticket abierto.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    tickets.pop(num, None)
+    _save_tickets(tickets)
+
+    # Si se cerró el activo, cambiar al primero disponible
+    if session.get('ticket_activo') == num:
+        session['ticket_activo'] = min(tickets.keys(), key=int)
+        session.modified = True
 
     return redirect(url_for('mostrador.mostradorVenta'))
 
@@ -304,11 +416,25 @@ def mostradorPedido():
         .all()
     )
 
+     # Cargar resumen de productos por pedido desde la vista
+    ids_pedidos = [p.idPedido for p in pedidos]
+    renglones = (
+        VistaResumenPedido.query
+        .filter(VistaResumenPedido.idPedido.in_(ids_pedidos))
+        .all()
+    )
+
+    # Agrupar por idPedido → dict { idPedido: [renglones] }
+    resumen_por_pedido = {}
+    for r in renglones:
+        resumen_por_pedido.setdefault(r.idPedido, []).append(r)
+
     entregar_form = EntregarPedidoForm()
 
     return render_template(
         "mostrador/pedidos.html",
         pedidos       = pedidos,
+        resumen_por_pedido = resumen_por_pedido,
         entregar_form = entregar_form,
     )
 
@@ -326,26 +452,32 @@ def detallePedido(id_pedido):
         Pedido.Estatus  == 'EnCurso'
     ).first_or_404()
 
-    # Nombre del cliente desde la relación con User
-    cliente = pedido.user.name if pedido.user.name else 'Cliente desconocido'
+    cliente = pedido.user.name if pedido.user else 'Cliente desconocido'
 
-    # Unidades del pedido — placeholder hasta que se defina el modelo completo
-    unidades = []
-    for u in pedido.unidadesPedido:
-        unidades.append({
-            'nombre':   getattr(u, 'nombre',   '—'),
-            'cantidad': getattr(u, 'cantidad', 0),
-            'precio':   getattr(u, 'precio',   0),
-            'subtotal': getattr(u, 'subtotal', 0),
-        })
+    renglones = (
+        VistaResumenPedido.query
+        .filter(VistaResumenPedido.idPedido == id_pedido)
+        .all()
+    )
+
+    unidades = [
+        {
+            'nombre':   r.NombreProducto,
+            'cantidad': r.cantidad,
+            'precio':   r.PrecioVentaProducto,
+            'subtotal': r.subtotal,
+        }
+        for r in renglones
+    ]
 
     return jsonify({
-        'idPedido': pedido.idPedido,
-        'cliente':  pedido.user.name,
-        'total':    pedido.Total,
-        'tipo':     pedido.Tipo,
-        'estatus':  pedido.Estatus,
-        'unidades': unidades,
+        'idPedido':      pedido.idPedido,
+        'cliente':       cliente,
+        'total':         pedido.Total,
+        'tipo':          pedido.Tipo,
+        'estatus':       pedido.Estatus,
+        'num_productos': len(unidades),   # ← conteo real desde la vista
+        'unidades':      unidades,
     })
 
 
