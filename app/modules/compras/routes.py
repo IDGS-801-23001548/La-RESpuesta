@@ -5,7 +5,7 @@ from .forms import OrdenCompraForm
 from app.extensions import db
 from app.models import (
     Proveedor, MateriaPrima, MateriaProveida,
-    MateriaPrimaUnitaria, OrdenCompra,
+    Lote, OrdenCompra,
     ProductoUnitario, Producto, Canal
 )
 from flask_security import login_required
@@ -100,10 +100,10 @@ def compra():
         mp_sums = {
             oc_id: float(val or 0)
             for oc_id, val in db.session.query(
-                MateriaPrimaUnitaria.idOrdenCompra,
-                func.sum(MateriaPrimaUnitaria.cantidadDeUnidad)
-            ).filter(MateriaPrimaUnitaria.idOrdenCompra.in_(order_ids))
-            .group_by(MateriaPrimaUnitaria.idOrdenCompra).all()
+                Lote.idOrdenCompra,
+                func.sum(Lote.cantidadDeUnidad)
+            ).filter(Lote.idOrdenCompra.in_(order_ids))
+            .group_by(Lote.idOrdenCompra).all()
         }
 
     # Canal: conteo de canales por lote
@@ -152,7 +152,7 @@ def compra():
 def compra_detalle(id):
     orden = OrdenCompra.query.get_or_404(id)
 
-    # Ítems Materia (MateriaPrimaUnitaria)
+    # Ítems Materia (Lote)
     items_materia = orden.materiasPrimasUnitarias.all()
 
     # Ítems Producto agrupados por idProducto
@@ -353,7 +353,7 @@ def compra_nueva():
 
             # ── Tipo Materia → insert en materia_prima_unitaria ──────────────
             else:
-                item = MateriaPrimaUnitaria(
+                item = Lote(
                     idMateriaProveida = mp_id,
                     idOrdenCompra     = orden.idOrdenCompra,
                     cantidadDeUnidad  = cant_u,

@@ -12,7 +12,10 @@ from .categoria import Categoria
 from .conversor import Conversor
 from .materia_prima import MateriaPrima
 from .materia_proveida import MateriaProveida
-from .materia_prima_unitaria import MateriaPrimaUnitaria
+from .lote import Lote
+from .canal_corte import CanalCorte
+from .corte import Corte
+from .canal import Canal
 from .orden_compra import OrdenCompra
 from .unidad_medida import UnidadMedida
 from .canal import Canal
