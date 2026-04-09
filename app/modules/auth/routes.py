@@ -16,6 +16,11 @@ def login():
     if current_user.is_authenticated:
         if current_user.has_role('admin'):
             return redirect(url_for('admin.dashboard'))
+            
+        # ---> NUEVO: Redirección para el repartidor si ya estaba logueado <---
+        if current_user.has_role('Repartidor'):
+            return redirect(url_for('repartidor.pedidos'))
+            
         return redirect(url_for('venta.inicio'))
 
     return render_template("security/login_user.html")
@@ -89,6 +94,10 @@ def login_post():
     # ── Redirección según rol ─────────────────────────────────────
     if user.has_role('admin'):
         return redirect(url_for('admin.dashboard'))
+
+    # ---> NUEVO: Redirección para el repartidor al hacer login <---
+    if user.has_role('Repartidor') or user.has_role('repartidor'):
+        return redirect(url_for('repartidor.pedidos'))
 
     if user.has_role('end-user'):
         return redirect(url_for('venta.inicio'))

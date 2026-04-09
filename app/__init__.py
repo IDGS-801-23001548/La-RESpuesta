@@ -103,6 +103,7 @@ def create_app():
     from .modules.logs      import log
     from .modules.proveedor import proveedor
     from .modules.materia   import materia
+    from .modules.repartidor import repartidor_bp
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
@@ -112,6 +113,7 @@ def create_app():
     app.register_blueprint(log)
     app.register_blueprint(proveedor)
     app.register_blueprint(materia)
+    app.register_blueprint(repartidor_bp)
 
     # ==============================
     # MANEJO DE ERRORES
