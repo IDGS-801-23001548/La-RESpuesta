@@ -55,10 +55,6 @@ def utilidad():
 def reportes():
     return render_template("admin/reportes.html")
 
-@admin.route("/ajustes",)
-def ajustes():
-    return f"ajustes"
-
 @admin.route("/ventas")
 def ventas():
     return f"ventas"

@@ -168,7 +168,3 @@ def logs_export():
     response.headers["Content-Type"] = "text/csv; charset=utf-8"
     response.headers["Content-Disposition"] = "attachment; filename=logs.csv"
     return response
-
-@log.route("/ajustes", methods=['GET', 'POST'])
-def ajustes():
-    return render_template("admin/ajustes.html")
