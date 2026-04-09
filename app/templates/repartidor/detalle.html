@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Entrega | La RESpuesta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 pb-10">
+
+    <header class="bg-green-800 text-white p-4 shadow-md flex items-center justify-between sticky top-0 z-50">
+        <a href="{{ url_for('repartidor.pedidos') }}" class="flex items-center text-green-100 font-bold">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Volver a Lista
+        </a>
+        <span class="font-black uppercase text-[10px] tracking-widest bg-white/20 px-3 py-1 rounded-full">{{ pedido.Estatus }}</span>
+    </header>
+
+    <main class="max-w-xl mx-auto p-4 mt-4">
+        
+        <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-200 mb-6">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Destino de Entrega:</p>
+            <h2 class="text-2xl font-black text-gray-900 mb-4">Cliente #{{ pedido.idUsuario }}</h2>
+            
+            <a href="https://www.google.com/maps/search/?api=1&query={{ pedido.Direccion | urlencode }}" 
+               target="_blank" class="relative block w-full h-48 rounded-3xl overflow-hidden mb-4 border-4 border-gray-50 shadow-inner group">
+                <img src="../../static/img/mapa.webp" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                    <span class="bg-white px-4 py-2 rounded-full font-black text-xs text-green-800 shadow-xl">📍 VER RUTA EN GPS</span>
+                </div>
+            </a>
+            <p class="text-sm font-bold text-gray-600">🏠 {{ pedido.Direccion }}</p>
+        </div>
+
+        <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-200 mb-6">
+            <h3 class="font-black text-gray-800 border-b pb-3 mb-4">Productos a Entregar</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center text-sm">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-gray-100 p-2 rounded-lg text-lg">🥩</span>
+                        <div>
+                            <p class="font-bold">Paquete Selección "La RESpuesta"</p>
+                            <p class="text-[10px] text-gray-400 uppercase">Cortes Premium</p>
+                        </div>
+                    </div>
+                    <span class="font-black text-green-700">${{ "%.2f"|format(pedido.Total) }}</span>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-dashed border-gray-200 flex justify-between items-end">
+                <div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase">Método de Pago</p>
+                    <p class="font-bold text-gray-700">{{ pedido.Tipo }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] font-black text-gray-400 uppercase">Total a Cobrar</p>
+                    <p class="text-3xl font-black text-green-800">${{ "%.2f"|format(pedido.Total) }}</p>
+                </div>
+            </div>
+        </div>
+
+        {% if pedido.Estatus == 'Cancelado' %}
+            <div class="bg-red-50 border-2 border-red-100 rounded-3xl p-6 mb-6">
+                <div class="flex items-center gap-2 text-red-700 mb-2">
+                    <span class="text-xl">⚠️</span>
+                    <span class="font-black text-xs uppercase tracking-widest">Reporte de Cancelación</span>
+                </div>
+                <p class="text-sm font-medium text-red-900 bg-white p-4 rounded-2xl border border-red-200 italic">
+                    "{{ pedido.Notas }}"
+                </p>
+            </div>
+        {% endif %}
+
+        <div class="space-y-4">
+            {% if pedido.Estatus == 'Pendiente' %}
+                {% if tiene_viaje_activo %}
+                    <div class="bg-yellow-50 p-6 rounded-3xl text-center border border-yellow-200">
+                        <p class="text-yellow-700 font-bold text-sm">⚠️ Tienes otro viaje activo. Finalízalo para iniciar este.</p>
+                    </div>
+                {% else %}
+                    <form action="{{ url_for('repartidor.actualizar_estado', id_pedido=pedido.idPedido) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" name="estado" value="EnCurso" class="w-full bg-green-600 text-white font-black py-5 rounded-[2rem] shadow-xl text-xl hover:bg-green-700 transition-all">
+                            INICIAR VIAJE 🚀
+                        </button>
+                    </form>
+                {% endif %}
+
+            {% elif pedido.Estatus == 'EnCurso' %}
+                <button onclick="abrirModal()" class="w-full bg-green-600 text-white font-black py-5 rounded-[2rem] shadow-xl text-xl hover:bg-green-700 transition-all">
+                    CONFIRMAR ENTREGA ✅
+                </button>
+                <button onclick="abrirModalCancelacion()" class="w-full bg-white text-red-500 font-bold py-4 rounded-[2rem] border-2 border-red-100 hover:bg-red-50">
+                    CANCELAR ENTREGA
+                </button>
+            {% endif %}
+        </div>
+    </main>
+
+    <div id="modalConfirmacion" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 text-center">
+            <div class="text-5xl mb-4">{% if pedido.Tipo == 'Efectivo' %}💵{% else %}💳{% endif %}</div>
+            <h3 class="text-2xl font-black mb-2">Confirmar Entrega</h3>
+            <p class="text-gray-500 mb-8 font-medium">¿Confirmas que el cliente recibió su pedido y el pago de <b>${{ "%.2f"|format(pedido.Total) }}</b> fue procesado?</p>
+            <form action="{{ url_for('repartidor.entregar_pedido', id_pedido=pedido.idPedido) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-green-700 mb-2">SÍ, ENTREGADO</button>
+            </form>
+            <button onclick="cerrarModal()" class="text-gray-400 font-bold">Volver</button>
+        </div>
+    </div>
+
+    <div id="modalCancelacion" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 text-center">
+            <div class="text-5xl mb-4">⚠️</div>
+            <h3 class="text-2xl font-black mb-2 text-red-600">Cancelar Entrega</h3>
+            <p class="text-gray-500 mb-6 font-medium text-sm">Explica por qué no se pudo realizar la entrega:</p>
+            <form action="{{ url_for('repartidor.actualizar_estado', id_pedido=pedido.idPedido) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="estado" value="Cancelado">
+                <textarea name="motivo_cancelacion" rows="3" class="w-full border-2 border-gray-100 rounded-2xl p-4 mb-6 focus:border-red-400 outline-none" placeholder="Ej: El cliente no salió..." required></textarea>
+                <button type="submit" class="w-full bg-red-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-red-700 mb-2">CONFIRMAR CANCELACIÓN</button>
+            </form>
+            <button onclick="cerrarModalCancelacion()" class="text-gray-400 font-bold">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        function abrirModal() { document.getElementById('modalConfirmacion').classList.replace('hidden', 'flex'); }
+        function cerrarModal() { document.getElementById('modalConfirmacion').classList.replace('flex', 'hidden'); }
+        function abrirModalCancelacion() { document.getElementById('modalCancelacion').classList.replace('hidden', 'flex'); }
+        function cerrarModalCancelacion() { document.getElementById('modalCancelacion').classList.replace('flex', 'hidden'); }
+    </script>
+</body>
+</html>

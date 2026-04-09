@@ -12,7 +12,6 @@ mongo_fotos  = None
 
 db = SQLAlchemy()
 
-# ✅ Sin app=current_app — se inicializa después con init_app
 limiter = Limiter(get_remote_address)
 
 def limit_by_email():
@@ -23,9 +22,9 @@ def _init_mongo(app):
     uri = app.config.get('MONGO_URI', 'mongodb://localhost:27017/')
     try:
         mongo_client = MongoClient(uri, serverSelectionTimeoutMS=3000)
-        mongo_client.server_info()  # fuerza conexión real al arranque
+        mongo_client.server_info() 
         db_mongo    = mongo_client['La_Respuesta']
         mongo_fotos = db_mongo['La_Respuesta_fotos']
-        app.logger.info("✅ MongoDB conectado correctamente")
+        app.logger.info(" MongoDB conectado correctamente")
     except Exception as e:
         app.logger.error(f"❌ MongoDB ERROR: {e}")
