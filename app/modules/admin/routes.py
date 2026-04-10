@@ -24,27 +24,6 @@ def dashboard():
     return render_template("admin/dashboard.html")
 
 
-@admin.route('/produccion')
-def produccion():
-    return render_template('admin/produccion.html',
-                           ordenes=[], solicitudes_pendientes=[], kg_producidos=0)
-
-@admin.route('/produccion/nueva')
-def produccion_nueva():
-    return render_template('admin/produccion_form.html', solicitud=None)
-
-@admin.route('/produccion/desde-solicitud/<int:id>')
-def produccion_desde_solicitud(id):
-    return render_template('admin/produccion_form.html', solicitud=None)
-
-@admin.route('/produccion/<int:id>')
-def produccion_detalle(id):
-    return render_template('admin/produccion_detalle.html', orden=None)
-
-@admin.route('/produccion/<int:id>/completar', methods=['GET', 'POST'])
-def produccion_completar(id):
-    return redirect(url_for('admin.produccion_detalle', id=id))
-
 # ── RUTAS A DESARROLLAR ──────────────────────────────────────────
 
 @admin.route("/utilidad", methods=['GET', 'POST'])

@@ -8,7 +8,13 @@
       "Bash(env/Scripts/python.exe -m flask db current)",
       "Bash(env/Scripts/python.exe -m flask db check)",
       "Bash(env/Scripts/python.exe -m flask db heads)",
-      "Bash(env/Scripts/python.exe -m flask db history)"
+      "Bash(env/Scripts/python.exe -m flask db history)",
+      "Bash(python -c ':*)",
+      "Bash(.venvScriptspython.exe -c ':*)",
+      "Bash(pip show:*)",
+      "Bash(ls */python.exe)",
+      "Bash(ls */Scripts/)",
+      "Bash(venv/Scripts/python.exe -c ':*)"
     ]
   }
 }

@@ -27,7 +27,7 @@
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
 
-        <!-- ── Columna principal ── -->
+        <!-- Columna principal -->
         <div class="xl:col-span-2 space-y-5">
 
             <!-- Card: Datos generales -->
@@ -39,8 +39,6 @@
                     <h3 class="text-sm font-semibold text-gray-700">Datos generales</h3>
                 </div>
                 <div class="p-5 space-y-4">
-
-                    <!-- Producto -->
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Producto a producir <span class="text-red-400">*</span>
@@ -53,69 +51,68 @@
                         <p class="text-[10px] text-red-500 mt-1">{{ err }}</p>
                         {% endfor %}
                     </div>
-
-                    <!-- Descripcion -->
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Descripcion / Notas
                         </label>
                         {{ form.descripcion(rows=2, placeholder="Notas del proceso, observaciones...", class_="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all resize-none placeholder-gray-300") }}
                     </div>
-
                 </div>
             </div>
 
-            <!-- Card: Materias primas -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!--  Card: Ingredientes — Materias primas                  -->
+            <!-- ═══════════════════════════════════════════════════════ -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                         </svg>
-                        <h3 class="text-sm font-semibold text-gray-700">Materias primas requeridas</h3>
+                        <h3 class="text-sm font-semibold text-gray-700">Materias primas</h3>
                     </div>
-                    <button type="button" onclick="agregarIngrediente()"
+                    <button type="button" onclick="agregarMateria()"
                         class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-600
                                bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                         </svg>
-                        Agregar
+                        Agregar materia
                     </button>
                 </div>
 
                 <div class="grid grid-cols-12 gap-2 px-5 py-2 bg-gray-50/30 border-b border-gray-100
                             text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                    <div class="col-span-7">Materia prima</div>
-                    <div class="col-span-4">Cantidad por unidad producida</div>
+                    <div class="col-span-7">Materia proveida</div>
+                    <div class="col-span-4">Cantidad (kg)</div>
                     <div class="col-span-1"></div>
                 </div>
 
-                <div id="tabla-ingredientes" class="divide-y divide-gray-50 px-5">
-                    {% set rows = ingredientes_actuales if ingredientes_actuales else [{'idMateriaPrima': 0, 'cantidadUsada': ''}] %}
-                    {% for ing in rows %}
-                    <div class="fila-ingrediente grid grid-cols-12 gap-2 py-3 items-center">
+                <div id="tabla-materias" class="divide-y divide-gray-50 px-5">
+                    {% set rows_m = ingredientes_materias if ingredientes_materias else [] %}
+                    {% for ing in rows_m %}
+                    <div class="fila-materia grid grid-cols-12 gap-2 py-3 items-center">
                         <div class="col-span-7">
-                            <select name="ingrediente_id[]"
+                            <select name="materia_id[]"
                                 class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                                        rounded-lg outline-none focus:border-green-400 transition-all">
-                                <option value="">Seleccionar materia prima...</option>
-                                {% for m in materias %}
-                                <option value="{{ m.idMateriaPrima }}" {% if m.idMateriaPrima == ing.idMateriaPrima %}selected{% endif %}>
-                                    {{ m.nombreMateriaPrima }}{% if m.tipo %} ({{ m.tipo }}){% endif %}
+                                <option value="">Seleccionar materia...</option>
+                                {% for m in choices_materias %}
+                                <option value="{{ m.id }}" {% if m.id == ing.idMateriaProveida %}selected{% endif %}>
+                                    {{ m.nombre }}
                                 </option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-span-4">
-                            <input type="number" name="ingrediente_cantidad[]"
+                            <input type="number" name="materia_cantidad[]"
                                 min="0.001" step="any" placeholder="0"
                                 value="{{ ing.cantidadUsada }}"
                                 class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                                        rounded-lg outline-none focus:border-green-400 transition-all text-right">
                         </div>
                         <div class="col-span-1 flex justify-center">
-                            <button type="button" onclick="quitarFila(this)"
+                            <button type="button" onclick="quitarFila(this, 'fila-materia', 'tabla-materias')"
                                 class="w-6 h-6 flex items-center justify-center rounded text-gray-300
                                        hover:text-red-400 hover:bg-red-50 transition-colors">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -127,17 +124,103 @@
                     {% endfor %}
                 </div>
 
+                {% if not choices_materias %}
+                <div class="px-5 py-3 border-t border-gray-50 bg-amber-50/50">
+                    <p class="text-[10px] text-amber-600">
+                        No hay materias proveidas con lotes disponibles actualmente.
+                    </p>
+                </div>
+                {% endif %}
+
                 <div class="px-5 py-3 border-t border-gray-50 bg-gray-50/30">
                     <p class="text-[10px] text-gray-400">
-                        La cantidad indica cuanto de esta materia prima se necesita para producir <strong>una unidad</strong> del producto.
-                        Al crear la solicitud de produccion se multiplicara por las unidades que quieras producir.
+                        Solo aparecen materias proveidas que tengan lotes con estatus <strong>Disponible</strong> y stock > 0.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!--  Card: Ingredientes — Cortes                           -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-amber-50/30">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121A3 3 0 109.879 9.879m4.242 4.242L9.88 9.88m4.242 4.242l2.121 2.121M9.879 9.879L7.757 7.757"/>
+                        </svg>
+                        <h3 class="text-sm font-semibold text-gray-700">Cortes</h3>
+                    </div>
+                    <button type="button" onclick="agregarCorte()"
+                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-600
+                               bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Agregar corte
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-12 gap-2 px-5 py-2 bg-gray-50/30 border-b border-gray-100
+                            text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                    <div class="col-span-7">Corte</div>
+                    <div class="col-span-4">Cantidad (kg)</div>
+                    <div class="col-span-1"></div>
+                </div>
+
+                <div id="tabla-cortes" class="divide-y divide-gray-50 px-5">
+                    {% set rows_c = ingredientes_cortes if ingredientes_cortes else [] %}
+                    {% for ing in rows_c %}
+                    <div class="fila-corte grid grid-cols-12 gap-2 py-3 items-center">
+                        <div class="col-span-7">
+                            <select name="corte_id[]"
+                                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
+                                       rounded-lg outline-none focus:border-amber-400 transition-all">
+                                <option value="">Seleccionar corte...</option>
+                                {% for c in choices_cortes %}
+                                <option value="{{ c.id }}" {% if c.id == ing.idCorte %}selected{% endif %}>
+                                    {{ c.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-span-4">
+                            <input type="number" name="corte_cantidad[]"
+                                min="0.001" step="any" placeholder="0"
+                                value="{{ ing.cantidadUsada }}"
+                                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
+                                       rounded-lg outline-none focus:border-amber-400 transition-all text-right">
+                        </div>
+                        <div class="col-span-1 flex justify-center">
+                            <button type="button" onclick="quitarFila(this, 'fila-corte', 'tabla-cortes')"
+                                class="w-6 h-6 flex items-center justify-center rounded text-gray-300
+                                       hover:text-red-400 hover:bg-red-50 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if not choices_cortes %}
+                <div class="px-5 py-3 border-t border-gray-50 bg-amber-50/50">
+                    <p class="text-[10px] text-amber-600">
+                        No hay cortes con lotes disponibles actualmente.
+                    </p>
+                </div>
+                {% endif %}
+
+                <div class="px-5 py-3 border-t border-gray-50 bg-gray-50/30">
+                    <p class="text-[10px] text-gray-400">
+                        Solo aparecen cortes cuyo canal_corte tenga un lote con estatus <strong>Disponible</strong> y stock > 0.
                     </p>
                 </div>
             </div>
 
         </div>
 
-        <!-- ── Columna lateral ── -->
+        <!-- Columna lateral -->
         <div>
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
@@ -148,7 +231,8 @@
                 </div>
 
                 <div class="p-5 space-y-3 text-xs text-gray-500">
-                    <p>Una receta enlaza un <strong>producto terminado</strong> con las <strong>materias primas</strong> necesarias para fabricarlo.</p>
+                    <p>Una receta enlaza un <strong>producto terminado</strong> con los <strong>ingredientes</strong> necesarios para fabricarlo.</p>
+                    <p>Los ingredientes pueden ser <strong>materias primas</strong> (de compra) o <strong>cortes</strong> (de produccion).</p>
 
                     {% if foto_actual %}
                     <div class="rounded-lg overflow-hidden border border-gray-100">
@@ -157,10 +241,10 @@
                     {% endif %}
 
                     <div class="bg-gray-50 rounded-lg p-3 text-[10px] space-y-1">
-                        <p class="font-semibold text-gray-600">Ejemplo "Docena de huevo":</p>
-                        <p>Producto: Docena de huevo</p>
-                        <p>→ Huevo: 12 piezas</p>
-                        <p class="text-gray-400">(produccion de 5 docenas → 60 huevos)</p>
+                        <p class="font-semibold text-gray-600">Ejemplo "Paquete de cortes":</p>
+                        <p>Producto: Paquete mixto</p>
+                        <p class="text-green-600">→ Materia: Sal 0.5 kg</p>
+                        <p class="text-amber-600">→ Corte: Bistec (Res) 2.0 kg</p>
                     </div>
                 </div>
 
@@ -182,27 +266,58 @@
     </div>
 </form>
 
-<!-- Plantilla oculta para clonar -->
-<template id="tpl-ingrediente">
-    <div class="fila-ingrediente grid grid-cols-12 gap-2 py-3 items-center">
+<!-- Plantilla oculta: fila materia -->
+<template id="tpl-materia">
+    <div class="fila-materia grid grid-cols-12 gap-2 py-3 items-center">
         <div class="col-span-7">
-            <select name="ingrediente_id[]"
+            <select name="materia_id[]"
                 class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                        rounded-lg outline-none focus:border-green-400 transition-all">
-                <option value="">Seleccionar materia prima...</option>
-                {% for m in materias %}
-                <option value="{{ m.idMateriaPrima }}">{{ m.nombreMateriaPrima }}{% if m.tipo %} ({{ m.tipo }}){% endif %}</option>
+                <option value="">Seleccionar materia...</option>
+                {% for m in choices_materias %}
+                <option value="{{ m.id }}">{{ m.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-span-4">
-            <input type="number" name="ingrediente_cantidad[]"
+            <input type="number" name="materia_cantidad[]"
                 min="0.001" step="any" placeholder="0"
                 class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                        rounded-lg outline-none focus:border-green-400 transition-all text-right">
         </div>
         <div class="col-span-1 flex justify-center">
-            <button type="button" onclick="quitarFila(this)"
+            <button type="button" onclick="quitarFila(this, 'fila-materia', 'tabla-materias')"
+                class="w-6 h-6 flex items-center justify-center rounded text-gray-300
+                       hover:text-red-400 hover:bg-red-50 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- Plantilla oculta: fila corte -->
+<template id="tpl-corte">
+    <div class="fila-corte grid grid-cols-12 gap-2 py-3 items-center">
+        <div class="col-span-7">
+            <select name="corte_id[]"
+                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
+                       rounded-lg outline-none focus:border-amber-400 transition-all">
+                <option value="">Seleccionar corte...</option>
+                {% for c in choices_cortes %}
+                <option value="{{ c.id }}">{{ c.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-span-4">
+            <input type="number" name="corte_cantidad[]"
+                min="0.001" step="any" placeholder="0"
+                class="w-full px-2 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
+                       rounded-lg outline-none focus:border-amber-400 transition-all text-right">
+        </div>
+        <div class="col-span-1 flex justify-center">
+            <button type="button" onclick="quitarFila(this, 'fila-corte', 'tabla-cortes')"
                 class="w-6 h-6 flex items-center justify-center rounded text-gray-300
                        hover:text-red-400 hover:bg-red-50 transition-colors">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -214,18 +329,23 @@
 </template>
 
 <script>
-    function agregarIngrediente() {
-        const tpl  = document.getElementById('tpl-ingrediente');
-        const cont = document.getElementById('tabla-ingredientes');
+    function agregarMateria() {
+        const tpl  = document.getElementById('tpl-materia');
+        const cont = document.getElementById('tabla-materias');
         cont.appendChild(tpl.content.cloneNode(true));
     }
 
-    function quitarFila(btn) {
-        const fila = btn.closest('.fila-ingrediente');
-        const cont = document.getElementById('tabla-ingredientes');
-        if (cont.querySelectorAll('.fila-ingrediente').length > 1) {
-            fila.remove();
-        }
+    function agregarCorte() {
+        const tpl  = document.getElementById('tpl-corte');
+        const cont = document.getElementById('tabla-cortes');
+        cont.appendChild(tpl.content.cloneNode(true));
+    }
+
+    function quitarFila(btn, filaClass, containerId) {
+        const fila = btn.closest('.' + filaClass);
+        const cont = document.getElementById(containerId);
+        // Permitir eliminar siempre (puede quedar vacio)
+        fila.remove();
     }
 </script>
 

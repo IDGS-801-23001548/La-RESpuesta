@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, jsonify
 from . import solicitud_de_produccion
 from app.extensions import db, mongo_fotos
 from app.models import (
@@ -18,7 +18,7 @@ from datetime import datetime, date
 # ═════════════════════════════════════════════════════════════════════════════
 
 def _foto_b64_de(id_foto):
-    """Devuelve la foto en base64 desde MongoDB para mostrarla en templates."""
+    """Devuelve la foto en base64 desde MongoDB."""
     if not id_foto or mongo_fotos is None:
         return None
     try:
@@ -41,9 +41,62 @@ def _lotes_disponibles_query():
     )
 
 
+def _lotes_materia_disponibles():
+    """Lotes provenientes de compra directa de materia prima."""
+    lotes_raw = (
+        _lotes_disponibles_query()
+        .filter(Lote.idMateriaProveida.isnot(None))
+        .order_by(
+            Lote.fechaCaducidad.is_(None),
+            Lote.fechaCaducidad.asc(),
+        )
+        .all()
+    )
+    items = []
+    for l in lotes_raw:
+        mp      = l.materiaProveida
+        materia = mp.materiaPrima if mp else None
+        unidad  = mp.unidadMedida.nombreUnidadMedida if mp and mp.unidadMedida else '—'
+        orden   = l.ordenCompra
+        items.append({
+            'id':           l.idLote,
+            'lote':         (orden.numeroLote if orden else None) or l.numeroLote or f'#{l.idLote}',
+            'materia':      materia.nombreMateriaPrima if materia else '—',
+            'totalMateria': l.totalMateria,
+            'unidad':       unidad,
+            'caducidad':    l.fechaCaducidad,
+        })
+    return items
+
+
+def _lotes_corte_disponibles():
+    """Lotes provenientes de produccion (canal_corte procesado)."""
+    lotes_raw = (
+        _lotes_disponibles_query()
+        .filter(Lote.idCanalCorte.isnot(None))
+        .order_by(Lote.idLote.desc())
+        .all()
+    )
+    items = []
+    for l in lotes_raw:
+        cc = CanalCorte.query.get(l.idCanalCorte)
+        corte = Corte.query.get(cc.idCorte) if cc else None
+        canal = Canal.query.get(cc.idCanal) if cc else None
+        cat = corte.categoria if corte else None
+        items.append({
+            'id':           l.idLote,
+            'lote':         l.numeroLote or f'#{l.idLote}',
+            'corte':        corte.nombreCorte if corte else '—',
+            'categoria':    cat.nombreCategoria if cat else '—',
+            'canal_id':     canal.idCanal if canal else '—',
+            'totalMateria': l.totalMateria,
+            'unidad':       'kg',
+        })
+    return items
+
+
 def _lotes_para_materia_prima(id_materia_prima):
-    """Lotes disponibles para una materia prima especifica
-    (los que provienen de compra directa de materia)."""
+    """Lotes disponibles para una materia prima especifica."""
     return (
         _lotes_disponibles_query()
         .join(MateriaProveida, Lote.idMateriaProveida == MateriaProveida.idMateriaProveida)
@@ -73,83 +126,6 @@ def _serializar_lote(lote):
     }
 
 
-def _canal_cortes_disponibles_para(id_corte):
-    """Canal_corte listos para procesar con un idCorte:
-    estatus Disponible y CantidadObtenida is NULL."""
-    return (
-        CanalCorte.query
-        .filter(CanalCorte.idCorte == id_corte)
-        .filter(CanalCorte.estatus == 'Disponible')
-        .filter(CanalCorte.CantidadObtenida.is_(None))
-        .order_by(CanalCorte.idCanalCorte.asc())
-        .all()
-    )
-
-
-def _serializar_canal_corte(cc):
-    """Convierte un CanalCorte a dict para mostrar en select."""
-    canal = Canal.query.get(cc.idCanal)
-    cat = canal.categoria if canal else None
-    return {
-        'id':               cc.idCanalCorte,
-        'idCanal':          cc.idCanal,
-        'cantidadEsperada': cc.CantidadEsperada,
-        'pesoCanal':        canal.Peso if canal else None,
-        'categoria':        cat.nombreCategoria if cat else '—',
-        'fechaSacrificio':  canal.fechaSacrificio.strftime('%d/%m/%Y') if canal and canal.fechaSacrificio else '—',
-    }
-
-
-def _cortes_con_disponibilidad():
-    """Catalogo de cortes (usado como lista de 'recetas de corte'), cada uno
-    enriquecido con el numero de canal_corte disponibles para procesar.
-    No se devuelven cortes cuyo Porcentaje sea NULL/0 — esos no pueden generar
-    canal_cortes."""
-    cortes = Corte.query.order_by(Corte.nombreCorte).all()
-    items = []
-    for c in cortes:
-        cat = c.categoria if c else None
-        disponibles = (
-            CanalCorte.query
-            .filter(CanalCorte.idCorte == c.idCorte)
-            .filter(CanalCorte.estatus == 'Disponible')
-            .filter(CanalCorte.CantidadObtenida.is_(None))
-            .count()
-        )
-        items.append({
-            'idCorte':      c.idCorte,
-            'nombre':       c.nombreCorte,
-            'categoria':    cat.nombreCategoria if cat else '—',
-            'porcentaje':   c.Porcentaje,
-            'foto_b64':     _foto_b64_de(c.idFoto),
-            'disponibles':  disponibles,
-        })
-    return items
-
-
-def _generar_numero_lote_produccion():
-    """Numero de lote para los Lote producidos por corte.
-    Formato: LP-MesDDNN  (ej: LP-Abr0901)."""
-    meses_corto = {1:'Ene',2:'Feb',3:'Mar',4:'Abr',5:'May',6:'Jun',
-                   7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic'}
-    hoy = date.today()
-    prefijo = f"LP-{meses_corto[hoy.month]}{hoy.day:02d}"
-    ultimo = (
-        Lote.query
-        .filter(Lote.numeroLote.like(f"{prefijo}%"))
-        .order_by(Lote.numeroLote.desc())
-        .first()
-    )
-    if ultimo and ultimo.numeroLote:
-        try:
-            ultimo_num = int(ultimo.numeroLote[len(prefijo):])
-        except (ValueError, IndexError):
-            ultimo_num = 0
-    else:
-        ultimo_num = 0
-    return f"{prefijo}{ultimo_num + 1:02d}"
-
-
 # ═════════════════════════════════════════════════════════════════════════════
 #  LISTADO PRINCIPAL
 # ═════════════════════════════════════════════════════════════════════════════
@@ -158,31 +134,8 @@ def _generar_numero_lote_produccion():
 @login_required
 @roles_required('admin')
 def solicitudes():
-    # Lotes disponibles (panel superior, solo los de compra directa)
-    lotes_raw = (
-        _lotes_disponibles_query()
-        .filter(Lote.idMateriaProveida.isnot(None))
-        .order_by(
-            Lote.fechaCaducidad.is_(None),
-            Lote.fechaCaducidad.asc(),
-        )
-        .all()
-    )
-
-    lotes = []
-    for l in lotes_raw:
-        mp     = l.materiaProveida
-        materia = mp.materiaPrima if mp else None
-        unidad  = mp.unidadMedida.nombreUnidadMedida if mp and mp.unidadMedida else '—'
-        orden   = l.ordenCompra
-        lotes.append({
-            'id':            l.idLote,
-            'lote':          (orden.numeroLote if orden else None) or l.numeroLote or f'#{l.idLote}',
-            'materia':       materia.nombreMateriaPrima if materia else '—',
-            'totalMateria':  l.totalMateria,
-            'unidad':        unidad,
-            'caducidad':     l.fechaCaducidad,
-        })
+    lotes_materia = _lotes_materia_disponibles()
+    lotes_corte   = _lotes_corte_disponibles()
 
     solicitudes_lista = (
         SolicitudProduccion.query
@@ -192,7 +145,8 @@ def solicitudes():
 
     return render_template(
         'admin/solicitud_produccion/solicitudes.html',
-        lotes=lotes,
+        lotes_materia=lotes_materia,
+        lotes_corte=lotes_corte,
         solicitudes=solicitudes_lista,
     )
 
@@ -205,9 +159,6 @@ def solicitudes():
 @login_required
 @roles_required('admin')
 def solicitudes_nueva():
-    """Pagina unificada para crear solicitud de cualquier tipo.
-    El query string ?tipo=Personalizada|Corte controla que catalogo se muestra."""
-
     tipo = request.values.get('tipo', 'Personalizada')
     if tipo not in ('Personalizada', 'Corte'):
         tipo = 'Personalizada'
@@ -253,7 +204,7 @@ def _solicitud_nueva_personalizada():
             return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Personalizada'))
 
         ingredientes = receta_obj.materiasPrimas.all()
-        seleccion    = []   # [(rmp, lote, cantidadConsumida)]
+        seleccion    = []
         errores      = []
 
         for rmp in ingredientes:
@@ -354,152 +305,130 @@ def _solicitud_nueva_personalizada():
         materias_con_lotes=materias_con_lotes,
         cantidad_producir=cantidad_producir,
         # placeholders para compatibilidad con el template unificado
-        cortes_catalogo=[],
-        corte_seleccionado=None,
+        canales=[],
         canal_cortes=[],
+        corte_seleccionado=None,
     )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Tipo Corte — consume canal_corte, produce Lote
-#  El catalogo de "recetas de corte" es la tabla Corte directamente.
+#  Tipo Corte — selecciona canal → corte (canal_corte), crea solicitud Pendiente
+#  NO pide cantidad obtenida aqui; eso se hace en el modulo de Produccion
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _solicitud_nueva_corte():
-    cortes_catalogo = _cortes_con_disponibilidad()
+    # Canales que tienen al menos 1 canal_corte Disponible (sin CantidadObtenida)
+    canales_con_cortes = (
+        db.session.query(Canal)
+        .join(CanalCorte, CanalCorte.idCanal == Canal.idCanal)
+        .filter(CanalCorte.estatus == 'Disponible')
+        .filter(CanalCorte.CantidadObtenida.is_(None))
+        .distinct()
+        .order_by(Canal.idCanal.desc())
+        .all()
+    )
+    canales_data = []
+    for c in canales_con_cortes:
+        cat = c.categoria
+        canales_data.append({
+            'idCanal':     c.idCanal,
+            'categoria':   cat.nombreCategoria if cat else '—',
+            'peso':        c.Peso,
+            'fecha':       c.fechaSacrificio.strftime('%d/%m/%Y') if c.fechaSacrificio else '—',
+            'descripcion': c.Descripcion or '',
+        })
 
-    corte_seleccionado       = None
+    canal_id_get = request.args.get('idCanal', type=int)
     canal_cortes_disponibles = []
+    corte_seleccionado = None
 
-    corte_id_get = request.args.get('idCorte', type=int)
-    if corte_id_get:
-        corte_seleccionado = Corte.query.get(corte_id_get)
+    if canal_id_get:
+        # Traer canal_cortes disponibles de esa canal
+        ccs = (
+            CanalCorte.query
+            .filter(CanalCorte.idCanal == canal_id_get)
+            .filter(CanalCorte.estatus == 'Disponible')
+            .filter(CanalCorte.CantidadObtenida.is_(None))
+            .order_by(CanalCorte.idCanalCorte.asc())
+            .all()
+        )
+        for cc in ccs:
+            corte = Corte.query.get(cc.idCorte)
+            canal_cortes_disponibles.append({
+                'idCanalCorte':    cc.idCanalCorte,
+                'idCorte':         cc.idCorte,
+                'nombreCorte':     corte.nombreCorte if corte else '—',
+                'cantidadEsperada': cc.CantidadEsperada,
+                'foto_b64':        _foto_b64_de(corte.idFoto) if corte else None,
+            })
 
     if request.method == 'POST':
         try:
-            id_corte          = int(request.form.get('idCorte'))
-            id_canal_corte    = int(request.form.get('idCanalCorte'))
-            cantidad_obtenida = float(request.form.get('cantidadObtenida') or 0)
+            id_canal_corte = int(request.form.get('idCanalCorte'))
         except (TypeError, ValueError):
-            flash('Datos invalidos. Verifica los campos del formulario.', 'danger')
-            return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte'))
-
-        corte = Corte.query.get(id_corte)
-        if not corte:
-            flash('Corte no encontrado.', 'danger')
-            return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte'))
+            flash('Debes seleccionar un canal corte.', 'danger')
+            return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte', idCanal=canal_id_get))
 
         canal_corte = CanalCorte.query.get(id_canal_corte)
         if not canal_corte:
             flash('Canal corte no encontrado.', 'danger')
-            return redirect(url_for(
-                'solicitud_de_produccion.solicitudes_nueva',
-                tipo='Corte', idCorte=id_corte,
-            ))
+            return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte'))
 
         if canal_corte.estatus != 'Disponible' or canal_corte.CantidadObtenida is not None:
             flash('Ese canal corte ya fue procesado.', 'danger')
-            return redirect(url_for(
-                'solicitud_de_produccion.solicitudes_nueva',
-                tipo='Corte', idCorte=id_corte,
-            ))
+            return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte', idCanal=canal_id_get))
 
-        if canal_corte.idCorte != corte.idCorte:
-            flash('El canal corte no corresponde al corte seleccionado.', 'danger')
-            return redirect(url_for(
-                'solicitud_de_produccion.solicitudes_nueva',
-                tipo='Corte', idCorte=id_corte,
-            ))
-
-        if cantidad_obtenida <= 0:
-            flash('La cantidad obtenida debe ser mayor a cero.', 'danger')
-            return redirect(url_for(
-                'solicitud_de_produccion.solicitudes_nueva',
-                tipo='Corte', idCorte=id_corte,
-            ))
+        corte = Corte.query.get(canal_corte.idCorte)
 
         try:
-            esperada = canal_corte.CantidadEsperada or 0
-            merma    = round(esperada - cantidad_obtenida, 3)
-
-            # 1) Marcar el canal_corte como procesado
-            canal_corte.CantidadObtenida = cantidad_obtenida
-            canal_corte.Merma            = merma
-            canal_corte.estatus          = 'Consumido'
-
-            # 2) Crear el Lote producido
-            numero_lote = _generar_numero_lote_produccion()
-            lote_producido = Lote(
-                idCanalCorte      = canal_corte.idCanalCorte,
-                idMateriaProveida = None,
-                idOrdenCompra     = None,
-                numeroLote        = numero_lote,
-                cantidadDeUnidad  = 1,
-                cantidadPorUnidad = cantidad_obtenida,
-                totalMateria      = cantidad_obtenida,
-                precioPorUnidad   = 0.0,
-                totalCosto        = 0.0,
-                fechaCaducidad    = None,
-                estatus           = 'Disponible',
-            )
-            db.session.add(lote_producido)
-            db.session.flush()
-
-            # 3) Crear la solicitud de produccion apuntando directo al Corte
+            # Crear solicitud en estado Pendiente — se completa en modulo Produccion
             nueva = SolicitudProduccion(
                 tipoReceta       = 'Corte',
                 idReceta         = None,
-                idCorte          = corte.idCorte,
+                idCorte          = corte.idCorte if corte else canal_corte.idCorte,
                 cantidadProducir = 1,
                 fechaSolicitud   = datetime.now(),
-                fechaCompletada  = datetime.now(),
-                estatus          = 'Completada',
+                fechaCompletada  = None,
+                estatus          = 'Pendiente',
                 idUsuario        = current_user.id if current_user and current_user.is_authenticated else None,
                 notas            = (request.form.get('notas') or '').strip() or None,
             )
             db.session.add(nueva)
             db.session.flush()
 
+            # Guardar detalle con el canal_corte elegido (sin lote producido aun)
             db.session.add(SolicitudProduccionDetalle(
                 idSolicitud       = nueva.idSolicitud,
                 idMateriaPrima    = None,
                 idLote            = None,
                 idCanalCorte      = canal_corte.idCanalCorte,
-                idLoteProducido   = lote_producido.idLote,
-                cantidadConsumida = cantidad_obtenida,
+                idLoteProducido   = None,
+                cantidadConsumida = 0,
             ))
 
             db.session.commit()
-            cat_nombre = corte.categoria.nombreCategoria if corte.categoria else ''
-            nombre_corte = f'{corte.nombreCorte} ({cat_nombre})' if cat_nombre else corte.nombreCorte
+            cat_nombre = corte.categoria.nombreCategoria if (corte and corte.categoria) else ''
+            nombre_corte = f'{corte.nombreCorte} ({cat_nombre})' if (corte and cat_nombre) else (corte.nombreCorte if corte else '—')
             flash(
-                f'Corte "{nombre_corte}" procesado. '
-                f'Se genero el lote {numero_lote} con {cantidad_obtenida:g} kg '
-                f'(merma: {merma:g} kg).',
+                f'Solicitud de corte "{nombre_corte}" creada como Pendiente. '
+                f'Complétala en el modulo de Produccion.',
                 'success'
             )
             return redirect(url_for('solicitud_de_produccion.solicitudes'))
 
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al procesar el corte: {e}', 'danger')
-            return redirect(url_for(
-                'solicitud_de_produccion.solicitudes_nueva',
-                tipo='Corte', idCorte=id_corte,
-            ))
-
-    if corte_seleccionado:
-        cortes_libres = _canal_cortes_disponibles_para(corte_seleccionado.idCorte)
-        canal_cortes_disponibles = [_serializar_canal_corte(cc) for cc in cortes_libres]
+            flash(f'Error al crear la solicitud: {e}', 'danger')
+            return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte', idCanal=canal_id_get))
 
     return render_template(
         'admin/solicitud_produccion/solicitudes_form.html',
         tipo='Corte',
-        cortes_catalogo=cortes_catalogo,
-        corte_seleccionado=corte_seleccionado,
-        corte_seleccionado_foto=_foto_b64_de(corte_seleccionado.idFoto) if corte_seleccionado else None,
+        canales=canales_data,
+        canal_id_seleccionado=canal_id_get,
         canal_cortes=canal_cortes_disponibles,
-        # placeholders para compatibilidad con el template unificado
+        corte_seleccionado=corte_seleccionado,
+        # placeholders
         recetas=[],
         receta_seleccionada=None,
         materias_con_lotes=[],
@@ -508,7 +437,36 @@ def _solicitud_nueva_corte():
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-#  CANCELAR (solo deja registro)
+#  API AJAX — canal_cortes por canal
+# ═════════════════════════════════════════════════════════════════════════════
+
+@solicitud_de_produccion.route('/solicitudes/api/canal-cortes/<int:canal_id>', methods=['GET'])
+@login_required
+@roles_required('admin')
+def api_canal_cortes_por_canal(canal_id):
+    """Devuelve JSON con canal_cortes disponibles para una canal dada."""
+    ccs = (
+        CanalCorte.query
+        .filter(CanalCorte.idCanal == canal_id)
+        .filter(CanalCorte.estatus == 'Disponible')
+        .filter(CanalCorte.CantidadObtenida.is_(None))
+        .order_by(CanalCorte.idCanalCorte.asc())
+        .all()
+    )
+    result = []
+    for cc in ccs:
+        corte = Corte.query.get(cc.idCorte)
+        result.append({
+            'idCanalCorte':     cc.idCanalCorte,
+            'idCorte':          cc.idCorte,
+            'nombreCorte':      corte.nombreCorte if corte else '—',
+            'cantidadEsperada': cc.CantidadEsperada,
+        })
+    return jsonify(result)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  CANCELAR
 # ═════════════════════════════════════════════════════════════════════════════
 
 @solicitud_de_produccion.route('/solicitudes/<int:id>/cancelar', methods=['POST'])
