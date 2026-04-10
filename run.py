@@ -38,10 +38,10 @@ if __name__ == '__main__':
 
         encrypted_password = hash_password('password')
 
-        if not user_datastore.find_user(email='admin@example.com'):
+        if not user_datastore.find_user(email='emmanuelortizreyes3@gmail.com'):
             user = user_datastore.create_user(
                 name        = 'admin', 
-                email       = 'admin@example.com', 
+                email       = 'emmanuelortizreyes3@gmail.com', 
                 password    = encrypted_password)
             
             user_datastore.add_role_to_user(user, 'admin')
@@ -50,58 +50,18 @@ if __name__ == '__main__':
                 nombre              ='admin',
                 apellido_paterno    ='admin',
                 apellido_materno    ='admin',
-                telefono            ='9999999999',
-                direccion           ='León, Gto',
-                user=user
-            )
-
-            db.session.add(persona)
-        if not user_datastore.find_user(email='emiliano@example.com'):
-            user = user_datastore.create_user(
-                name        = 'emiliano', 
-                email       = 'emiliano@example.com', 
-                password    = encrypted_password)
-            
-            user_datastore.add_role_to_user(user, 'admin')
-            
-            persona = Persona(
-                nombre              ='Emiliano',
-                apellido_paterno    ='Mendoza',
-                apellido_materno    ='Maldonado',
-                telefono            ='4779189172',
-                direccion           ='León, Gto',
-                user=user
-            )
-
-            db.session.add(persona)
-
-        if not user_datastore.find_user(email='emmanuel@example.com'):
-            user = user_datastore.create_user(
-                name        = 'Emmanuel', 
-                email       = 'emmanuel@example.com', 
-                password    = encrypted_password)
- 
-            user_datastore.add_role_to_user(user, 'admin')
-
-            persona = Persona(
-                nombre              ='Emmanuel',
-                apellido_paterno    ='Ortiz',
-                apellido_materno    ='Reyes',
                 telefono            ='4773845271',
                 direccion           ='León, Gto',
-                user                =user
+                user=user
             )
+
             db.session.add(persona)
 
         db.session.commit()
 
-        user = user_datastore.find_user(email='emmanuel@example.com')
+        user = user_datastore.find_user(email='emmanuelortizreyes3@gmail.com')
         if user:
             user_datastore.add_role_to_user(user, 'admin')
-
-        user2 = user_datastore.find_user(email='emiliano@example.com')
-        if user2:
-            user_datastore.add_role_to_user(user, 'Cajero')
 
     @app.before_request
     def before_request():
