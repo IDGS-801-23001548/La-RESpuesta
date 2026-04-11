@@ -199,7 +199,7 @@
                             </td>
 
                             <td class="px-4 py-3">
-                                {% set n = orden.materiasPrimasUnitarias.count() %}
+                                {% set n = orden.lotes.count() %}
                                 <span class="text-xs text-gray-500">
                                     {{ n }} artículo{{ 's' if n != 1 }}
                                 </span>

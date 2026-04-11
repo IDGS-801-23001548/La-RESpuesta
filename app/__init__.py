@@ -2,17 +2,15 @@ import os
 import logging
 from datetime import timedelta
 
-from flask import Flask, session, render_template
+from flask import Flask, session, render_template, request, redirect, render_template
 from flask_security import Security, SQLAlchemyUserDatastore
-from flask_security.utils import hash_password
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 from app.extensions import mail
 
-from .models import User, Role, Categoria
+from .models import User, Role
 from app.extensions import db, limiter, _init_mongo
 
 load_dotenv()
@@ -118,10 +116,11 @@ def create_app():
     from .modules.materia                   import materia
     from .modules.recetas                   import receta
     from .modules.solicitud_de_produccion   import solicitud_de_produccion
+    from .modules.produccion                import produccion
     from .modules.productos                 import productos
     from .modules.finanzas                  import finanzas
-
-    from .modules.mostrador import mostrador
+    from .modules.ajustes                   import ajustes
+    from .modules.mostrador                 import mostrador
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
@@ -133,17 +132,20 @@ def create_app():
     app.register_blueprint(materia)
     app.register_blueprint(receta)
     app.register_blueprint(solicitud_de_produccion)
+    app.register_blueprint(produccion)
     app.register_blueprint(productos)
     app.register_blueprint(finanzas)
-    
-    
+    app.register_blueprint(ajustes)  
     app.register_blueprint(mostrador)
 
     # ==============================
     # MANEJO DE ERRORES
     # ==============================
+
     @app.errorhandler(404)
     def page_not_found(e):
+        if request.referrer:
+            return redirect(request.referrer)
         return render_template("404.html"), 404
 
     @app.route("/")

@@ -14,3 +14,9 @@ class Carrito(db.Model):
         backref='carrito',
         lazy='dynamic'
     )
+
+    cortes = db.relationship(
+        'CorteUnitario',
+        backref='carrito',
+        lazy='dynamic'
+    )

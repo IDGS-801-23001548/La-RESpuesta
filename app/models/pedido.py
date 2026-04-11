@@ -20,5 +20,11 @@ class Pedido(db.Model):
         lazy='dynamic'
     )
 
+    cortesPedido = db.relationship(
+        'CorteUnitario',
+        backref='pedido',
+        lazy='dynamic'
+    )
+
     user = db.relationship('User', backref='pedidos')
 

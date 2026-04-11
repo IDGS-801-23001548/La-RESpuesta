@@ -17,3 +17,9 @@ class Categoria(db.Model):
         backref='categoria',
         lazy='dynamic'
     )
+
+    cortes = db.relationship(
+        'Corte',
+        backref='categoria',
+        lazy='dynamic'
+    )

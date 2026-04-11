@@ -101,7 +101,7 @@
 
                 {{ ui.sidebar_item( "Solicitudes de Producción",
                 url_for('solicitud_de_produccion.solicitudes'),endpoint_prefix="solicitud_de_produccion.solicitudes") }}
-                {{ ui.sidebar_item( "Producción", url_for('admin.produccion'), endpoint_prefix="admin.produccion") }}
+                {{ ui.sidebar_item( "Producción", url_for('produccion.index'), endpoint_prefix="produccion.index") }}
                 {{ ui.sidebar_item( "Productos", url_for('productos.catalogo'), endpoint_prefix="productos.catalogo")}}
                 
 
@@ -129,7 +129,6 @@
 
                 {{ ui.sidebar_item( "Usuarios y Roles", url_for('user.usuarios'), endpoint_prefix="user.usuarios") }}
                 {{ ui.sidebar_item( "Logs del Sistema", url_for('log.logs'), endpoint_prefix="log.logs") }}
-
                 {{ ui.sidebar_item( "Proveedores", url_for('proveedor.proveedores'), endpoint_prefix="proveedor.proveedores") }}
 
                 {% endcall %}
@@ -140,7 +139,7 @@
             <div class="px-3 py-3 border-t border-gray-100 space-y-0.5 shrink-0">
 
                 {{ ui.sidebar_link(
-                "Ajustes", url_for('admin.ajustes'),
+                "Ajustes", url_for('ajustes.vista_ajustes'),
                 "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37
                 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94
                 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0

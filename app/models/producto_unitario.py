@@ -10,6 +10,7 @@ class ProductoUnitario(db.Model):
     FechaCaducidad              = db.Column(db.Date, nullable=True) 
     estatus                     = db.Column(db.String(100), nullable=False) #Vendido, Caducado, Disponible, Desechado, etc
     idCarrito                   = db.Column(db.Integer,db.ForeignKey('carrito.idCarrito'),nullable=True)
+    idOrdenCompra               = db.Column(db.Integer,db.ForeignKey('orden_compra.idOrdenCompra'),nullable=False)
 
     #Los estados que producto tendra son
     #Disponible

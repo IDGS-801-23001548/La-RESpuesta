@@ -13,28 +13,62 @@
     </a>
     <div>
         <h2 class="text-lg font-semibold text-gray-800">Nueva solicitud de produccion</h2>
-        <p class="text-xs text-gray-400 mt-0.5">Selecciona una receta, asigna lotes y define la cantidad a producir</p>
+        <p class="text-xs text-gray-400 mt-0.5">
+            {% if tipo == 'Corte' %}
+            Selecciona una canal y un corte disponible para enviar a produccion.
+            {% else %}
+            Selecciona una receta personalizada, asigna lotes y define la cantidad a producir.
+            {% endif %}
+        </p>
     </div>
 </div>
 
-<!-- Paso 1: elegir receta -->
+<!-- Selector de tipo -->
+<div class="mb-5 flex gap-2">
+    <a href="{{ url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Personalizada') }}"
+        class="flex-1 px-4 py-3 rounded-xl border text-center text-sm font-semibold transition-all
+               {% if tipo != 'Corte' %}bg-green-600 text-white border-green-600 shadow-sm shadow-green-200
+               {% else %}bg-white text-gray-600 border-gray-200 hover:border-green-300{% endif %}">
+        Receta personalizada
+        <span class="block text-[10px] font-normal mt-0.5
+            {% if tipo != 'Corte' %}text-green-100{% else %}text-gray-400{% endif %}">
+            consume lotes → produce producto
+        </span>
+    </a>
+    <a href="{{ url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte') }}"
+        class="flex-1 px-4 py-3 rounded-xl border text-center text-sm font-semibold transition-all
+               {% if tipo == 'Corte' %}bg-amber-600 text-white border-amber-600 shadow-sm shadow-amber-200
+               {% else %}bg-white text-gray-600 border-gray-200 hover:border-amber-300{% endif %}">
+        Corte de canal
+        <span class="block text-[10px] font-normal mt-0.5
+            {% if tipo == 'Corte' %}text-amber-100{% else %}text-gray-400{% endif %}">
+            elige canal → corte → envia a produccion
+        </span>
+    </a>
+</div>
+
+
+{# ════════════════════════════════════════════════════════════════════════ #}
+{# RECETA PERSONALIZADA                                                     #}
+{# ════════════════════════════════════════════════════════════════════════ #}
+{% if tipo != 'Corte' %}
+
 <form method="GET" action="{{ url_for('solicitud_de_produccion.solicitudes_nueva') }}" class="mb-5">
+    <input type="hidden" name="tipo" value="Personalizada">
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
             Receta a producir <span class="text-red-400">*</span>
         </label>
-        <div class="flex gap-2">
-            <select name="idReceta" required onchange="this.form.submit()"
-                class="flex-1 px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
-                <option value="">Seleccionar receta...</option>
-                {% for r in recetas %}
-                <option value="{{ r.idReceta }}" {% if receta_seleccionada and r.idReceta == receta_seleccionada.idReceta %}selected{% endif %}>
-                    {{ r.nombreReceta }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
+        <select name="idReceta" required onchange="this.form.submit()"
+            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+            <option value="">Seleccionar receta...</option>
+            {% for r in recetas %}
+            <option value="{{ r.idReceta }}" {% if receta_seleccionada and r.idReceta == receta_seleccionada.idReceta %}selected{% endif %}>
+                {{ r.nombreReceta }}
+            </option>
+            {% endfor %}
+        </select>
         {% if not recetas %}
         <p class="text-[10px] text-amber-600 mt-2">No hay recetas registradas. Crea primero una receta.</p>
         {% endif %}
@@ -42,45 +76,43 @@
 </form>
 
 {% if receta_seleccionada %}
-<!-- Paso 2: lotes + cantidad -->
 <form method="POST" action="{{ url_for('solicitud_de_produccion.solicitudes_nueva') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="tipo" value="Personalizada">
     <input type="hidden" name="idReceta" value="{{ receta_seleccionada.idReceta }}">
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
-
         <div class="xl:col-span-2 space-y-5">
 
-            <!-- Card: Materias primas con select de lote -->
+            {# ── Ingredientes tipo materia prima ── #}
+            {% if materias_con_lotes %}
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
-                    <h3 class="text-sm font-semibold text-gray-700">Lotes a consumir</h3>
+                    <h3 class="text-sm font-semibold text-gray-700">Lotes de materia prima a consumir</h3>
                 </div>
-
                 <div class="divide-y divide-gray-50">
                     {% for mc in materias_con_lotes %}
                     <div class="p-5">
                         <div class="flex items-center justify-between mb-3">
                             <div>
-                                <p class="text-sm font-semibold text-gray-800">{{ mc.materia.nombreMateriaPrima }}</p>
+                                <p class="text-sm font-semibold text-gray-800">{{ mc.nombre }}</p>
                                 <p class="text-[10px] text-gray-400">
                                     Necesario por unidad: <strong>{{ mc.cantidad_unidad }}</strong>
                                     <span class="text-gray-300">·</span>
-                                    Total para <span id="cant-display-{{ mc.materia.idMateriaPrima }}">1</span>:
+                                    Total para <span class="cant-display">1</span>:
                                     <strong class="text-green-600 cant-total"
                                         data-base="{{ mc.cantidad_unidad }}"
-                                        data-target="cant-total-{{ mc.materia.idMateriaPrima }}">
-                                        <span id="cant-total-{{ mc.materia.idMateriaPrima }}">{{ mc.cantidad_unidad }}</span>
+                                        data-target="cant-total-m-{{ mc.id_campo }}">
+                                        <span id="cant-total-m-{{ mc.id_campo }}">{{ mc.cantidad_unidad }}</span>
                                     </strong>
                                 </p>
                             </div>
                         </div>
-
                         {% if mc.lotes %}
-                        <select name="lote_{{ mc.materia.idMateriaPrima }}" required
+                        <select name="lote_materia_{{ mc.id_campo }}" required
                             class="w-full px-3 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                                    rounded-lg outline-none focus:border-green-400 transition-all">
                             <option value="">Seleccionar lote...</option>
@@ -93,19 +125,72 @@
                         </select>
                         {% else %}
                         <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p class="text-[11px] text-red-600 font-semibold">⚠ No hay lotes disponibles para esta materia prima.</p>
+                            <p class="text-[11px] text-red-600 font-semibold">No hay lotes disponibles para esta materia prima.</p>
                         </div>
                         {% endif %}
-                    </div>
-                    {% else %}
-                    <div class="p-8 text-center text-xs text-gray-400">
-                        Esta receta no tiene materias primas configuradas.
                     </div>
                     {% endfor %}
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Notas -->
+            {# ── Ingredientes tipo corte ── #}
+            {% if cortes_con_lotes %}
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-amber-50/30">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121A3 3 0 109.879 9.879m4.242 4.242L9.88 9.88m4.242 4.242l2.121 2.121M9.879 9.879L7.757 7.757"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Lotes de corte a consumir</h3>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    {% for cc in cortes_con_lotes %}
+                    <div class="p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">{{ cc.nombre }}</p>
+                                <p class="text-[10px] text-gray-400">
+                                    Necesario por unidad: <strong>{{ cc.cantidad_unidad }} kg</strong>
+                                    <span class="text-gray-300">·</span>
+                                    Total para <span class="cant-display">1</span>:
+                                    <strong class="text-amber-600 cant-total"
+                                        data-base="{{ cc.cantidad_unidad }}"
+                                        data-target="cant-total-c-{{ cc.id_campo }}">
+                                        <span id="cant-total-c-{{ cc.id_campo }}">{{ cc.cantidad_unidad }}</span> kg
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+                        {% if cc.lotes %}
+                        <select name="lote_corte_{{ cc.id_campo }}" required
+                            class="w-full px-3 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-amber-400 transition-all">
+                            <option value="">Seleccionar lote...</option>
+                            {% for lote in cc.lotes %}
+                            <option value="{{ lote.id }}">
+                                Lote {{ lote.lote }} — Stock: {{ lote.totalMateria }} {{ lote.unidad }}
+                                · {{ lote.canal }} · Cad: {{ lote.caducidad }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="text-[11px] text-red-600 font-semibold">No hay lotes disponibles para este corte.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── Sin ingredientes ── #}
+            {% if not materias_con_lotes and not cortes_con_lotes %}
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center">
+                <p class="text-xs text-gray-400">Esta receta no tiene ingredientes configurados.</p>
+            </div>
+            {% endif %}
+
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                 <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                     Notas (opcional)
@@ -115,41 +200,31 @@
                            rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
                            transition-all resize-none placeholder-gray-300"></textarea>
             </div>
-
         </div>
 
-        <!-- Lateral -->
         <div>
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
-                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
                     <h3 class="text-sm font-semibold text-gray-700">Resumen</h3>
                 </div>
-
                 <div class="p-5 space-y-4">
                     <div>
                         <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Receta</p>
                         <p class="text-sm font-bold text-gray-800">{{ receta_seleccionada.nombreReceta }}</p>
                     </div>
-
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Cantidad a producir <span class="text-red-400">*</span>
                         </label>
                         <input type="number" name="cantidadProducir" id="cantidadProducir"
-                            min="1" step="1" value="1" required
-                            oninput="actualizarTotales()"
+                            min="1" step="1" value="1" required oninput="actualizarTotales()"
                             class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
                                    rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all text-right">
                     </div>
-
                     <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-[11px] text-green-700">
                         Al confirmar se descontara automaticamente el stock de los lotes seleccionados.
                     </div>
                 </div>
-
                 <div class="px-5 pb-5 space-y-2">
                     <button type="submit"
                         class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
@@ -164,7 +239,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </form>
 
@@ -177,12 +251,139 @@
             const span = document.getElementById(target);
             if (span) span.textContent = (base * cant).toLocaleString('es-MX', { maximumFractionDigits: 3 });
         });
-        document.querySelectorAll('[id^="cant-display-"]').forEach(el => {
-            el.textContent = cant;
-        });
+        document.querySelectorAll('.cant-display').forEach(el => { el.textContent = cant; });
     }
     actualizarTotales();
 </script>
+{% endif %}
+
+
+{# ════════════════════════════════════════════════════════════════════════ #}
+{# CORTE DE CANAL — filtro: Canal → Corte (canal_corte)                    #}
+{# Solo crea solicitud Pendiente — se completa en Produccion               #}
+{# ════════════════════════════════════════════════════════════════════════ #}
+{% else %}
+
+<!-- Paso 1: elegir canal -->
+<form method="GET" action="{{ url_for('solicitud_de_produccion.solicitudes_nueva') }}" class="mb-5">
+    <input type="hidden" name="tipo" value="Corte">
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+            1. Seleccionar canal <span class="text-red-400">*</span>
+        </label>
+        <select name="idCanal" required onchange="this.form.submit()"
+            class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                   rounded-lg outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all">
+            <option value="">Seleccionar canal...</option>
+            {% for c in canales %}
+            <option value="{{ c.idCanal }}"
+                {% if canal_id_seleccionado and c.idCanal == canal_id_seleccionado %}selected{% endif %}>
+                Canal #{{ c.idCanal }} — {{ c.categoria }}
+                · {{ c.peso }} kg
+                · Sacrificio: {{ c.fecha }}
+                {% if c.descripcion %} · {{ c.descripcion }}{% endif %}
+            </option>
+            {% endfor %}
+        </select>
+        {% if not canales %}
+        <p class="text-[10px] text-amber-600 mt-2">No hay canales con cortes disponibles. Registra una compra de canal primero.</p>
+        {% endif %}
+    </div>
+</form>
+
+<!-- Paso 2: elegir corte (canal_corte) y enviar solicitud -->
+{% if canal_id_seleccionado and canal_cortes %}
+<form method="POST" action="{{ url_for('solicitud_de_produccion.solicitudes_nueva') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="tipo" value="Corte">
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div class="xl:col-span-2 space-y-5">
+
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">2. Seleccionar corte a producir</h3>
+                </div>
+                <div class="p-5">
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                        Corte disponible <span class="text-red-400">*</span>
+                    </label>
+                    <select name="idCanalCorte" id="idCanalCorte" required
+                        class="w-full px-3 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-amber-400 transition-all">
+                        <option value="">Seleccionar corte...</option>
+                        {% for cc in canal_cortes %}
+                        <option value="{{ cc.idCanalCorte }}">
+                            {{ cc.nombreCorte }}
+                            · Esperado: {{ "%.3f"|format(cc.cantidadEsperada or 0) }} kg
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-[10px] text-gray-400 mt-2">
+                        Se mostraran solo los cortes aun no procesados de la canal seleccionada.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                    Notas (opcional)
+                </label>
+                <textarea name="notas" rows="2" placeholder="Observaciones..."
+                    class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                           rounded-lg outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100
+                           transition-all resize-none placeholder-gray-300"></textarea>
+            </div>
+        </div>
+
+        <div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-sm font-semibold text-gray-700">Resumen</h3>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Canal</p>
+                        <p class="text-sm font-bold text-gray-800">
+                            {% for c in canales if c.idCanal == canal_id_seleccionado %}
+                            #{{ c.idCanal }} — {{ c.categoria }} · {{ c.peso }} kg
+                            {% endfor %}
+                        </p>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[11px] text-amber-700">
+                        La solicitud se creara como <strong>Pendiente</strong>.
+                        El peso obtenido y el registro del lote se haran en el modulo de
+                        <strong>Produccion</strong>.
+                    </div>
+                </div>
+                <div class="px-5 pb-5 space-y-2">
+                    <button type="submit"
+                        class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold
+                               rounded-lg shadow-sm shadow-amber-200 transition-all hover:-translate-y-px">
+                        Enviar a produccion
+                    </button>
+                    <a href="{{ url_for('solicitud_de_produccion.solicitudes') }}"
+                        class="block w-full py-2.5 text-center text-sm text-gray-500 hover:text-gray-700
+                               bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% elif canal_id_seleccionado and not canal_cortes %}
+<div class="bg-white rounded-xl border border-red-100 shadow-sm p-6 text-center">
+    <p class="text-xs text-red-600 font-semibold">
+        No hay cortes disponibles para esta canal. Todos ya fueron procesados o enviados a produccion.
+    </p>
+</div>
+{% endif %}
+
 {% endif %}
 
 {% endblock %}

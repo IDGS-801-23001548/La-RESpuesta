@@ -53,7 +53,7 @@
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Foto</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Receta</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Producto</th>
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Materias primas</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Ingredientes</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
@@ -81,9 +81,21 @@
                         <span class="text-xs text-gray-600">{{ item.producto_nombre }}</span>
                     </td>
                     <td class="px-4 py-3">
-                        <span class="text-[10px] font-semibold px-2 py-1 rounded-full border bg-green-50 text-green-700 border-green-200">
-                            {{ item.num_materias }} ingrediente(s)
-                        </span>
+                        <div class="flex flex-wrap gap-1">
+                            {% if item.num_materias > 0 %}
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200">
+                                {{ item.num_materias }} materia(s)
+                            </span>
+                            {% endif %}
+                            {% if item.num_cortes > 0 %}
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
+                                {{ item.num_cortes }} corte(s)
+                            </span>
+                            {% endif %}
+                            {% if item.num_materias == 0 and item.num_cortes == 0 %}
+                            <span class="text-[10px] text-gray-400">Sin ingredientes</span>
+                            {% endif %}
+                        </div>
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

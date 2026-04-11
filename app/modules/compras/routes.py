@@ -1,12 +1,13 @@
 from collections import defaultdict
+from types import SimpleNamespace
 from flask import render_template, redirect, url_for, flash, request, jsonify, abort
 from . import compras
 from .forms import OrdenCompraForm
 from app.extensions import db
 from app.models import (
     Proveedor, MateriaPrima, MateriaProveida,
-    Lote, OrdenCompra,
-    ProductoUnitario, Producto, Canal
+    OrdenCompra, Canal, CanalCorte, Corte, Categoria,
+    Lote, ProductoUnitario, Producto,
 )
 from flask_security import login_required
 from flask_security.decorators import roles_required
@@ -76,6 +77,57 @@ def _parse_int(s):
         return 0
 
 
+def _fake_mp_por_categoria(categoria):
+    """
+    Construye un objeto compatible con los templates (que esperan
+    materia_proveida.nombreMateriaProveida y materia_proveida.materiaPrima.nombreMateriaPrima)
+    a partir de una Categoria — Canal ya no tiene idMateriaProveida.
+    """
+    nombre_cat = categoria.nombreCategoria if categoria else '—'
+    return SimpleNamespace(
+        nombreMateriaProveida=f'Canal — {nombre_cat}',
+        materiaPrima=SimpleNamespace(nombreMateriaPrima=nombre_cat),
+    )
+
+
+def _crear_canal_cortes_para(canal):
+    """
+    Genera automaticamente un registro en canal_corte por cada Corte
+    cuya categoria coincide con la categoria de la canal.
+
+    Nota sobre unidades:
+    - Corte.Porcentaje esta almacenado como fraccion decimal (ej: 0.065 = 6.5%),
+      no como porcentaje entero. Por lo tanto la formula es Peso * Porcentaje,
+      no Peso * Porcentaje / 100.
+    - El resultado queda expresado en kilogramos (mismas unidades que canal.Peso).
+    - La suma de todos los CantidadEsperada para una canal debe dar canal.Peso.
+
+    CantidadEsperada = canal.Peso * Corte.Porcentaje
+    CantidadObtenida = NULL  (se llena cuando el corte se procesa en produccion)
+    Merma            = NULL
+    estatus          = 'Disponible'
+    """
+    if canal.idCategoria is None or canal.Peso is None:
+        return 0
+
+    cortes = Corte.query.filter_by(idCategoria=canal.idCategoria).all()
+    creados = 0
+    peso = float(canal.Peso)
+    for c in cortes:
+        porcentaje = float(c.Porcentaje or 0)
+        cantidad_esperada = round(peso * porcentaje, 3) if porcentaje else None
+        db.session.add(CanalCorte(
+            idCorte          = c.idCorte,
+            idCanal          = canal.idCanal,
+            CantidadEsperada = cantidad_esperada,
+            CantidadObtenida = None,
+            Merma            = None,
+            estatus          = 'Disponible',
+        ))
+        creados += 1
+    return creados
+
+
 # ── Lista de órdenes ──────────────────────────────────────────────────────────
 @compras.route("/compras", methods=['GET'])
 @login_required
@@ -90,47 +142,49 @@ def compra():
     total_recibida  = sum(1 for o in ordenes if o.estatus == 'Recibida')
     total_cancelada = sum(1 for o in ordenes if o.estatus == 'Cancelada')
 
-    # ── Conteo de artículos por orden ─────────────────────────────────────────
     order_ids = [o.idOrdenCompra for o in ordenes]
-    lotes     = [o.numeroLote for o in ordenes if o.numeroLote]
 
-    # Materia Prima: suma cantidadDeUnidad por orden
-    mp_sums = {}
+    # Materia Prima: conteo de lotes (Lote ligado directamente a la orden)
+    mp_counts = {}
     if order_ids:
-        mp_sums = {
-            oc_id: float(val or 0)
-            for oc_id, val in db.session.query(
+        mp_counts = {
+            oc_id: cnt
+            for oc_id, cnt in db.session.query(
                 Lote.idOrdenCompra,
-                func.sum(Lote.cantidadDeUnidad)
+                func.count(Lote.idLote)
             ).filter(Lote.idOrdenCompra.in_(order_ids))
             .group_by(Lote.idOrdenCompra).all()
         }
 
-    # Canal: conteo de canales por lote
+    # Canal: conteo por idOrdenCompra
     canal_counts = {}
-    if lotes:
+    if order_ids:
         canal_counts = {
-            lote: cnt
-            for lote, cnt in db.session.query(Canal.numeroLote, func.count(Canal.idMateriaProveida))
-            .filter(Canal.numeroLote.in_(lotes))
-            .group_by(Canal.numeroLote).all()
+            oc_id: cnt
+            for oc_id, cnt in db.session.query(
+                Canal.idOrdenCompra,
+                func.count(Canal.idCanal)
+            ).filter(Canal.idOrdenCompra.in_(order_ids))
+            .group_by(Canal.idOrdenCompra).all()
         }
 
-    # Producto Unitario: conteo por lote
+    # Producto Unitario: conteo por idOrdenCompra
     pu_counts = {}
-    if lotes:
+    if order_ids:
         pu_counts = {
-            lote: cnt
-            for lote, cnt in db.session.query(ProductoUnitario.NumeroLote, func.count(ProductoUnitario.idProductoUnitario))
-            .filter(ProductoUnitario.NumeroLote.in_(lotes))
-            .group_by(ProductoUnitario.NumeroLote).all()
+            oc_id: cnt
+            for oc_id, cnt in db.session.query(
+                ProductoUnitario.idOrdenCompra,
+                func.count(ProductoUnitario.idProductoUnitario)
+            ).filter(ProductoUnitario.idOrdenCompra.in_(order_ids))
+            .group_by(ProductoUnitario.idOrdenCompra).all()
         }
 
     articulos_por_orden = {
         o.idOrdenCompra: (
-            int(mp_sums.get(o.idOrdenCompra, 0)) +
-            canal_counts.get(o.numeroLote, 0) +
-            pu_counts.get(o.numeroLote, 0)
+            mp_counts.get(o.idOrdenCompra, 0) +
+            canal_counts.get(o.idOrdenCompra, 0) +
+            pu_counts.get(o.idOrdenCompra, 0)
         )
         for o in ordenes
     }
@@ -152,11 +206,11 @@ def compra():
 def compra_detalle(id):
     orden = OrdenCompra.query.get_or_404(id)
 
-    # Ítems Materia (Lote)
-    items_materia = orden.materiasPrimasUnitarias.all()
+    # Ítems Materia (Lote ligado a la orden)
+    items_materia = Lote.query.filter_by(idOrdenCompra=orden.idOrdenCompra).all()
 
     # Ítems Producto agrupados por idProducto
-    pu_lista = ProductoUnitario.query.filter_by(NumeroLote=orden.numeroLote).all()
+    pu_lista = ProductoUnitario.query.filter_by(idOrdenCompra=orden.idOrdenCompra).all()
     pu_por_producto = defaultdict(list)
     for pu in pu_lista:
         pu_por_producto[pu.idProducto].append(pu)
@@ -172,18 +226,19 @@ def compra_detalle(id):
             'fecha_caducidad': unidades[0].FechaCaducidad,
         })
 
-    # Ítems Canal agrupados por idMateriaProveida
-    canal_lista = Canal.query.filter_by(numeroLote=orden.numeroLote).all()
-    canal_por_mp = defaultdict(list)
+    # Ítems Canal agrupados por idCategoria
+    canal_lista = Canal.query.filter_by(idOrdenCompra=orden.idOrdenCompra).all()
+    canal_por_cat = defaultdict(list)
     for c in canal_lista:
-        canal_por_mp[c.idMateriaProveida].append(c)
+        canal_por_cat[c.idCategoria].append(c)
     items_canal = []
-    for id_mp, canales in canal_por_mp.items():
-        mp = MateriaProveida.query.get(id_mp)
+    for id_cat, canales in canal_por_cat.items():
+        cat = Categoria.query.get(id_cat)
         items_canal.append({
-            'materia_proveida': mp,
+            'materia_proveida': _fake_mp_por_categoria(cat),
+            'categoria':        cat,
             'total':            len(canales),
-            'peso_total':       round(sum(c.peso or 0 for c in canales), 3),
+            'peso_total':       round(sum(c.Peso or 0 for c in canales), 3),
             'disponibles':      sum(1 for c in canales if c.estatus == 'Disponible'),
             'en_espera':        sum(1 for c in canales if c.estatus == 'EnEspera'),
             'fecha_sacrificio': canales[0].fechaSacrificio,
@@ -233,34 +288,36 @@ def compra_nueva():
             fecha_orden = date.today()
 
         # Arrays de líneas
-        mp_ids           = request.form.getlist('materia_proveida_id[]')
-        cantidades_u     = request.form.getlist('cantidad_de_unidad[]')
-        cantidades_x     = request.form.getlist('cantidad_por_unidad[]')
-        precios          = request.form.getlist('precio_por_unidad[]')
-        fechas_caducidad = request.form.getlist('fecha_caducidad[]')    # Producto
-        fechas_sacrificio = request.form.getlist('fecha_sacrificio[]')  # Canal
-        pesos_canal      = request.form.getlist('peso_canal[]')         # Canal
+        mp_ids            = request.form.getlist('materia_proveida_id[]')
+        cantidades_u      = request.form.getlist('cantidad_de_unidad[]')
+        cantidades_x      = request.form.getlist('cantidad_por_unidad[]')
+        precios           = request.form.getlist('precio_por_unidad[]')
+        fechas_caducidad  = request.form.getlist('fecha_caducidad[]')
+        fechas_sacrificio = request.form.getlist('fecha_sacrificio[]')
+        pesos_canal       = request.form.getlist('peso_canal[]')
 
         if not mp_ids:
             flash('Debes agregar al menos una materia prima.', 'danger')
             return redirect(url_for('compras.compra_nueva'))
 
-        total_orden = 0.0
+        # ── Validación y armado de líneas ────────────────────────────────────
         lineas = []
-        for i, mp_id in enumerate(mp_ids):
+        total_orden = 0.0
+
+        for i, mp_id_raw in enumerate(mp_ids):
             num_linea = i + 1
             try:
-                mp_id = int(mp_id) if mp_id else 0
+                mp_id = int(mp_id_raw) if mp_id_raw else 0
             except ValueError:
                 mp_id = 0
-            cant_u    = _parse_int(cantidades_u[i]      if i < len(cantidades_u)    else '')
-            cant_x    = _parse_int(cantidades_x[i]      if i < len(cantidades_x)    else '')
-            precio    = _parse_float(precios[i]          if i < len(precios)         else '')
-            fecha_cad = _parse_date(fechas_caducidad[i]  if i < len(fechas_caducidad)  else '')
-            fecha_sac = _parse_date(fechas_sacrificio[i] if i < len(fechas_sacrificio) else '')
-            peso_c    = _parse_float(pesos_canal[i]      if i < len(pesos_canal)     else '')
 
-            # Validación por línea
+            cant_u    = _parse_int(cantidades_u[i]       if i < len(cantidades_u)     else '')
+            cant_x    = _parse_int(cantidades_x[i]       if i < len(cantidades_x)     else '')
+            precio    = _parse_float(precios[i]           if i < len(precios)          else '')
+            fecha_cad = _parse_date(fechas_caducidad[i]   if i < len(fechas_caducidad)  else '')
+            fecha_sac = _parse_date(fechas_sacrificio[i]  if i < len(fechas_sacrificio) else '')
+            peso_c    = _parse_float(pesos_canal[i]       if i < len(pesos_canal)      else '')
+
             if not mp_id:
                 flash(f'Línea {num_linea}: debes seleccionar la materia proveída.', 'danger')
                 return redirect(url_for('compras.compra_nueva'))
@@ -271,31 +328,72 @@ def compra_nueva():
                 flash(f'Línea {num_linea}: el precio no puede ser negativo.', 'danger')
                 return redirect(url_for('compras.compra_nueva'))
 
-            # Determinar tipo para validar campos condicionales
-            mp_proveida_check = MateriaProveida.query.get(mp_id)
-            if mp_proveida_check and mp_proveida_check.materiaPrima:
-                tipo_check = mp_proveida_check.materiaPrima.tipo or 'Materia'
-                if tipo_check == 'Canal':
-                    if not fecha_sac:
-                        flash(f'Línea {num_linea} (Canal): la fecha de sacrificio es obligatoria.', 'danger')
-                        return redirect(url_for('compras.compra_nueva'))
-                    if peso_c <= 0:
-                        flash(f'Línea {num_linea} (Canal): el peso por canal debe ser mayor a 0.', 'danger')
-                        return redirect(url_for('compras.compra_nueva'))
-                elif tipo_check == 'Materia':
-                    if cant_x <= 0:
-                        flash(f'Línea {num_linea}: la cantidad por unidad debe ser mayor a 0.', 'danger')
-                        return redirect(url_for('compras.compra_nueva'))
-                    if not _parse_date(fechas_caducidad[i] if i < len(fechas_caducidad) else ''):
-                        flash(f'Línea {num_linea} (Materia): la fecha de caducidad es obligatoria.', 'danger')
-                        return redirect(url_for('compras.compra_nueva'))
+            mp_proveida = MateriaProveida.query.get(mp_id)
+            if not mp_proveida or not mp_proveida.materiaPrima:
+                flash(f'Línea {num_linea}: materia proveída inválida.', 'danger')
+                return redirect(url_for('compras.compra_nueva'))
 
-            total_costo   = cant_u * precio
-            total_materia = cant_u * cant_x   # ambos int → resultado int
-            total_orden  += total_costo
-            lineas.append((mp_id, cant_u, cant_x, precio, total_costo, total_materia,
-                           fecha_cad, fecha_sac, peso_c))
+            materia = mp_proveida.materiaPrima
+            tipo = materia.tipo or 'Materia'
 
+            # ── Validaciones por tipo ────────────────────────────────────────
+            if tipo == 'Canal':
+                if materia.idCategoria is None:
+                    flash(
+                        f'Línea {num_linea}: la materia prima "{materia.nombreMateriaPrima}" '
+                        f'es tipo Canal pero no tiene categoría asignada.',
+                        'danger'
+                    )
+                    return redirect(url_for('compras.compra_nueva'))
+                if not fecha_sac:
+                    flash(f'Línea {num_linea} (Canal): la fecha de sacrificio es obligatoria.', 'danger')
+                    return redirect(url_for('compras.compra_nueva'))
+                if peso_c <= 0:
+                    flash(f'Línea {num_linea} (Canal): el peso por canal debe ser mayor a 0.', 'danger')
+                    return redirect(url_for('compras.compra_nueva'))
+
+            elif tipo == 'Producto':
+                if not materia.idProducto:
+                    flash(
+                        f'Línea {num_linea}: la materia prima "{materia.nombreMateriaPrima}" '
+                        f'es tipo Producto pero no tiene un producto vinculado.',
+                        'danger'
+                    )
+                    return redirect(url_for('compras.compra_nueva'))
+                if cant_x <= 0:
+                    flash(f'Línea {num_linea}: la cantidad por unidad debe ser mayor a 0.', 'danger')
+                    return redirect(url_for('compras.compra_nueva'))
+                if not fecha_cad:
+                    flash(f'Línea {num_linea} (Producto): la fecha de caducidad es obligatoria.', 'danger')
+                    return redirect(url_for('compras.compra_nueva'))
+
+            elif tipo == 'Materia':
+                if cant_x <= 0:
+                    flash(f'Línea {num_linea}: la cantidad por unidad debe ser mayor a 0.', 'danger')
+                    return redirect(url_for('compras.compra_nueva'))
+                if not fecha_cad:
+                    flash(f'Línea {num_linea} (Materia): la fecha de caducidad es obligatoria.', 'danger')
+                    return redirect(url_for('compras.compra_nueva'))
+
+            else:
+                flash(
+                    f'Línea {num_linea}: tipo de materia prima desconocido ("{tipo}"). '
+                    f'Se omitió la línea.',
+                    'warning'
+                )
+                continue
+
+            total_costo  = cant_u * precio
+            total_materia = cant_u * cant_x
+            total_orden += total_costo
+            lineas.append((mp_proveida, materia, tipo, cant_u, cant_x, precio,
+                           total_costo, total_materia, fecha_cad, fecha_sac, peso_c))
+
+        if not lineas:
+            flash('No hay líneas válidas para registrar la orden.', 'danger')
+            return redirect(url_for('compras.compra_nueva'))
+
+        # ── Crear la orden de compra ─────────────────────────────────────────
         numero_lote = _generar_lote()
 
         orden = OrdenCompra(
@@ -311,60 +409,54 @@ def compra_nueva():
 
         estatus_item = 'Disponible' if estatus == 'Recibida' else 'EnEspera'
 
-        for mp_id, cant_u, cant_x, precio, total_costo, total_materia, fecha_cad, fecha_sac, peso_c in lineas:
-            mp_proveida = MateriaProveida.query.get(mp_id)
-            if not mp_proveida:
-                continue
-            materia = mp_proveida.materiaPrima
-            tipo    = materia.tipo or 'Materia'
+        for (mp_proveida, materia, tipo, cant_u, cant_x, precio,
+             total_costo, total_materia, fecha_cad, fecha_sac, peso_c) in lineas:
 
-            # ── Tipo Producto → inserts en producto_unitario ─────────────────
+            # ── Tipo Producto → producto_unitario ────────────────────────────
             if tipo == 'Producto':
-                if not materia.idProducto:
-                    flash(
-                        f'La materia prima "{materia.nombreMateriaPrima}" es tipo Producto '
-                        'pero no tiene un producto vinculado. Se omitió.',
-                        'warning'
-                    )
-                    continue
-                n_piezas = max(1, int(round(cant_u * cant_x)))
+                n_piezas = max(1, int(round(cant_u * (cant_x or 1))))
                 for _ in range(n_piezas):
                     pu = ProductoUnitario(
                         idProducto     = materia.idProducto,
+                        idOrdenCompra  = orden.idOrdenCompra,
                         NumeroLote     = numero_lote,
                         FechaCaducidad = fecha_cad,
-                        estatus        = 'Disponible' if estatus == 'Recibida' else 'EnEspera',
+                        estatus        = estatus_item,
                     )
                     db.session.add(pu)
 
-            # ── Tipo Canal → inserts en canal ────────────────────────────────
+            # ── Tipo Canal → canal + canal_corte (auto) ──────────────────────
             elif tipo == 'Canal':
                 n_canales = max(1, int(round(cant_u)))
                 for _ in range(n_canales):
                     canal = Canal(
-                        idMateriaProveida = mp_id,
-                        idCategoria       = materia.idCategoria,
-                        numeroLote        = numero_lote,
-                        peso              = peso_c if peso_c else None,
-                        fechaSacrificio   = fecha_sac,
-                        estatus           = 'Disponible' if estatus == 'Recibida' else 'EnEspera',
+                        idCategoria     = materia.idCategoria,
+                        idOrdenCompra   = orden.idOrdenCompra,
+                        Descripcion     = materia.nombreMateriaPrima,
+                        Peso            = peso_c if peso_c else None,
+                        fechaSacrificio = fecha_sac,
+                        estatus         = estatus_item,
                     )
                     db.session.add(canal)
+                    db.session.flush()  # necesitamos canal.idCanal antes de crear los canal_corte
+                    _crear_canal_cortes_para(canal)
 
-            # ── Tipo Materia → insert en materia_prima_unitaria ──────────────
-            else:
-                item = Lote(
-                    idMateriaProveida = mp_id,
+            # ── Tipo Materia → lote (compra directa de materia prima) ────────
+            elif tipo == 'Materia':
+                lote = Lote(
                     idOrdenCompra     = orden.idOrdenCompra,
+                    idMateriaProveida = mp_proveida.idMateriaProveida,
+                    idCanalCorte      = None,
+                    numeroLote        = numero_lote,
                     cantidadDeUnidad  = cant_u,
-                    cantidadPorUnidad = cant_x,
+                    cantidadPorUnidad = float(cant_x),
+                    totalMateria      = float(total_materia),
                     precioPorUnidad   = precio,
                     totalCosto        = round(total_costo, 2),
-                    totalMateria      = total_materia,
                     fechaCaducidad    = fecha_cad,
                     estatus           = estatus_item,
                 )
-                db.session.add(item)
+                db.session.add(lote)
 
         db.session.commit()
         flash(f'Orden {numero_lote} registrada correctamente.', 'success')
@@ -389,20 +481,21 @@ def compra_recibir(id):
     if orden.estatus == 'EnCurso':
         orden.estatus = 'Recibida'
 
-        # Materias primas unitarias
-        for item in orden.materiasPrimasUnitarias.all():
-            if item.estatus == 'EnEspera':
-                item.estatus = 'Disponible'
+        # Lotes de materia prima en espera
+        for lote in Lote.query.filter_by(
+            idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
+        ).all():
+            lote.estatus = 'Disponible'
 
-        # Productos unitarios (lote de la orden)
+        # Productos unitarios en espera
         for pu in ProductoUnitario.query.filter_by(
-            NumeroLote=orden.numeroLote, estatus='EnEspera'
+            idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
         ).all():
             pu.estatus = 'Disponible'
 
-        # Canales (lote de la orden)
+        # Canales en espera
         for canal in Canal.query.filter_by(
-            numeroLote=orden.numeroLote, estatus='EnEspera'
+            idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
         ).all():
             canal.estatus = 'Disponible'
 
@@ -423,20 +516,21 @@ def compra_cancelar(id):
     if orden.estatus == 'EnCurso':
         orden.estatus = 'Cancelada'
 
-        # Materias primas unitarias
-        for item in orden.materiasPrimasUnitarias.all():
-            if item.estatus == 'EnEspera':
-                item.estatus = 'Cancelado'
+        # Lotes de materia prima en espera
+        for lote in Lote.query.filter_by(
+            idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
+        ).all():
+            lote.estatus = 'Cancelado'
 
         # Productos unitarios en espera → Desechado
         for pu in ProductoUnitario.query.filter_by(
-            NumeroLote=orden.numeroLote, estatus='EnEspera'
+            idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
         ).all():
             pu.estatus = 'Desechado'
 
         # Canales en espera → Cancelado
         for canal in Canal.query.filter_by(
-            numeroLote=orden.numeroLote, estatus='EnEspera'
+            idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
         ).all():
             canal.estatus = 'Cancelado'
 
@@ -451,10 +545,12 @@ def compra_cancelar(id):
 @roles_required('admin')
 def compra_imprimir(id):
     orden = OrdenCompra.query.get_or_404(id)
-    items = orden.materiasPrimasUnitarias.all()
 
-    # Para impresión también mostramos resumen de producto y canal
-    pu_lista = ProductoUnitario.query.filter_by(NumeroLote=orden.numeroLote).all()
+    # Lotes de materia prima
+    items = Lote.query.filter_by(idOrdenCompra=orden.idOrdenCompra).all()
+
+    # Resumen de productos unitarios
+    pu_lista = ProductoUnitario.query.filter_by(idOrdenCompra=orden.idOrdenCompra).all()
     pu_por_producto = defaultdict(list)
     for pu in pu_lista:
         pu_por_producto[pu.idProducto].append(pu)
@@ -467,18 +563,20 @@ def compra_imprimir(id):
         for id_prod, unidades in pu_por_producto.items()
     ]
 
-    canal_lista = Canal.query.filter_by(numeroLote=orden.numeroLote).all()
-    canal_por_mp = defaultdict(list)
+    # Resumen de canales por categoría
+    canal_lista = Canal.query.filter_by(idOrdenCompra=orden.idOrdenCompra).all()
+    canal_por_cat = defaultdict(list)
     for c in canal_lista:
-        canal_por_mp[c.idMateriaProveida].append(c)
+        canal_por_cat[c.idCategoria].append(c)
     items_canal = [
         {
-            'materia_proveida': MateriaProveida.query.get(id_mp),
+            'materia_proveida': _fake_mp_por_categoria(Categoria.query.get(id_cat)),
+            'categoria':        Categoria.query.get(id_cat),
             'total':            len(canales),
-            'peso_total':       round(sum(c.peso or 0 for c in canales), 3),
+            'peso_total':       round(sum(c.Peso or 0 for c in canales), 3),
             'fecha_sacrificio': canales[0].fechaSacrificio,
         }
-        for id_mp, canales in canal_por_mp.items()
+        for id_cat, canales in canal_por_cat.items()
     ]
 
     return render_template(
@@ -537,9 +635,9 @@ def api_materias_proveidas(proveedor_id, materia_prima_id):
 @roles_required('admin')
 def api_detalle_mp(materia_proveida_id):
     """
-    Devuelve unidad, conversor y ── nuevo ── tipo de la materia prima.
+    Devuelve unidad, conversor y tipo de la materia prima.
     El campo tipo es usado por el frontend para mostrar campos condicionales
-    (fecha_caducidad para Producto, fecha_sacrificio + peso para Canal).
+    (fecha_caducidad para Materia/Producto, fecha_sacrificio + peso para Canal).
     """
     mp        = MateriaProveida.query.get_or_404(materia_proveida_id)
     unidad    = mp.unidadMedida
