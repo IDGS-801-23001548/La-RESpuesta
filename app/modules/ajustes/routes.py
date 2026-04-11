@@ -13,12 +13,57 @@ import os
 from .forms import ImportForm, RestoreForm
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
+import threading
 
 
 DB_USER         = os.getenv('DB_USER')
 DB_PASSWORD     = os.getenv('DB_PASSWORD')
 DB_HOST         = os.getenv('DB_HOST')
 DB_NAME         = os.getenv('DB_NAME')
+
+RESTORE_STATUS = {
+    "estado": "idle",   # idle | procesando | completado | error
+    "mensaje": ""
+}
+
+def ejecutar_restore(filepath):
+    global RESTORE_STATUS
+
+    try:
+        RESTORE_STATUS["estado"] = "procesando"
+        RESTORE_STATUS["mensaje"] = "Restaurando base de datos..."
+
+        mysql_path = r"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"
+
+        env = os.environ.copy()
+        env["MYSQL_PWD"] = DB_PASSWORD
+
+        comando = [
+            mysql_path,
+            "-h", DB_HOST,
+            "-u", DB_USER,
+            DB_NAME
+        ]
+
+        with open(filepath, "rb") as f:
+            resultado = subprocess.run(
+                comando,
+                stdin=f,
+                env=env,
+                capture_output=True
+            )
+
+        if resultado.returncode != 0:
+            raise Exception(resultado.stderr.decode())
+
+        RESTORE_STATUS["estado"] = "completado"
+        RESTORE_STATUS["mensaje"] = "Restauración completada correctamente ✅"
+
+    except Exception as e:
+        RESTORE_STATUS["estado"] = "error"
+        RESTORE_STATUS["mensaje"] = f"Error: {str(e)}"
+
+        print("ERROR RESTORE:", str(e))
 
 @ajustes.route("/ajustes", methods = ['GET'])
 @login_required
@@ -33,6 +78,10 @@ def vista_ajustes():
         restore_form=restore_form,
         import_form=import_form
     )
+
+@ajustes.route("/restore/status")
+def restore_status():
+    return RESTORE_STATUS
 
 # --------------------- BACKUP -----------------------------------
 @ajustes.route("/backup", methods=["GET"])
@@ -67,41 +116,35 @@ def backup():
 @roles_required('admin')
 def restore():
 
+    global RESTORE_STATUS
+
     form = RestoreForm()
 
-    if form.validate_on_submit():
+    if not form.validate_on_submit():
+        return {"estado": "error", "mensaje": "Archivo inválido"}, 400
 
-        file = form.file.data
-        filename = secure_filename(file.filename)
+    file = form.file.data
+    filename = secure_filename(file.filename)
 
-        if not filename.endswith(".sql"):
-            flash("Formato inválido. Solo se permiten archivos .sql", "danger")
-            return redirect(url_for("ajustes.vista_ajustes"))
+    if not filename.endswith(".sql"):
+        return {"estado": "error", "mensaje": "Formato inválido"}, 400
 
-        filepath = Path("temp") / filename
-        file.save(filepath)
+    filepath = Path("temp") / filename
+    file.save(filepath)
 
-        try:
-            comando = [
-                r"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe",
-                "-h", DB_HOST,
-                "-u", DB_USER,
-                f"-p{DB_PASSWORD}",
-                DB_NAME
-            ]
+    # 🔥 IMPORTANTE: reiniciar estado
+    RESTORE_STATUS["estado"] = "procesando"
+    RESTORE_STATUS["mensaje"] = "Iniciando restauración..."
 
-            with open(filepath, "rb") as f:
-                subprocess.run(comando, stdin=f, check=True)
+    # 🔥 AQUÍ ESTÁ LA CLAVE
+    hilo = threading.Thread(
+        target=ejecutar_restore,
+        args=(filepath,),
+        daemon=True  # 🔥 importante para que no rompa Flask
+    )
+    hilo.start()
 
-            flash("Base de datos restaurada correctamente", "success")
-
-        except Exception as e:
-            flash(f"Error al restaurar: {str(e)}", "danger")
-
-    else:
-        flash("Archivo inválido o faltante", "danger")
-
-    return redirect(url_for("ajustes.vista_ajustes"))
+    return {"estado": "procesando"}
 
 # --------------------- EXPORT -----------------------------------
 TABLAS_PERMITIDAS = ["user", "producto", "categoria", "conversor", "unidad_medida", "Categoria", "corte"]

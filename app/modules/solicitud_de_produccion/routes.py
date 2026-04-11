@@ -110,6 +110,17 @@ def _lotes_para_materia_prima(id_materia_prima):
     )
 
 
+def _lotes_para_corte(id_corte):
+    """Lotes disponibles para un corte especifico (via canal_corte)."""
+    return (
+        _lotes_disponibles_query()
+        .join(CanalCorte, Lote.idCanalCorte == CanalCorte.idCanalCorte)
+        .filter(CanalCorte.idCorte == id_corte)
+        .order_by(Lote.idLote.desc())
+        .all()
+    )
+
+
 def _serializar_lote(lote):
     """Convierte un Lote (compra directa) a dict para mostrar en select."""
     mp = lote.materiaProveida
@@ -122,6 +133,20 @@ def _serializar_lote(lote):
         'totalMateria': lote.totalMateria,
         'unidad':       unidad,
         'proveedor':    proveedor,
+        'caducidad':    lote.fechaCaducidad.strftime('%d/%m/%Y') if lote.fechaCaducidad else '—',
+    }
+
+
+def _serializar_lote_corte(lote):
+    """Convierte un Lote (produccion de corte) a dict para mostrar en select."""
+    cc = lote.canalCorte
+    canal = Canal.query.get(cc.idCanal) if cc else None
+    return {
+        'id':           lote.idLote,
+        'lote':         lote.numeroLote or f'#{lote.idLote}',
+        'totalMateria': lote.totalMateria,
+        'unidad':       'kg',
+        'canal':        f'Canal #{canal.idCanal}' if canal else '—',
         'caducidad':    lote.fechaCaducidad.strftime('%d/%m/%Y') if lote.fechaCaducidad else '—',
     }
 
@@ -176,7 +201,8 @@ def _solicitud_nueva_personalizada():
     recetas_lista = Receta.query.order_by(Receta.nombreReceta).all()
 
     receta_seleccionada = None
-    materias_con_lotes  = []
+    materias_con_lotes  = []   # ingredientes tipo materia prima
+    cortes_con_lotes    = []   # ingredientes tipo corte
     cantidad_producir   = 1
 
     receta_id_get = request.args.get('idReceta', type=int)
@@ -208,25 +234,49 @@ def _solicitud_nueva_personalizada():
         errores      = []
 
         for rmp in ingredientes:
-            lote_id = request.form.get(f'lote_{rmp.idMateriaPrima}', type=int)
-            if not lote_id:
-                errores.append(f'Falta seleccionar lote para "{rmp.materiaPrima.nombreMateriaPrima}".')
-                continue
-
-            lote = Lote.query.get(lote_id)
-            if not lote or lote.estatus != 'Disponible':
-                errores.append(f'El lote elegido para "{rmp.materiaPrima.nombreMateriaPrima}" ya no esta disponible.')
-                continue
-
-            if not lote.materiaProveida or lote.materiaProveida.idMateriaPrima != rmp.idMateriaPrima:
-                errores.append(f'Lote invalido para "{rmp.materiaPrima.nombreMateriaPrima}".')
-                continue
-
+            nombre_ing = rmp.nombre_ingrediente
             cantidad_necesaria = rmp.cantidadUsada * cantidad_producir
+
+            if rmp.idMateriaPrima:
+                # ── Ingrediente tipo materia prima ──
+                lote_id = request.form.get(f'lote_materia_{rmp.idMateriaPrima}', type=int)
+                if not lote_id:
+                    errores.append(f'Falta seleccionar lote para "{nombre_ing}".')
+                    continue
+
+                lote = Lote.query.get(lote_id)
+                if not lote or lote.estatus != 'Disponible':
+                    errores.append(f'El lote elegido para "{nombre_ing}" ya no esta disponible.')
+                    continue
+
+                if not lote.materiaProveida or lote.materiaProveida.idMateriaPrima != rmp.idMateriaPrima:
+                    errores.append(f'Lote invalido para "{nombre_ing}".')
+                    continue
+
+            elif rmp.idCorte:
+                # ── Ingrediente tipo corte ──
+                lote_id = request.form.get(f'lote_corte_{rmp.idCorte}', type=int)
+                if not lote_id:
+                    errores.append(f'Falta seleccionar lote para "{nombre_ing}".')
+                    continue
+
+                lote = Lote.query.get(lote_id)
+                if not lote or lote.estatus != 'Disponible':
+                    errores.append(f'El lote elegido para "{nombre_ing}" ya no esta disponible.')
+                    continue
+
+                # Validar que el lote pertenece al corte correcto (via canal_corte)
+                cc = lote.canalCorte
+                if not cc or cc.idCorte != rmp.idCorte:
+                    errores.append(f'Lote invalido para "{nombre_ing}".')
+                    continue
+            else:
+                continue  # ingrediente sin FK — ignorar
+
             if (lote.totalMateria or 0) < cantidad_necesaria:
                 errores.append(
                     f'Stock insuficiente en lote {lote.numeroLote or lote.idLote} '
-                    f'para "{rmp.materiaPrima.nombreMateriaPrima}". '
+                    f'para "{nombre_ing}". '
                     f'Necesario: {cantidad_necesaria:g}, disponible: {lote.totalMateria:g}.'
                 )
                 continue
@@ -259,7 +309,7 @@ def _solicitud_nueva_personalizada():
             for rmp, lote, cant in seleccion:
                 db.session.add(SolicitudProduccionDetalle(
                     idSolicitud       = nueva.idSolicitud,
-                    idMateriaPrima    = rmp.idMateriaPrima,
+                    idMateriaPrima    = rmp.idMateriaPrima,  # None para cortes
                     idLote            = lote.idLote,
                     cantidadConsumida = cant,
                 ))
@@ -287,15 +337,30 @@ def _solicitud_nueva_personalizada():
                 tipo='Personalizada', idReceta=id_receta,
             ))
 
+    # ── GET: construir listas de ingredientes con sus lotes disponibles ──
     if receta_seleccionada:
         for rmp in receta_seleccionada.materiasPrimas.all():
-            lotes = _lotes_para_materia_prima(rmp.idMateriaPrima)
-            materias_con_lotes.append({
-                'rmp':             rmp,
-                'materia':         rmp.materiaPrima,
-                'cantidad_unidad': rmp.cantidadUsada,
-                'lotes':           [_serializar_lote(l) for l in lotes],
-            })
+            if rmp.idMateriaPrima:
+                lotes = _lotes_para_materia_prima(rmp.idMateriaPrima)
+                materias_con_lotes.append({
+                    'rmp':             rmp,
+                    'id_campo':        rmp.idMateriaPrima,
+                    'nombre':          rmp.materiaPrima.nombreMateriaPrima if rmp.materiaPrima else '—',
+                    'cantidad_unidad': rmp.cantidadUsada,
+                    'lotes':           [_serializar_lote(l) for l in lotes],
+                })
+            elif rmp.idCorte:
+                lotes = _lotes_para_corte(rmp.idCorte)
+                corte_obj = rmp.corte
+                cat = corte_obj.categoria if corte_obj else None
+                nombre = f"{corte_obj.nombreCorte} ({cat.nombreCategoria})" if (corte_obj and cat) else (corte_obj.nombreCorte if corte_obj else '—')
+                cortes_con_lotes.append({
+                    'rmp':             rmp,
+                    'id_campo':        rmp.idCorte,
+                    'nombre':          nombre,
+                    'cantidad_unidad': rmp.cantidadUsada,
+                    'lotes':           [_serializar_lote_corte(l) for l in lotes],
+                })
 
     return render_template(
         'admin/solicitud_produccion/solicitudes_form.html',
@@ -303,6 +368,7 @@ def _solicitud_nueva_personalizada():
         recetas=recetas_lista,
         receta_seleccionada=receta_seleccionada,
         materias_con_lotes=materias_con_lotes,
+        cortes_con_lotes=cortes_con_lotes,
         cantidad_producir=cantidad_producir,
         # placeholders para compatibilidad con el template unificado
         canales=[],
@@ -432,6 +498,7 @@ def _solicitud_nueva_corte():
         recetas=[],
         receta_seleccionada=None,
         materias_con_lotes=[],
+        cortes_con_lotes=[],
         cantidad_producir=1,
     )
 

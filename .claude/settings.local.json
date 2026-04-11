@@ -14,7 +14,9 @@
       "Bash(pip show:*)",
       "Bash(ls */python.exe)",
       "Bash(ls */Scripts/)",
-      "Bash(venv/Scripts/python.exe -c ':*)"
+      "Bash(venv/Scripts/python.exe -c ':*)",
+      "Bash(\"env/Scripts/python.exe\" -m flask db current)",
+      "Bash(\"env/Scripts/python.exe\" -m flask db heads)"
     ]
   }
 }

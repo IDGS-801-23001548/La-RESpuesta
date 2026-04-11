@@ -10,6 +10,7 @@ from flask_security import roles_required
 from datetime import datetime, date
 
 
+
 # ═════════════════════════════════════════════════════════════════════════════
 #  HELPERS
 # ═════════════════════════════════════════════════════════════════════════════
@@ -188,6 +189,7 @@ def completar(id):
                 totalCosto        = 0.0,
                 fechaCaducidad    = None,
                 estatus           = 'Disponible',
+                idUsuario         = current_user.id
             )
             db.session.add(lote_producido)
             db.session.flush()

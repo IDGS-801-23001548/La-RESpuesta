@@ -83,33 +83,36 @@
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
         <div class="xl:col-span-2 space-y-5">
+
+            {# ── Ingredientes tipo materia prima ── #}
+            {% if materias_con_lotes %}
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                     <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
-                    <h3 class="text-sm font-semibold text-gray-700">Lotes a consumir</h3>
+                    <h3 class="text-sm font-semibold text-gray-700">Lotes de materia prima a consumir</h3>
                 </div>
                 <div class="divide-y divide-gray-50">
                     {% for mc in materias_con_lotes %}
                     <div class="p-5">
                         <div class="flex items-center justify-between mb-3">
                             <div>
-                                <p class="text-sm font-semibold text-gray-800">{{ mc.materia.nombreMateriaPrima }}</p>
+                                <p class="text-sm font-semibold text-gray-800">{{ mc.nombre }}</p>
                                 <p class="text-[10px] text-gray-400">
                                     Necesario por unidad: <strong>{{ mc.cantidad_unidad }}</strong>
                                     <span class="text-gray-300">·</span>
-                                    Total para <span id="cant-display-{{ mc.materia.idMateriaPrima }}">1</span>:
+                                    Total para <span class="cant-display">1</span>:
                                     <strong class="text-green-600 cant-total"
                                         data-base="{{ mc.cantidad_unidad }}"
-                                        data-target="cant-total-{{ mc.materia.idMateriaPrima }}">
-                                        <span id="cant-total-{{ mc.materia.idMateriaPrima }}">{{ mc.cantidad_unidad }}</span>
+                                        data-target="cant-total-m-{{ mc.id_campo }}">
+                                        <span id="cant-total-m-{{ mc.id_campo }}">{{ mc.cantidad_unidad }}</span>
                                     </strong>
                                 </p>
                             </div>
                         </div>
                         {% if mc.lotes %}
-                        <select name="lote_{{ mc.materia.idMateriaPrima }}" required
+                        <select name="lote_materia_{{ mc.id_campo }}" required
                             class="w-full px-3 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
                                    rounded-lg outline-none focus:border-green-400 transition-all">
                             <option value="">Seleccionar lote...</option>
@@ -126,13 +129,68 @@
                         </div>
                         {% endif %}
                     </div>
-                    {% else %}
-                    <div class="p-8 text-center text-xs text-gray-400">
-                        Esta receta no tiene materias primas configuradas.
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── Ingredientes tipo corte ── #}
+            {% if cortes_con_lotes %}
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-amber-50/30">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121A3 3 0 109.879 9.879m4.242 4.242L9.88 9.88m4.242 4.242l2.121 2.121M9.879 9.879L7.757 7.757"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Lotes de corte a consumir</h3>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    {% for cc in cortes_con_lotes %}
+                    <div class="p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">{{ cc.nombre }}</p>
+                                <p class="text-[10px] text-gray-400">
+                                    Necesario por unidad: <strong>{{ cc.cantidad_unidad }} kg</strong>
+                                    <span class="text-gray-300">·</span>
+                                    Total para <span class="cant-display">1</span>:
+                                    <strong class="text-amber-600 cant-total"
+                                        data-base="{{ cc.cantidad_unidad }}"
+                                        data-target="cant-total-c-{{ cc.id_campo }}">
+                                        <span id="cant-total-c-{{ cc.id_campo }}">{{ cc.cantidad_unidad }}</span> kg
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+                        {% if cc.lotes %}
+                        <select name="lote_corte_{{ cc.id_campo }}" required
+                            class="w-full px-3 py-2 text-xs text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-amber-400 transition-all">
+                            <option value="">Seleccionar lote...</option>
+                            {% for lote in cc.lotes %}
+                            <option value="{{ lote.id }}">
+                                Lote {{ lote.lote }} — Stock: {{ lote.totalMateria }} {{ lote.unidad }}
+                                · {{ lote.canal }} · Cad: {{ lote.caducidad }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="text-[11px] text-red-600 font-semibold">No hay lotes disponibles para este corte.</p>
+                        </div>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>
             </div>
+            {% endif %}
+
+            {# ── Sin ingredientes ── #}
+            {% if not materias_con_lotes and not cortes_con_lotes %}
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center">
+                <p class="text-xs text-gray-400">Esta receta no tiene ingredientes configurados.</p>
+            </div>
+            {% endif %}
+
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                 <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                     Notas (opcional)
@@ -193,7 +251,7 @@
             const span = document.getElementById(target);
             if (span) span.textContent = (base * cant).toLocaleString('es-MX', { maximumFractionDigits: 3 });
         });
-        document.querySelectorAll('[id^="cant-display-"]').forEach(el => { el.textContent = cant; });
+        document.querySelectorAll('.cant-display').forEach(el => { el.textContent = cant; });
     }
     actualizarTotales();
 </script>

@@ -160,17 +160,51 @@
           </form>
         </div>
         {% else %}
-        <div style="text-align:center;padding:2rem;color:#9ca3af;font-size:.85rem;font-weight:600;">
-          Tu carrito está vacío
-        </div>
+          {% if not items_cortes %}
+          <div style="text-align:center;padding:2rem;color:#9ca3af;font-size:.85rem;font-weight:600;">
+            Tu carrito esta vacio
+          </div>
+          {% endif %}
         {% endfor %}
       </div>
 
-      <a href="{{ url_for('venta.seleccionar_animal') }}" class="add-more">
+      {# ── Cortes en el carrito ── #}
+      {% if items_cortes %}
+      <div style="margin-top:.5rem;margin-bottom:.5rem;">
+        <p style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.08em;margin:0 0 .5rem;">Cortes (por peso)</p>
+      </div>
+      {% for ic in items_cortes %}
+      <div class="cart-item" style="border-left:3px solid #fbbf24;">
+        <div class="item-icon" style="background:#fffbeb;">🥩</div>
+        <div class="item-info">
+          <p class="item-name">{{ ic.nombre }}</p>
+          <p class="item-sub">{{ ic.categoria }}</p>
+          <p class="item-price" style="color:#d97706;">{{ '%.2f'|format(ic.peso) }} kg × ${{ '%.2f'|format(ic.corte.precioPorKilo) }}/kg</p>
+        </div>
+        <div class="item-total">
+          <span class="item-subtotal">${{ '%.2f'|format(ic.costo) }}</span>
+        </div>
+        <form action="{{ url_for('venta.quitar_corte_del_carrito', id_corte_unitario=ic.corte_unitario.idCorteUnitario) }}" method="POST" style="display:inline;">
+          {{ form.hidden_tag() }}
+          <button type="submit" class="remove-btn" title="Quitar corte">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      <a href="{{ url_for('venta.catalogo') }}" class="add-more">
         <div class="add-more-icon">
           <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         </div>
-        <span>Agregar más productos</span>
+        <span>Agregar mas productos</span>
+      </a>
+      <a href="{{ url_for('venta.catalogo_cortes') }}" class="add-more" style="border-color:#fde68a;">
+        <div class="add-more-icon" style="background:#fffbeb;">
+          <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <span style="color:#d97706;">Agregar cortes por peso</span>
       </a>
 
       <!-- Tipo de entrega -->
@@ -230,7 +264,7 @@
         </div>
         <div class="panel-body">
           <div class="summary-row">
-            <span class="lbl">Productos ({{ items|length }})</span>
+            <span class="lbl">Productos ({{ items|length }}){% if items_cortes %} + Cortes ({{ items_cortes|length }}){% endif %}</span>
             <span class="val">${{ '%.2f'|format(total) }}</span>
           </div>
           <div class="summary-note">Precio con IVA incluido</div>

@@ -20,5 +20,6 @@ from .orden_compra import OrdenCompra
 from .unidad_medida import UnidadMedida
 from .canal import Canal
 from .retiro import Retiro
+from .corte_unitario import CorteUnitario
 from .receta import Receta, RecetaMateriaPrima
 from .solicitud_produccion import SolicitudProduccion, SolicitudProduccionDetalle

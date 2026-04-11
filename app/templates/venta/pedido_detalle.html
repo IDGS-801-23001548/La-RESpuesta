@@ -229,6 +229,24 @@
             </div>
           </div>
           {% endfor %}
+          {% if items_cortes %}
+          <div style="padding:.5rem 0 .25rem;border-top:1px dashed #fde68a;margin-top:.5rem;">
+            <p style="font-size:.62rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.08em;margin:0;">Cortes por peso</p>
+          </div>
+          {% for ic in items_cortes %}
+          <div class="product-row">
+            <div class="product-icon" style="background:#fffbeb;border-left:3px solid #fbbf24;">🥩</div>
+            <div class="product-info">
+              <p class="product-name">{{ ic.nombre }}</p>
+              <p class="product-sub">{{ ic.categoria }}</p>
+            </div>
+            <div class="product-price">
+              <p class="unit">{{ '%.2f'|format(ic.peso) }} kg × ${{ '%.2f'|format(ic.corte.precioPorKilo) }}/kg</p>
+              <p class="total">${{ '%.2f'|format(ic.costo) }}</p>
+            </div>
+          </div>
+          {% endfor %}
+          {% endif %}
         </div>
         <div class="total-row">
           <span class="label">Total del pedido (IVA incluido)</span>

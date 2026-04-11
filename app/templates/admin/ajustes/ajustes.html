@@ -45,7 +45,7 @@
             </p>
 
             <form action="{{ url_for('ajustes.restore') }}" method="POST" enctype="multipart/form-data"
-                class="space-y-3" onsubmit="showLoader()">
+                class="space-y-3" onsubmit="return handleRestoreSubmit()">
 
                 {{ restore_form.hidden_tag() }}
 
@@ -71,7 +71,7 @@
                 </p>
                 {% endif %}
 
-                <button type="submit" onclick="return confirmRestore()"
+                <button type="submit"
                     class="w-full px-4 py-2 rounded-xl bg-red-500 text-white text-sm hover:bg-red-600">
                     Restaurar Base de Datos
                 </button>
@@ -157,18 +157,97 @@
 </div>
 
 <script>
-    function showLoader() {
+    let intervalo = null;
+    let restoreEnProceso = false;
+
+    function checkRestoreStatus() {
+        fetch("/admin/restore/status")
+            .then(res => {
+
+                // 🔥 Si la sesión murió
+                if (res.redirected) {
+                    detenerMonitor();
+                    alert("Tu sesión expiró. Inicia sesión nuevamente.");
+                    window.location.href = res.url;
+                    return null;
+                }
+
+                return res.json();
+            })
+            .then(data => {
+
+                if (!data) return;
+
+                const loader = document.getElementById("loader");
+
+                if (data.estado === "procesando") {
+                    loader.classList.remove("hidden");
+                }
+
+                if (data.estado === "completado") {
+                    loader.classList.add("hidden");
+
+                    detenerMonitor();
+
+                    alert(data.mensaje);
+
+                    restoreEnProceso = false;
+                }
+
+                if (data.estado === "error") {
+                    loader.classList.add("hidden");
+
+                    detenerMonitor();
+
+                    alert(data.mensaje);
+
+                    restoreEnProceso = false;
+                }
+            })
+            .catch(err => {
+                console.error("Error polling:", err);
+                detenerMonitor();
+            });
+    }
+
+    function iniciarMonitor() {
+        if (intervalo) return; // 🔥 evita duplicados
+
+        intervalo = setInterval(checkRestoreStatus, 2000);
+    }
+
+    function detenerMonitor() {
+        if (intervalo) {
+            clearInterval(intervalo);
+            intervalo = null;
+        }
+    }
+
+    function handleRestoreSubmit() {
+
+        // 🔥 evitar doble click
+        if (restoreEnProceso) return false;
+
+        if (!confirm("Esto eliminará los datos actuales. ¿Deseas continuar?")) {
+            return false;
+        }
+
+        restoreEnProceso = true;
+
         document.getElementById("loader").classList.remove("hidden");
+
+        iniciarMonitor();
+
+        return true; // 🔥 permite enviar el form
     }
 
-    function confirmRestore() {
-        return confirm("Esto eliminará los datos actuales. ¿Deseas continuar?");
-    }
-
-    // Mostrar nombre del archivo seleccionado
     function updateFileName(input, targetId) {
         const fileName = input.files[0]?.name || "";
         document.getElementById(targetId).textContent = fileName;
+    }
+
+    function showLoader() {
+        document.getElementById("loader").classList.remove("hidden");
     }
 </script>
 

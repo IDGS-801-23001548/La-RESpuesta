@@ -10,6 +10,7 @@ class Corte(db.Model):
     idFoto          = db.Column(db.String(255), nullable=True)
     nombreCorte     = db.Column(db.String(50), nullable=False)
     Porcentaje      = db.Column(db.Float, nullable=True)
+    precioPorKilo   = db.Column(db.Float, nullable=True, default=0.0)
 
     canalCortes = db.relationship(
         'CanalCorte',

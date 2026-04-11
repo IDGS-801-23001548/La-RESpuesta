@@ -1,0 +1,341 @@
+{% extends "/venta/layout.html" %}
+
+{% block title %}VentaOnline — Cortes{% endblock %}
+
+{% block styles %}
+<style>
+  .animal-pills {
+    display: flex; align-items: center; gap: .5rem;
+    flex-wrap: wrap; margin-bottom: 1rem;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: .4rem .9rem;
+    font-size: .78rem; font-weight: 800;
+    border-radius: 99px; cursor: pointer;
+    border: 1.5px solid #e5e7eb;
+    background: #fff; color: #6b7280;
+    transition: all .15s;
+    user-select: none;
+  }
+  .pill:hover { border-color: #d97706; color: #d97706; background: #fffbeb; }
+  .pill.active { background: #d97706; color: #fff; border-color: #d97706; }
+  .pill-emoji { font-size: .9rem; }
+
+  .toolbar {
+    display: flex; align-items: flex-start; gap: 1rem;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap svg {
+    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; stroke: #9ca3af; fill: none; pointer-events: none;
+  }
+  .search-input {
+    width: 100%;
+    padding: .65rem .85rem .65rem 2.4rem;
+    font-size: .85rem;
+    color: #374151; background: #fff;
+    border: 1.5px solid #e5e7eb; border-radius: 12px;
+    outline: none; transition: all .18s;
+  }
+  .search-input:focus { border-color: #d97706; box-shadow: 0 0 0 3px rgba(217,119,6,.1); }
+  .search-input::placeholder { color: #d1d5db; }
+
+  .results-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem;
+  }
+  .results-count { font-size: .78rem; font-weight: 700; color: #6b7280; }
+  .results-count strong { color: #111827; }
+  .btn-reset {
+    font-size: .72rem; font-weight: 700; color: #9ca3af;
+    background: none; border: none; cursor: pointer;
+    text-decoration: underline; padding: 0; transition: color .15s;
+  }
+  .btn-reset:hover { color: #374151; }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .product-card {
+    background: #fff; border-radius: 18px;
+    border: 1.5px solid #f0f0f0;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    overflow: hidden; display: flex; flex-direction: column;
+    transition: all .22s cubic-bezier(.4,0,.2,1);
+  }
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0,0,0,.09);
+    border-color: #fde68a;
+  }
+
+  .card-img-wrap {
+    width: 100%; aspect-ratio: 4/3;
+    background: #fefce8;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+  }
+  .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
+  .product-card:hover .card-img { transform: scale(1.04); }
+  .card-img-placeholder { font-size: 3.5rem; opacity: .2; user-select: none; }
+
+  .badge-wrap { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+  .stock-badge { font-size: .6rem; font-weight: 800; padding: 3px 8px; border-radius: 99px; }
+  .stock-badge.ok   { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .stock-badge.low  { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+
+  .animal-badge { font-size: .58rem; font-weight: 800; padding: 3px 7px; border-radius: 99px; }
+  .badge-red    { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+  .badge-pink   { background: #fdf2f8; color: #db2777; border: 1px solid #f9a8d4; }
+  .badge-amber  { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+  .badge-purple { background: #faf5ff; color: #7c3aed; border: 1px solid #ddd6fe; }
+  .badge-gray   { background: #f9fafb; color: #6b7280; border: 1px solid #e5e7eb; }
+
+  .card-body { padding: .9rem 1rem; flex: 1; display: flex; flex-direction: column; gap: .4rem; }
+  .card-name {
+    font-size: .88rem; font-weight: 800; color: #111827; margin: 0; line-height: 1.3;
+  }
+  .card-stock { font-size: .68rem; color: #6b7280; font-weight: 600; margin: 0; }
+  .card-prices { display: flex; align-items: baseline; gap: .6rem; margin-top: .3rem; }
+  .price-venta { font-size: 1.1rem; font-weight: 900; color: #d97706; margin: 0; }
+  .price-venta span { font-size: .65rem; color: #9ca3af; font-weight: 600; }
+
+  .card-footer { padding: 0 1rem .9rem; }
+  .peso-row {
+    display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem;
+  }
+  .peso-input {
+    flex: 1; padding: .5rem .65rem;
+    font-size: .82rem; font-weight: 700; color: #374151;
+    border: 1.5px solid #e5e7eb; border-radius: 9px; background: #f9fafb;
+    outline: none; text-align: right; transition: border-color .18s;
+  }
+  .peso-input:focus { border-color: #d97706; }
+  .peso-unit { font-size: .72rem; font-weight: 800; color: #9ca3af; }
+  .peso-total {
+    font-size: .75rem; font-weight: 800; color: #d97706;
+    text-align: right; margin-bottom: .5rem; min-height: 1.1em;
+  }
+  .btn-add {
+    width: 100%; padding: .65rem;
+    background: #d97706; color: #fff;
+    font-size: .82rem; font-weight: 800;
+    border: none; border-radius: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all .18s;
+    box-shadow: 0 2px 8px rgba(217,119,6,.25);
+  }
+  .btn-add:hover { background: #b45309; transform: translateY(-1px); }
+  .btn-add:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn-add svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.5; }
+
+  .empty-state { grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: #9ca3af; }
+  .empty-state-icon { font-size: 3rem; margin-bottom: .75rem; }
+  .empty-state p { font-size: .85rem; font-weight: 600; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: #065f46; color: #fff; padding: .75rem 1.5rem;
+    border-radius: 14px; font-size: .82rem; font-weight: 700;
+    box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    opacity: 0; transition: all .3s ease; z-index: 200; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 640px) {
+    .toolbar  { flex-direction: column; }
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  }
+</style>
+{% endblock %}
+
+{% block container %}
+
+<!-- ENCABEZADO -->
+<div class="fade-in" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+  <div>
+    <h2 style="font-size:1.4rem;font-weight:900;color:#111827;margin:0;">Catalogo de cortes</h2>
+    <p style="font-size:.78rem;color:#6b7280;font-weight:600;margin:.25rem 0 0;">Selecciona el peso que deseas de cada corte</p>
+  </div>
+  <a href="{{ url_for('venta.catalogo') }}"
+     style="font-size:.75rem;font-weight:700;color:#d97706;text-decoration:underline;">
+    Ver productos
+  </a>
+</div>
+
+<!-- FILTROS POR CATEGORIA -->
+<div class="animal-pills fade-in-2" id="animal-pills">
+  <button class="pill active" data-cat="Todos" onclick="setAnimal(this)">Todos</button>
+  {% for cat in categorias_lista %}
+  <button class="pill" data-cat="{{ cat.idCategoria }}" onclick="setAnimal(this)">
+    {% if emoji_map.get(cat.nombreCategoria) %}
+      <span class="pill-emoji">{{ emoji_map[cat.nombreCategoria] }}</span>
+    {% endif %}
+    {{ cat.nombreCategoria }}
+  </button>
+  {% endfor %}
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar fade-in-2">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+    </svg>
+    <input type="text" id="search-input" class="search-input"
+           placeholder="Buscar corte..." oninput="filtrar()" autocomplete="off">
+  </div>
+</div>
+
+<!-- BARRA DE RESULTADOS -->
+<div class="results-bar fade-in-2">
+  <p class="results-count">
+    Mostrando <strong id="count-visible">{{ items|length }}</strong>
+    de <strong>{{ items|length }}</strong> corte{{ 's' if items|length != 1 else '' }}
+  </p>
+  <button class="btn-reset" onclick="resetFiltros()">Limpiar filtros</button>
+</div>
+
+<!-- GRID DE CORTES -->
+<div class="products-grid fade-in-3" id="products-grid">
+
+  {% for item in items %}
+  {% set c = item.corte %}
+  {% set cat_nombre = item.cat_nombre %}
+  {% set badge_color = color_map.get(cat_nombre, 'gray') %}
+  {% set emoji = emoji_map.get(cat_nombre, '') %}
+
+  <div class="product-card"
+       data-id="{{ c.idCorte }}"
+       data-nombre="{{ c.nombreCorte | lower }}"
+       data-precio="{{ c.precioPorKilo }}"
+       data-categoria="{{ item.cat_filtro }}"
+       data-stock="{{ item.stock_kg }}">
+
+    <!-- IMAGEN -->
+    <div class="card-img-wrap">
+      {% if item.foto_b64 %}
+        <img src="{{ item.foto_b64 }}" alt="{{ c.nombreCorte }}" class="card-img" loading="lazy">
+      {% else %}
+        <span class="card-img-placeholder">{{ emoji or '🥩' }}</span>
+      {% endif %}
+
+      <div class="badge-wrap">
+        <span class="stock-badge {{ 'ok' if item.stock_kg > 2 else 'low' }}">
+          {{ "%.1f"|format(item.stock_kg) }} kg
+        </span>
+        {% if cat_nombre != '—' %}
+        <span class="animal-badge badge-{{ badge_color }}">{{ cat_nombre }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- CUERPO -->
+    <div class="card-body">
+      <p class="card-name">{{ c.nombreCorte }}</p>
+      <p class="card-stock">Disponible: {{ "%.2f"|format(item.stock_kg) }} kg</p>
+      <div class="card-prices">
+        <p class="price-venta">${{ "%.2f"|format(c.precioPorKilo) }} <span>/kg</span></p>
+      </div>
+    </div>
+
+    <!-- PIE — INPUT DE PESO + BOTON -->
+    <div class="card-footer">
+      <div class="peso-row">
+        <input type="number" class="peso-input" id="peso-{{ c.idCorte }}"
+               min="0.1" max="{{ item.stock_kg }}" step="0.1" value="0.5"
+               oninput="calcTotal({{ c.idCorte }}, {{ c.precioPorKilo }})">
+        <span class="peso-unit">kg</span>
+      </div>
+      <p class="peso-total" id="total-{{ c.idCorte }}">
+        Total: ${{ "%.2f"|format(c.precioPorKilo * 0.5) }}
+      </p>
+      <form method="POST" action="{{ url_for('venta.agregar_corte_al_carrito', id_corte=c.idCorte) }}"
+            id="form-corte-{{ c.idCorte }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="peso" id="peso-hidden-{{ c.idCorte }}" value="0.5">
+        <button type="submit" class="btn-add" onclick="syncPeso({{ c.idCorte }})">
+          <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Agregar al carrito
+        </button>
+      </form>
+    </div>
+
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">🥩</div>
+    <p>No hay cortes disponibles en este momento</p>
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- Toast notificacion -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Filtros ──
+  let activeCat = 'Todos';
+
+  function setAnimal(btn) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    activeCat = btn.dataset.cat;
+    filtrar();
+  }
+
+  function filtrar() {
+    const txt = document.getElementById('search-input').value.toLowerCase();
+    const cards = document.querySelectorAll('.product-card');
+    let visible = 0;
+    cards.forEach(card => {
+      const nombre = card.dataset.nombre;
+      const cat    = card.dataset.categoria;
+      let show = true;
+      if (activeCat !== 'Todos' && cat !== activeCat) show = false;
+      if (txt && !nombre.includes(txt)) show = false;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    document.getElementById('count-visible').textContent = visible;
+  }
+
+  function resetFiltros() {
+    document.getElementById('search-input').value = '';
+    activeCat = 'Todos';
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    document.querySelector('.pill[data-cat="Todos"]').classList.add('active');
+    filtrar();
+  }
+
+  // ── Calcular total ──
+  function calcTotal(id, precioPorKilo) {
+    const input = document.getElementById('peso-' + id);
+    let peso = parseFloat(input.value) || 0;
+    if (peso < 0) peso = 0;
+    const total = (peso * precioPorKilo).toFixed(2);
+    document.getElementById('total-' + id).textContent = 'Total: $' + total;
+    document.getElementById('peso-hidden-' + id).value = peso;
+  }
+
+  function syncPeso(id) {
+    const input = document.getElementById('peso-' + id);
+    document.getElementById('peso-hidden-' + id).value = input.value;
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+
+{% endblock %}
