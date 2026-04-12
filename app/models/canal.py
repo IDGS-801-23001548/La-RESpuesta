@@ -11,6 +11,7 @@ class Canal(db.Model):
     Descripcion     = db.Column(db.String(200), nullable=True)
     Peso            = db.Column(db.Float, nullable=True)
     fechaSacrificio = db.Column(db.Date, nullable=False)
+    fechaCaducidad  = db.Column(db.Date, nullable=True)
     estatus         = db.Column(db.String(20), default='EnEspera')
 
     categoria = db.relationship(

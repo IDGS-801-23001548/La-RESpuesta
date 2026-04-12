@@ -241,6 +241,7 @@ def pagar_orden(id):
     orden.PagoProveedor = 'Pagado'
     orden.metodoPago    = metodo
     orden.fechaPago     = datetime.now()
+    orden.idUsuarioPago = current_user.id if current_user.is_authenticated else None
     db.session.commit()
 
     flash(f'Orden {orden.numeroLote} pagada por {metodo}.', 'success')

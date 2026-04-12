@@ -112,6 +112,10 @@
                     </p>
                     {% endif %}
                 </div>
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Solicitado por</p>
+                    <p class="text-sm text-gray-700 font-medium">{{ orden.usuario.email if orden.usuario else '—' }}</p>
+                </div>
                 {% if orden.notas %}
                 <div class="col-span-2 sm:col-span-3">
                     <p class="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Notas</p>

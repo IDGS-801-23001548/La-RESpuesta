@@ -50,26 +50,10 @@ def _choices_productos_disponibles(receta_actual=None):
 
 
 def _choices_materias_con_lote():
-    """Materias proveidas que tienen al menos un lote Disponible con stock > 0.
-    Devuelve lista de dicts con id (idMateriaProveida) y nombre legible."""
-    # Buscar idMateriaProveida que tengan lotes disponibles
-    ids_con_lote = (
-        db.session.query(Lote.idMateriaProveida)
-        .filter(
-            Lote.idMateriaProveida.isnot(None),
-            Lote.estatus == 'Disponible',
-            Lote.totalMateria > 0,
-        )
-        .distinct()
-        .all()
-    )
-    ids_set = {row[0] for row in ids_con_lote}
-    if not ids_set:
-        return []
-
+    """Todas las materias primas disponibles (via MateriaProveida).
+    La receta es un plano — no requiere lotes existentes."""
     materias = (
         MateriaProveida.query
-        .filter(MateriaProveida.idMateriaProveida.in_(ids_set))
         .order_by(MateriaProveida.nombreMateriaProveida)
         .all()
     )
@@ -80,26 +64,9 @@ def _choices_materias_con_lote():
 
 
 def _choices_cortes_con_lote():
-    """Cortes que tienen al menos un lote Disponible con stock > 0 (via canal_corte).
-    Devuelve lista de dicts con id (idCorte) y nombre legible."""
-    # Camino: Corte → CanalCorte → Lote (donde idCanalCorte != NULL y Disponible)
-    subq_cc = (
-        db.session.query(CanalCorte.idCorte)
-        .join(Lote, Lote.idCanalCorte == CanalCorte.idCanalCorte)
-        .filter(
-            Lote.estatus == 'Disponible',
-            Lote.totalMateria > 0,
-        )
-        .distinct()
-        .subquery()
-    )
-
-    cortes = (
-        Corte.query
-        .filter(Corte.idCorte.in_(db.session.query(subq_cc.c.idCorte)))
-        .order_by(Corte.nombreCorte)
-        .all()
-    )
+    """Todos los cortes disponibles en el catalogo.
+    La receta es un plano — no requiere lotes existentes."""
+    cortes = Corte.query.order_by(Corte.nombreCorte).all()
     resultado = []
     for c in cortes:
         cat = c.categoria
