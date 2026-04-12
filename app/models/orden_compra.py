@@ -16,6 +16,10 @@ class OrdenCompra(db.Model):
     metodoPago      = db.Column(db.String(20), nullable=True)
     fechaPago       = db.Column(db.DateTime, nullable=True)
 
+    # Trazabilidad
+    idUsuario       = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    idUsuarioPago   = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
     proveedor = db.relationship(
         'Proveedor',
         backref=db.backref('ordenesCompra', lazy='dynamic')
@@ -25,4 +29,15 @@ class OrdenCompra(db.Model):
         'Canal',
         backref='ordenCompra',
         lazy='dynamic'
+    )
+
+    usuario = db.relationship(
+        'User',
+        foreign_keys=[idUsuario],
+        backref=db.backref('ordenesCompra', lazy='dynamic'),
+    )
+    usuarioPago = db.relationship(
+        'User',
+        foreign_keys=[idUsuarioPago],
+        backref=db.backref('pagosProveedores', lazy='dynamic'),
     )

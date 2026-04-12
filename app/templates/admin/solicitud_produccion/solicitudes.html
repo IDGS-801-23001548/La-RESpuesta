@@ -177,6 +177,7 @@
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Receta / Corte</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Cantidad</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Fecha</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Solicitado por</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Estatus</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
                 </tr>
@@ -196,6 +197,9 @@
                     <td class="px-4 py-3 text-xs text-gray-700">{{ s.cantidadProducir }}</td>
                     <td class="px-4 py-3 text-xs font-mono text-gray-500">
                         {{ s.fechaSolicitud.strftime('%d/%m/%Y %H:%M') if s.fechaSolicitud else '—' }}
+                    </td>
+                    <td class="px-4 py-3 text-xs text-gray-600">
+                        {{ s.usuario.email if s.usuario else '—' }}
                     </td>
                     <td class="px-4 py-3">
                         {% set badge = {
@@ -225,7 +229,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-xs text-gray-400">
+                    <td colspan="8" class="px-4 py-8 text-center text-xs text-gray-400">
                         No hay solicitudes registradas todavia.
                     </td>
                 </tr>

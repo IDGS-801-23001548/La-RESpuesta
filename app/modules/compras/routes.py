@@ -9,9 +9,9 @@ from app.models import (
     OrdenCompra, Canal, CanalCorte, Corte, Categoria,
     Lote, ProductoUnitario, Producto,
 )
-from flask_security import login_required
+from flask_security import login_required, current_user
 from flask_security.decorators import roles_required
-from datetime import date
+from datetime import date, timedelta
 from sqlalchemy import func
 
 # ── Mapa de meses en español ──────────────────────────────────────────────────
@@ -312,7 +312,7 @@ def compra_nueva():
                 mp_id = 0
 
             cant_u    = _parse_int(cantidades_u[i]       if i < len(cantidades_u)     else '')
-            cant_x    = _parse_int(cantidades_x[i]       if i < len(cantidades_x)     else '')
+            cant_x    = _parse_float(cantidades_x[i]     if i < len(cantidades_x)     else '')
             precio    = _parse_float(precios[i]           if i < len(precios)          else '')
             fecha_cad = _parse_date(fechas_caducidad[i]   if i < len(fechas_caducidad)  else '')
             fecha_sac = _parse_date(fechas_sacrificio[i]  if i < len(fechas_sacrificio) else '')
@@ -383,7 +383,7 @@ def compra_nueva():
                 )
                 continue
 
-            total_costo  = cant_u * precio
+            total_costo   = cant_u * cant_x * precio
             total_materia = cant_u * cant_x
             total_orden += total_costo
             lineas.append((mp_proveida, materia, tipo, cant_u, cant_x, precio,
@@ -403,6 +403,7 @@ def compra_nueva():
             fechaDeOrden = fecha_orden,
             notas        = notas if notas else None,
             totalOrden   = round(total_orden, 2),
+            idUsuario    = current_user.id if current_user and current_user.is_authenticated else None,
         )
         db.session.add(orden)
         db.session.flush()
@@ -429,12 +430,14 @@ def compra_nueva():
             elif tipo == 'Canal':
                 n_canales = max(1, int(round(cant_u)))
                 for _ in range(n_canales):
+                    fecha_cad_canal = (fecha_sac + timedelta(days=7)) if (fecha_sac and estatus == 'Recibida') else None
                     canal = Canal(
                         idCategoria     = materia.idCategoria,
                         idOrdenCompra   = orden.idOrdenCompra,
                         Descripcion     = materia.nombreMateriaPrima,
                         Peso            = peso_c if peso_c else None,
                         fechaSacrificio = fecha_sac,
+                        fechaCaducidad  = fecha_cad_canal,
                         estatus         = estatus_item,
                     )
                     db.session.add(canal)
@@ -493,11 +496,13 @@ def compra_recibir(id):
         ).all():
             pu.estatus = 'Disponible'
 
-        # Canales en espera
+        # Canales en espera — auto-asignar fecha de caducidad (7 dias desde sacrificio)
         for canal in Canal.query.filter_by(
             idOrdenCompra=orden.idOrdenCompra, estatus='EnEspera'
         ).all():
             canal.estatus = 'Disponible'
+            if not canal.fechaCaducidad and canal.fechaSacrificio:
+                canal.fechaCaducidad = canal.fechaSacrificio + timedelta(days=7)
 
         db.session.commit()
         flash('Orden marcada como Recibida. Los ítems ahora están Disponibles.', 'success')

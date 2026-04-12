@@ -298,8 +298,8 @@ def _solicitud_nueva_personalizada():
                 idCorte          = None,
                 cantidadProducir = cantidad_producir,
                 fechaSolicitud   = datetime.now(),
-                fechaCompletada  = datetime.now(),
-                estatus          = 'Completada',
+                fechaCompletada  = None,
+                estatus          = 'Pendiente',
                 idUsuario        = current_user.id if current_user and current_user.is_authenticated else None,
                 notas            = (request.form.get('notas') or '').strip() or None,
             )
@@ -309,23 +309,18 @@ def _solicitud_nueva_personalizada():
             for rmp, lote, cant in seleccion:
                 db.session.add(SolicitudProduccionDetalle(
                     idSolicitud       = nueva.idSolicitud,
-                    idMateriaPrima    = rmp.idMateriaPrima,  # None para cortes
+                    idMateriaPrima    = rmp.idMateriaPrima,
                     idLote            = lote.idLote,
+                    idCanalCorte      = None,
+                    idLoteProducido   = None,
                     cantidadConsumida = cant,
                 ))
-                lote.totalMateria = (lote.totalMateria or 0) - cant
-                if lote.totalMateria <= 0:
-                    lote.totalMateria = 0
-                    lote.estatus      = 'Agotado'
-
-            producto = receta_obj.producto
-            if producto is not None:
-                producto.StockProducto = (producto.StockProducto or 0) + cantidad_producir
 
             db.session.commit()
             flash(
-                f'Solicitud de produccion creada. Se produjeron {cantidad_producir} unidad(es) '
-                f'de "{receta_obj.nombreReceta}".',
+                f'Solicitud de produccion creada como Pendiente para '
+                f'"{receta_obj.nombreReceta}" ({cantidad_producir} unidades). '
+                f'Un administrador debe autorizarla en Produccion.',
                 'success'
             )
             return redirect(url_for('solicitud_de_produccion.solicitudes'))
