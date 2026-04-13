@@ -261,13 +261,11 @@ def _completar_login(user, remember):
     if user.has_role('admin'):
         return redirect(url_for('admin.dashboard'))
 
-<<<<<<< HEAD
     if user.has_role('Repartidor') or user.has_role('repartidor'):
         return redirect(url_for('repartidor.pedidos'))
-=======
+      
     if user.has_role('Cajero'):
         return redirect(url_for('mostrador.mostradorVenta'))
->>>>>>> origin/develop
 
     if user.has_role('end-user'):
         return redirect(url_for('venta.inicio'))

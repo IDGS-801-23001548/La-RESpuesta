@@ -28,7 +28,6 @@ def _init_mongo(app):
         mongo_client.server_info() 
         db_mongo    = mongo_client['La_Respuesta']
         mongo_fotos = db_mongo['La_Respuesta_fotos']
-        app.logger.info(" MongoDB conectado correctamente")
         app.logger.info("MongoDB conectado correctamente")
     except Exception as e:
         app.logger.error(f"MongoDB ERROR: {e}")
