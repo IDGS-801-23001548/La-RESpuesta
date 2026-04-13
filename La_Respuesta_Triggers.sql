@@ -77,3 +77,89 @@ INSERT INTO unidad_medida (nombreUnidadMedida, idConversor) VALUES
 
 
 INSERT INTO Categoria (nombreCategoria) VALUES ('RES'), ('CERDO'), ('POLLO'), ('BORREGO'), ('OTRO');
+
+
+-- Procedure para crear un pedido en una venta de mostrador
+DELIMITER $$
+
+CREATE PROCEDURE crear_pedido_mostrador(
+    IN p_idUsuario INT,
+    IN p_tipo VARCHAR(50)
+)
+BEGIN
+    INSERT INTO pedido (
+        idUsuario,
+        Total,
+        Tipo,
+        Estatus,
+        Entrega,
+        Direccion,
+        Notas,
+        fechaCreacion
+    )
+    VALUES (
+        p_idUsuario,
+        0, -- inicia en 0, luego puedes actualizarlo
+        p_tipo,
+        'Finalizado',
+        'Mostrador',
+        '',
+        'Venta generada en sucursal',
+        NOW()
+    );
+
+    -- Retornar el ID generado
+    SELECT LAST_INSERT_ID() AS idPedido;
+END$$
+
+DELIMITER ;
+
+
+
+-- Procedure para asignar productos unitarios a un pedido y actualizar su estatus
+DELIMITER $$
+
+CREATE PROCEDURE asignar_productos_a_pedido(
+    IN p_idPedido INT,
+    IN p_idProducto INT,
+    IN p_cantidad INT
+)
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE v_idProductoUnitario INT;
+
+    -- Cursor para obtener productos disponibles ordenados por caducidad
+    DECLARE cur_productos CURSOR FOR
+        SELECT idProductoUnitario
+        FROM producto_unitario
+        WHERE idProducto = p_idProducto
+          AND estatus = 'Disponible'
+        ORDER BY FechaCaducidad ASC;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur_productos;
+
+    read_loop: LOOP
+        FETCH cur_productos INTO v_idProductoUnitario;
+
+        IF done = 1 OR p_cantidad <= 0 THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Actualizar el producto unitario
+        UPDATE producto_unitario
+        SET idPedido = p_idPedido,
+            estatus = 'Vendido'
+        WHERE idProductoUnitario = v_idProductoUnitario;
+
+        -- Reducir contador
+        SET p_cantidad = p_cantidad - 1;
+
+    END LOOP;
+
+    CLOSE cur_productos;
+
+END$$
+
+DELIMITER ;
