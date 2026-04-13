@@ -103,11 +103,16 @@ def index():
             receta_obj = sol.receta
             producto = receta_obj.producto if receta_obj else None
             foto = _foto_b64_de(receta_obj.idFoto) if receta_obj else None
+            # Derivar categoría desde el producto de la receta
+            cat_nombre = '—'
+            if producto and producto.idCategoria:
+                cat_obj = Categoria.query.get(producto.idCategoria)
+                cat_nombre = cat_obj.nombreCategoria if cat_obj else '—'
             items_pendientes.append({
                 'solicitud':        sol,
                 'tipo':             'Personalizada',
                 'nombre':           sol.nombreReceta,
-                'categoria':        '—',
+                'categoria':        cat_nombre,
                 'canal_id':         '—',
                 'canal_peso':       '—',
                 'cantidad_esperada': f'{sol.cantidadProducir} uds',
@@ -165,6 +170,136 @@ def completar(id):
     if sol.tipoReceta == 'Personalizada':
         return _completar_personalizada(sol)
     return _completar_corte(sol)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  CANCELAR — cancelar solicitud desde el modulo de produccion
+# ═════════════════════════════════════════════════════════════════════════════
+
+@produccion.route('/produccion/<int:id>/cancelar', methods=['POST'])
+@login_required
+@roles_required('admin')
+def cancelar(id):
+    sol = SolicitudProduccion.query.get_or_404(id)
+
+    if sol.estatus == 'Completada':
+        flash('No se puede cancelar una solicitud ya completada.', 'warning')
+        return redirect(url_for('produccion.index'))
+
+    if sol.estatus == 'Cancelada':
+        flash('Esta solicitud ya fue cancelada.', 'warning')
+        return redirect(url_for('produccion.index'))
+
+    sol.estatus = 'Cancelada'
+    db.session.commit()
+
+    email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+    current_app.logger.info(
+        f"Solicitud de produccion cancelada (desde Produccion) | solicitud=#{sol.idSolicitud} "
+        f"| tipo={sol.tipoReceta} | nombre={sol.nombreReceta or '—'} "
+        f"| usuario={email_usuario} | ip={request.remote_addr}"
+    )
+
+    flash(f'Solicitud #{sol.idSolicitud} cancelada.', 'success')
+    return redirect(url_for('produccion.index'))
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  CORREGIR — ajustar peso de una produccion completada (solo tipo Corte)
+# ═════════════════════════════════════════════════════════════════════════════
+
+@produccion.route('/produccion/<int:id>/corregir', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin')
+def corregir(id):
+    sol = SolicitudProduccion.query.get_or_404(id)
+
+    if sol.estatus != 'Completada':
+        flash('Solo se pueden corregir solicitudes completadas.', 'warning')
+        return redirect(url_for('produccion.index'))
+
+    if sol.tipoReceta != 'Corte':
+        flash('La correccion de peso solo aplica para producciones de tipo Corte.', 'warning')
+        return redirect(url_for('produccion.index'))
+
+    detalle = sol.detalles.first()
+    cc = CanalCorte.query.get(detalle.idCanalCorte) if detalle and detalle.idCanalCorte else None
+    lote_prod = Lote.query.get(detalle.idLoteProducido) if detalle and detalle.idLoteProducido else None
+    corte = Corte.query.get(cc.idCorte) if cc else None
+    canal = Canal.query.get(cc.idCanal) if cc else None
+    cat = corte.categoria if corte and corte.categoria else None
+
+    info = {
+        'corte_nombre':      corte.nombreCorte if corte else '—',
+        'categoria':         cat.nombreCategoria if cat else '—',
+        'canal_id':          canal.idCanal if canal else '—',
+        'cantidad_esperada': cc.CantidadEsperada if cc else 0,
+        'peso_actual':       lote_prod.totalMateria if lote_prod else 0,
+        'merma_actual':      cc.Merma if cc else 0,
+        'lote_numero':       lote_prod.numeroLote if lote_prod else '—',
+    }
+
+    if request.method == 'POST':
+        try:
+            nuevo_peso = float(request.form.get('cantidadCorregida') or 0)
+        except (TypeError, ValueError):
+            flash('La cantidad debe ser un numero valido.', 'danger')
+            return redirect(url_for('produccion.corregir', id=id))
+
+        if nuevo_peso <= 0:
+            flash('La cantidad debe ser mayor a cero.', 'danger')
+            return redirect(url_for('produccion.corregir', id=id))
+
+        peso_anterior = lote_prod.totalMateria if lote_prod else 0
+
+        try:
+            esperada = cc.CantidadEsperada or 0
+            nueva_merma = round(esperada - nuevo_peso, 3)
+
+            # Actualizar lote producido
+            lote_prod.totalMateria      = nuevo_peso
+            lote_prod.cantidadPorUnidad = nuevo_peso
+
+            # Actualizar canal_corte
+            cc.CantidadObtenida = nuevo_peso
+            cc.Merma            = nueva_merma
+
+            # Actualizar detalle
+            if detalle:
+                detalle.cantidadConsumida = nuevo_peso
+
+            db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.warning(
+                f"Produccion corregida (Corte) | solicitud=#{sol.idSolicitud} "
+                f"| corte={corte.nombreCorte if corte else '—'} "
+                f"| lote={lote_prod.numeroLote} "
+                f"| peso_anterior={peso_anterior:g}kg | peso_nuevo={nuevo_peso:g}kg "
+                f"| merma_nueva={nueva_merma:g}kg "
+                f"| corregido_por={email_usuario} | ip={request.remote_addr}"
+            )
+
+            flash(
+                f'Produccion corregida: {peso_anterior:g} kg → {nuevo_peso:g} kg. '
+                f'Nueva merma: {nueva_merma:g} kg.',
+                'success'
+            )
+            return redirect(url_for('produccion.index'))
+
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Error al corregir produccion | solicitud=#{sol.idSolicitud} | error={e}"
+            )
+            flash(f'Error al corregir: {e}', 'danger')
+            return redirect(url_for('produccion.corregir', id=id))
+
+    return render_template(
+        'admin/produccion/produccion_corregir.html',
+        solicitud=sol,
+        info=info,
+    )
 
 
 # ── Completar tipo Corte ─────────────────────────────────────────────────────
@@ -282,8 +417,19 @@ def _completar_personalizada(sol):
     for det in detalles:
         lote = Lote.query.get(det.idLote) if det.idLote else None
         mp   = det.materiaPrima
+
+        # Resolver nombre: materia prima directa o corte (via lote → canalCorte → corte)
+        if mp:
+            nombre_ing = mp.nombreMateriaPrima
+        elif lote and lote.canalCorte:
+            corte_obj = Corte.query.get(lote.canalCorte.idCorte)
+            cat = corte_obj.categoria if corte_obj else None
+            nombre_ing = f'{corte_obj.nombreCorte} ({cat.nombreCategoria})' if (corte_obj and cat) else (corte_obj.nombreCorte if corte_obj else '—')
+        else:
+            nombre_ing = '—'
+
         ingredientes_info.append({
-            'nombre':     mp.nombreMateriaPrima if mp else '—',
+            'nombre':     nombre_ing,
             'lote':       (lote.numeroLote or f'#{lote.idLote}') if lote else '—',
             'necesario':  det.cantidadConsumida,
             'disponible': lote.totalMateria if lote else 0,
@@ -304,7 +450,13 @@ def _completar_personalizada(sol):
 
         for det in detalles:
             lote = Lote.query.get(det.idLote) if det.idLote else None
-            nombre_ing = det.materiaPrima.nombreMateriaPrima if det.materiaPrima else '—'
+            if det.materiaPrima:
+                nombre_ing = det.materiaPrima.nombreMateriaPrima
+            elif lote and lote.canalCorte:
+                corte_obj = Corte.query.get(lote.canalCorte.idCorte)
+                nombre_ing = corte_obj.nombreCorte if corte_obj else '—'
+            else:
+                nombre_ing = '—'
 
             if not lote or lote.estatus != 'Disponible':
                 errores.append(f'El lote para "{nombre_ing}" ya no esta disponible.')
