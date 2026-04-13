@@ -2,5 +2,599 @@
 
 {% block content %}
 
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
-{% endblock content %}
+<!-- ─── Header ─── -->
+<div class="flex items-start justify-between mb-5">
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Dashboard de Ventas</h2>
+        <p class="text-xs text-gray-400 mt-0.5">
+            Pedidos, productos y presentaciones más vendidas ·
+            {% if preset == 'hoy' %}Hoy
+            {% elif preset == 'semana' %}Esta semana
+            {% elif preset == 'mes' %}Este mes
+            {% else %}Rango personalizado{% endif %}
+        </p>
+    </div>
+
+    <a href="{{ url_for('venta.pedidos') }}"
+        class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
+               text-white text-sm font-medium rounded-lg shadow-sm shadow-green-200
+               transition-all duration-150 hover:-translate-y-px active:translate-y-0">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        Ver pedidos
+    </a>
+</div>
+
+<!-- ─── Filtros de rango ─── -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-5">
+    <form method="GET" action="{{ url_for('admin.dashboard_ventas') }}" class="flex flex-wrap items-end gap-3">
+
+        <div class="flex gap-1.5">
+            {% for key, label in [('hoy','Hoy'),('semana','Semana'),('mes','Mes'),('rango','Rango')] %}
+            <a href="{{ url_for('admin.dashboard_ventas', preset=key) }}"
+                class="px-3 py-2 text-xs font-semibold rounded-lg transition-all
+                       {% if preset == key %}
+                         bg-green-600 text-white shadow-sm shadow-green-200
+                       {% else %}
+                         bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200
+                       {% endif %}">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+
+        <div class="h-8 w-px bg-gray-200 mx-1"></div>
+
+        <input type="hidden" name="preset" value="rango">
+        <div>
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Desde</label>
+            <input type="date" name="desde" value="{{ desde.strftime('%Y-%m-%d') }}"
+                class="px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg
+                       outline-none focus:border-green-400">
+        </div>
+        <div>
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Hasta</label>
+            <input type="date" name="hasta" value="{{ hasta.strftime('%Y-%m-%d') }}"
+                class="px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg
+                       outline-none focus:border-green-400">
+        </div>
+
+        <button type="submit"
+            class="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold rounded-lg transition-all">
+            Aplicar
+        </button>
+
+        <p class="ml-auto text-[11px] text-gray-400">
+            Mostrando del
+            <span class="font-semibold text-gray-600">{{ desde.strftime('%d/%m/%Y') }}</span>
+            al
+            <span class="font-semibold text-gray-600">{{ hasta.strftime('%d/%m/%Y') }}</span>
+        </p>
+    </form>
+</div>
+
+<!-- ═══════════════ KPIs principales ═══════════════ -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+
+    <!-- Total vendido -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 col-span-2 md:col-span-1">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-xl">💰</div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 leading-tight">Total<br>Vendido</p>
+        </div>
+        <p class="text-3xl font-bold text-green-700">${{ "%.2f"|format(total_vendido) }}</p>
+        <p class="text-[11px] text-gray-400 mt-1">
+            {% if cambio_total >= 0 %}
+            <span class="text-green-600 font-semibold">▲ {{ "%.1f"|format(cambio_total) }}%</span>
+            {% else %}
+            <span class="text-red-500 font-semibold">▼ {{ "%.1f"|format(cambio_total|abs) }}%</span>
+            {% endif %}
+            vs periodo anterior
+        </p>
+    </div>
+
+    <!-- Pedidos totales -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl">🛒</div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 leading-tight">Pedidos<br>Totales</p>
+        </div>
+        <p class="text-3xl font-bold text-blue-700">{{ total_pedidos }}</p>
+        <p class="text-[11px] text-gray-400 mt-1">
+            Ticket prom. <span class="font-semibold text-gray-600">${{ "%.2f"|format(ticket_promedio) }}</span>
+        </p>
+    </div>
+
+    <!-- Pedidos finalizados -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-xl">✅</div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 leading-tight">Finali-<br>zados</p>
+        </div>
+        <p class="text-3xl font-bold text-emerald-700">{{ pedidos_finalizados }}</p>
+        <p class="text-[11px] text-gray-400 mt-1">
+            <span class="font-semibold text-gray-600">{{ "%.0f"|format(pedidos_finalizados / total_pedidos * 100 if total_pedidos > 0 else 0) }}%</span>
+            de conversión
+        </p>
+    </div>
+
+    <!-- Pedidos cancelados -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-xl">❌</div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 leading-tight">Cancela-<br>dos</p>
+        </div>
+        <p class="text-3xl font-bold text-red-600">{{ pedidos_cancelados }}</p>
+        <p class="text-[11px] text-gray-400 mt-1">
+            <span class="font-semibold text-gray-600">{{ "%.0f"|format(pedidos_cancelados / total_pedidos * 100 if total_pedidos > 0 else 0) }}%</span>
+            del total
+        </p>
+    </div>
+</div>
+
+<!-- ═══════════════ Fila de KPIs secundarios ═══════════════ -->
+<div class="grid grid-cols-3 gap-3 mb-5">
+
+    <!-- Por tipo de pago -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-3">Ingresos por tipo de pago</p>
+        <div class="space-y-2.5">
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-600 font-medium">💵 Efectivo</span>
+                    <span class="font-semibold text-gray-800">${{ "%.2f"|format(total_efectivo) }}</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-green-500 rounded-full" style="width: {{ pct_efectivo }}%"></div>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-600 font-medium">💳 Tarjeta</span>
+                    <span class="font-semibold text-gray-800">${{ "%.2f"|format(total_tarjeta) }}</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-500 rounded-full" style="width: {{ pct_tarjeta }}%"></div>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-600 font-medium">🏦 Transferencia</span>
+                    <span class="font-semibold text-gray-800">${{ "%.2f"|format(total_transferencia) }}</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-purple-500 rounded-full" style="width: {{ pct_transferencia }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Por tipo de entrega -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-3">Pedidos por tipo de entrega</p>
+        <div class="space-y-2.5">
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-600 font-medium">🏪 Mostrador</span>
+                    <span class="font-semibold text-gray-800">{{ pedidos_mostrador }}</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full" style="width: {{ pct_mostrador }}%"></div>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-600 font-medium">🚚 Domicilio</span>
+                    <span class="font-semibold text-gray-800">{{ pedidos_domicilio }}</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-orange-500 rounded-full" style="width: {{ pct_domicilio }}%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-2 text-center">
+            <div>
+                <p class="text-lg font-bold text-amber-600">{{ pedidos_mostrador }}</p>
+                <p class="text-[10px] text-gray-400">Mostrador</p>
+            </div>
+            <div>
+                <p class="text-lg font-bold text-orange-600">{{ pedidos_domicilio }}</p>
+                <p class="text-[10px] text-gray-400">Domicilio</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatus actual -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-3">Estatus de pedidos activos</p>
+        <div class="space-y-2">
+            <div class="flex items-center justify-between px-3 py-2.5 bg-yellow-50 rounded-lg border border-yellow-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                    <span class="text-xs font-medium text-gray-700">En Curso</span>
+                </div>
+                <span class="text-sm font-bold text-yellow-700">{{ pedidos_en_curso }}</span>
+            </div>
+            <div class="flex items-center justify-between px-3 py-2.5 bg-green-50 rounded-lg border border-green-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span class="text-xs font-medium text-gray-700">Finalizados</span>
+                </div>
+                <span class="text-sm font-bold text-green-700">{{ pedidos_finalizados }}</span>
+            </div>
+            <div class="flex items-center justify-between px-3 py-2.5 bg-red-50 rounded-lg border border-red-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                    <span class="text-xs font-medium text-gray-700">Cancelados</span>
+                </div>
+                <span class="text-sm font-bold text-red-600">{{ pedidos_cancelados }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ Gráficas: Productos más vendidos + Tipos de pago ═══════════════ -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+
+    <!-- Gráfica de barras: top productos -->
+    <div class="md:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <p class="text-sm font-semibold text-gray-800">Productos más vendidos</p>
+                <p class="text-[11px] text-gray-400">Por unidades vendidas en el periodo</p>
+            </div>
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1">Top 8</span>
+        </div>
+        <canvas id="chartProductos" height="220"></canvas>
+    </div>
+
+    <!-- Gráfica de pastel: tipo de pago -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="mb-4">
+            <p class="text-sm font-semibold text-gray-800">Tipo de pago</p>
+            <p class="text-[11px] text-gray-400">Distribución de métodos</p>
+        </div>
+        <canvas id="chartPago" height="190"></canvas>
+        <div class="mt-4 space-y-1.5">
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-sm bg-green-500 flex-shrink-0"></span>
+                <span class="text-gray-600 flex-1">Efectivo</span>
+                <span class="font-semibold text-gray-800">{{ "%.0f"|format(pct_efectivo) }}%</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-sm bg-blue-500 flex-shrink-0"></span>
+                <span class="text-gray-600 flex-1">Tarjeta</span>
+                <span class="font-semibold text-gray-800">{{ "%.0f"|format(pct_tarjeta) }}%</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-sm bg-purple-500 flex-shrink-0"></span>
+                <span class="text-gray-600 flex-1">Transferencia</span>
+                <span class="font-semibold text-gray-800">{{ "%.0f"|format(pct_transferencia) }}%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ Gráficas: Presentaciones + Entrega ═══════════════ -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+
+    <!-- Gráfica de pastel: presentaciones/cortes más vendidos -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="mb-4">
+            <p class="text-sm font-semibold text-gray-800">Presentaciones</p>
+            <p class="text-[11px] text-gray-400">Cortes más solicitados</p>
+        </div>
+        <canvas id="chartPresentaciones" height="190"></canvas>
+        <div class="mt-4 space-y-1.5" id="leyendaPresentaciones">
+            {# Se renderiza dinámicamente con JS #}
+        </div>
+    </div>
+
+    <!-- Tabla: Top productos con monto -->
+    <div class="md:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div>
+                <p class="text-sm font-semibold text-gray-800">Detalle de productos vendidos</p>
+                <p class="text-[11px] text-gray-400">Unidades y monto generado por producto</p>
+            </div>
+        </div>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-100">
+                    <th class="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400">#</th>
+                    <th class="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400">Producto</th>
+                    <th class="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-400">Unidades</th>
+                    <th class="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-400">Subtotal</th>
+                    <th class="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-400">% del total</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for i, p in enumerate(top_productos, 1) %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-5 py-3">
+                        {% if i == 1 %}
+                        <span class="text-base">🥇</span>
+                        {% elif i == 2 %}
+                        <span class="text-base">🥈</span>
+                        {% elif i == 3 %}
+                        <span class="text-base">🥉</span>
+                        {% else %}
+                        <span class="text-xs font-bold text-gray-300">{{ i }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-3">
+                        <p class="font-medium text-gray-800 text-xs">{{ p.NombreProducto }}</p>
+                        <p class="text-[10px] text-gray-400">${{ "%.2f"|format(p.PrecioVentaProducto) }} / u.</p>
+                    </td>
+                    <td class="px-5 py-3 text-right">
+                        <span class="text-xs font-semibold text-gray-700">{{ p.cantidad }}</span>
+                    </td>
+                    <td class="px-5 py-3 text-right">
+                        <span class="text-xs font-semibold text-green-700">${{ "%.2f"|format(p.subtotal) }}</span>
+                    </td>
+                    <td class="px-5 py-3 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 rounded-full"
+                                     style="width: {{ "%.0f"|format(p.subtotal / total_vendido * 100 if total_vendido > 0 else 0) }}%">
+                                </div>
+                            </div>
+                            <span class="text-[11px] text-gray-500 w-8 text-right">
+                                {{ "%.0f"|format(p.subtotal / total_vendido * 100 if total_vendido > 0 else 0) }}%
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-5 py-10 text-center">
+                        <p class="text-xs text-gray-400">Sin ventas en este periodo</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ═══════════════ Últimos pedidos ═══════════════ -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-5">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div>
+            <p class="text-sm font-semibold text-gray-800">Últimos pedidos</p>
+            <p class="text-[11px] text-gray-400">Los pedidos más recientes del periodo seleccionado</p>
+        </div>
+        <a href="{{ url_for('venta.pedidos') }}"
+           class="text-[11px] font-semibold text-green-600 hover:text-green-700 transition-colors">
+            Ver todos →
+        </a>
+    </div>
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="bg-gray-50 border-b border-gray-100">
+                <th class="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400">ID</th>
+                <th class="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400">Cliente</th>
+                <th class="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400">Entrega</th>
+                <th class="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400">Pago</th>
+                <th class="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400">Estatus</th>
+                <th class="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total</th>
+                <th class="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-400">Fecha</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+            {% for p in ultimos_pedidos %}
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-5 py-3">
+                    <span class="text-xs font-mono font-semibold text-gray-500">#{{ p.idPedido }}</span>
+                </td>
+                <td class="px-5 py-3">
+                    <p class="text-xs font-medium text-gray-800">
+                        {{ p.user.persona.nombre if p.user and p.user.persona else p.user.email if p.user else '—' }}
+                    </p>
+                </td>
+                <td class="px-5 py-3">
+                    {% if p.Entrega == 'Domicilio' %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-orange-50 text-orange-700 border border-orange-100">
+                        🚚 Domicilio
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">
+                        🏪 Mostrador
+                    </span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-3">
+                    {% if p.Tipo == 'Efectivo' %}
+                    <span class="text-[10px] font-medium text-gray-600">💵 Efectivo</span>
+                    {% elif p.Tipo == 'Tarjeta' %}
+                    <span class="text-[10px] font-medium text-gray-600">💳 Tarjeta</span>
+                    {% else %}
+                    <span class="text-[10px] font-medium text-gray-600">🏦 Transf.</span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-3">
+                    {% if p.Estatus == 'Finalizado' %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-green-50 text-green-700 border border-green-100">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Finalizado
+                    </span>
+                    {% elif p.Estatus == 'EnCurso' %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-yellow-50 text-yellow-700 border border-yellow-100">
+                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse"></span> En Curso
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Cancelado
+                    </span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-3 text-right">
+                    <span class="text-xs font-semibold text-gray-800">${{ "%.2f"|format(p.Total) }}</span>
+                </td>
+                <td class="px-5 py-3 text-right">
+                    <span class="text-[11px] text-gray-400">{{ p.fechaCreacion.strftime('%d/%m %H:%M') }}</span>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="px-5 py-10 text-center">
+                    <p class="text-xs text-gray-400">Sin pedidos en este periodo</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ═══════════════ Scripts de Chart.js ═══════════════ -->
+<script>
+    // ── Paleta compartida ──────────────────────────────────────
+    const verde      = '#16a34a';
+    const azul       = '#3b82f6';
+    const morado     = '#a855f7';
+    const amber      = '#f59e0b';
+    const rojo       = '#ef4444';
+    const paleta     = ['#16a34a','#3b82f6','#f59e0b','#a855f7','#ef4444','#06b6d4','#f97316','#84cc16'];
+
+    const chartDefaults = {
+        font: { family: 'Inter, system-ui, sans-serif' },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: '#1f2937',
+                titleFont: { size: 11, weight: '600' },
+                bodyFont: { size: 11 },
+                padding: 10,
+                cornerRadius: 8,
+                displayColors: false,
+            }
+        }
+    };
+
+    // ── 1. Gráfica de barras: Productos más vendidos ───────────
+    const labelsProductos = {{ top_productos | map(attribute='NombreProducto') | list | tojson }};
+    const cantProductos   = {{ top_productos | map(attribute='cantidad') | list | tojson }};
+
+    new Chart(document.getElementById('chartProductos'), {
+        type: 'bar',
+        data: {
+            labels: labelsProductos,
+            datasets: [{
+                data: cantProductos,
+                backgroundColor: paleta,
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            ...chartDefaults,
+            responsive: true,
+            maintainAspectRatio: true,
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    grid: { color: '#f3f4f6' },
+                    ticks: { font: { size: 11 }, color: '#9ca3af' }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 11, weight: '500' },
+                        color: '#374151',
+                        callback: function(v, i) {
+                            const l = labelsProductos[i];
+                            return l.length > 22 ? l.slice(0, 22) + '…' : l;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                ...chartDefaults.plugins,
+                tooltip: {
+                    ...chartDefaults.plugins.tooltip,
+                    callbacks: {
+                        label: ctx => ` ${ctx.raw} unidades vendidas`
+                    }
+                }
+            }
+        }
+    });
+
+    // ── 2. Gráfica de pastel: Tipo de pago ────────────────────
+    new Chart(document.getElementById('chartPago'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Efectivo', 'Tarjeta', 'Transferencia'],
+            datasets: [{
+                data: [{{ total_efectivo }}, {{ total_tarjeta }}, {{ total_transferencia }}],
+                backgroundColor: [verde, azul, morado],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '68%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    ...chartDefaults.plugins.tooltip,
+                    callbacks: {
+                        label: ctx => ` $${ctx.raw.toFixed(2)}`
+                    }
+                }
+            }
+        }
+    });
+
+    // ── 3. Gráfica de pastel: Presentaciones más vendidas ─────
+    const labelsPres = {{ presentaciones | map(attribute='nombre') | list | tojson }};
+    const dataPres   = {{ presentaciones | map(attribute='cantidad') | list | tojson }};
+    const coloresPres = paleta.slice(0, labelsPres.length);
+
+    new Chart(document.getElementById('chartPresentaciones'), {
+        type: 'doughnut',
+        data: {
+            labels: labelsPres,
+            datasets: [{
+                data: dataPres,
+                backgroundColor: coloresPres,
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '60%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    ...chartDefaults.plugins.tooltip,
+                    callbacks: {
+                        label: ctx => ` ${ctx.raw} unidades`
+                    }
+                }
+            }
+        }
+    });
+
+    // Leyenda dinámica presentaciones
+    const leyenda = document.getElementById('leyendaPresentaciones');
+    labelsPres.forEach((label, i) => {
+        const total = dataPres.reduce((a, b) => a + b, 0);
+        const pct = total > 0 ? Math.round(dataPres[i] / total * 100) : 0;
+        leyenda.innerHTML += `
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-sm flex-shrink-0" style="background:${coloresPres[i]}"></span>
+                <span class="text-gray-600 flex-1 truncate" title="${label}">${label.length > 18 ? label.slice(0,18)+'…' : label}</span>
+                <span class="font-semibold text-gray-800">${pct}%</span>
+            </div>`;
+    });
+</script>
+
+{% endblock %}
