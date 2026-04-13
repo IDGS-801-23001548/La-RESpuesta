@@ -38,10 +38,10 @@ if __name__ == '__main__':
 
         encrypted_password = hash_password('password')
 
-        if not user_datastore.find_user(email='emmanuelortizreyes3@gmail.com'):
+        if not user_datastore.find_user(email='LaRESpuestaAdmin@gmail.com'):
             user = user_datastore.create_user(
                 name        = 'admin', 
-                email       = 'emmanuelortizreyes3@gmail.com', 
+                email       = 'LaRESpuestaAdmin@gmail.com', 
                 password    = encrypted_password)
             
             user_datastore.add_role_to_user(user, 'admin')
@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
         db.session.commit()
 
-        user = user_datastore.find_user(email='emmanuelortizreyes3@gmail.com')
+        user = user_datastore.find_user(email='LaRESpuestaAdmin@gmail.com')
         if user:
             user_datastore.add_role_to_user(user, 'admin')
 
