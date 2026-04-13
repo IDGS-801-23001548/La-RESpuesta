@@ -32,5 +32,12 @@ class User(db.Model, UserMixin):
                                     backref='user', 
                                     uselist=False)
     
-    pedido              = db.relationship('Pedido', 
-                                    backref='userPedido')
+    pedido              = db.relationship('Pedido',
+                                           foreign_keys='Pedido.idUsuario',
+                                           backref='usuario_comprador',
+                                           lazy='dynamic')
+    
+    pedidos_a_repartir  = db.relationship('Pedido',
+                                           foreign_keys='Pedido.idRepartidor',
+                                           backref='usuario_repartidor', 
+                                           lazy='dynamic')

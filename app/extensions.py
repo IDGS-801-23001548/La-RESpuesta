@@ -25,7 +25,7 @@ def _init_mongo(app):
     uri = app.config.get('MONGO_URI', 'mongodb://localhost:27017/')
     try:
         mongo_client = MongoClient(uri, serverSelectionTimeoutMS=3000)
-        mongo_client.server_info()  # fuerza conexión real al arranque
+        mongo_client.server_info() 
         db_mongo    = mongo_client['La_Respuesta']
         mongo_fotos = db_mongo['La_Respuesta_fotos']
         app.logger.info("MongoDB conectado correctamente")
