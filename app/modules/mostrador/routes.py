@@ -154,6 +154,17 @@ def _get_cortes_con_stock():
     return [{'corte': corte, 'stock_kg': round(float(stock_kg), 3)} for corte, stock_kg in rows]
 
 
+# ─── CATÁLOGO DE CORTES (solo lectura) ──────────────────────
+
+@mostrador.route("/catalogo-cortes", methods=['GET'])
+@login_required
+@roles_required('admin')
+def catalogo_cortes():
+    cortes_raw  = _get_cortes_con_stock()
+    items_cortes = _enrich_cortes_con_fotos(cortes_raw)
+    return render_template("mostrador/cortes_catalogo.html", items_cortes=items_cortes)
+
+
 # ─── VISTA PRINCIPAL ────────────────────────────────────────
 
 @mostrador.route("/venta", methods=['GET'])
@@ -561,8 +572,8 @@ def cobrar():
         db.session.commit()
 
         current_app.logger.info(
-            f"Venta mostrador registrada | pedido_id={pedido.idPedido} "
-            f"| total=${total:.2f} | tipo_pago={tipo_pago} "
+            f"venta_mostrador | pedido_id={pedido.idPedido} "
+            f"| total={total:.2f} | tipo_pago={tipo_pago} "
             f"| productos={len(items_productos)} | cortes={len(items_cortes)} "
             f"| estatus={pedido.Estatus} "
             f"| usuario={current_user.email} "
@@ -778,8 +789,8 @@ def entregarPedido(id_pedido):
         db.session.commit()
 
         current_app.logger.info(
-            f"Pedido entregado | pedido_id={pedido.idPedido} "
-            f"| total=${pedido.Total:.2f} | tipo_pago={pedido.Tipo} "
+            f"pedido_entregado | pedido_id={pedido.idPedido} "
+            f"| total={pedido.Total:.2f} | tipo_pago={pedido.Tipo} "
             f"| estatus={pedido.Estatus} "
             f"| usuario={current_user.email} "
             f"| ip={request.remote_addr}"

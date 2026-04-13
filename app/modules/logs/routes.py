@@ -34,6 +34,8 @@ TIPOS = [
     ("receta",      re.compile(r"receta .+ creada|receta .+ actualizada|receta .+ eliminada", re.I)),
     ("proveedor",   re.compile(r"proveedor .+ creado|proveedor .+ actualizado|proveedor .+ eliminado|proveedor .+ estado:", re.I)),
     ("finanzas",    re.compile(r"movimiento financiero", re.I)),
+    ("venta",       re.compile(r"venta_mostrador", re.I)),
+    ("pedido",      re.compile(r"pedido_entregado", re.I)),
     ("creacion",    re.compile(r"creado", re.I)),
     ("edicion",     re.compile(r"actualizado", re.I)),
     ("estado",      re.compile(r"estado:", re.I)),
