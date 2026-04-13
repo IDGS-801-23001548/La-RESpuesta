@@ -6,10 +6,17 @@
      PROVEEDORES — Detalle
 ══════════════════════════════ -->
 
+{% set pago_labels = {
+    'contado':    'Contado',
+    'credito_8':  'Crédito 8 días',
+    'credito_15': 'Crédito 15 días',
+    'credito_30': 'Crédito 30 días'
+} %}
+
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
     <div class="flex items-center gap-3">
-        <a href="{{ url_for('admin.proveedores') }}"
+        <a href="{{ url_for('proveedor.proveedores') }}"
             class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
                    text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -17,17 +24,23 @@
             </svg>
         </a>
         <div>
-            <h2 class="text-lg font-semibold text-gray-800">Rastro Municipal del Norte</h2>
-            <p class="text-xs text-gray-400 mt-0.5">RFC: RMN850312AB1</p>
+            <h2 class="text-lg font-semibold text-gray-800">{{ proveedor.nombre }}</h2>
+            <p class="text-xs text-gray-400 mt-0.5">RFC: {{ proveedor.rfc }}</p>
         </div>
-        <!-- Badge estatus (RDF1402) -->
+        {% if proveedor.estatus == 'activo' %}
         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
                      bg-green-50 text-green-700 border border-green-200">
             <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Activo
         </span>
+        {% else %}
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                     bg-red-50 text-red-500 border border-red-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Inactivo
+        </span>
+        {% endif %}
     </div>
     <div class="flex items-center gap-2">
-        <a href="{{ url_for('admin.proveedores_editar', id=1) }}"
+        <a href="{{ url_for('proveedor.proveedores_editar', id=proveedor.id) }}"
             class="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 font-medium
                    border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -35,13 +48,13 @@
             </svg>
             Editar
         </a>
-        <a href="{{ url_for('admin.compras_nueva') }}"
+        <a href="{{ url_for('compras.compra_nueva') }}"
             class="flex items-center gap-2 px-3 py-2 text-sm text-white font-medium
                    bg-green-600 hover:bg-green-700 rounded-lg shadow-sm shadow-green-200 transition-colors">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            Nueva compra
+            Nueva orden
         </a>
     </div>
 </div>
@@ -51,7 +64,7 @@
     <!-- ── Columna izquierda: ficha (1/3) ── -->
     <div class="space-y-4">
 
-        <!-- Datos generales -->
+        <!-- Ficha del proveedor -->
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                 <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -61,24 +74,25 @@
             </div>
             <div class="p-5 space-y-3.5">
 
-                <!-- Avatar grande -->
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-xl bg-green-100 border border-green-200
-                                flex items-center justify-center text-green-700 font-bold text-lg">R</div>
+                                flex items-center justify-center text-green-700 font-bold text-lg">
+                        {{ proveedor.nombre[0].upper() }}
+                    </div>
                     <div>
-                        <p class="text-sm font-semibold text-gray-800">Rastro Municipal del Norte</p>
-                        <p class="text-xs text-gray-400 font-mono">RMN850312AB1</p>
+                        <p class="text-sm font-semibold text-gray-800">{{ proveedor.nombre }}</p>
+                        <p class="text-xs text-gray-400 font-mono">{{ proveedor.rfc }}</p>
                     </div>
                 </div>
 
                 <div class="border-t border-gray-100 pt-3 space-y-2.5">
                     {% set datos = [
-                        ("Contacto",    "Carlos Mendoza"),
-                        ("Teléfono",    "555-123-4567"),
-                        ("Correo",      "cmendoza@rastro.com"),
-                        ("Dirección",   "Carretera Norte km 4.5, León, Gto."),
-                        ("Cond. pago",  "Crédito 15 días"),
-                        ("Días entrega","Lun, Mié, Vie"),
+                        ("Contacto",   proveedor.contacto),
+                        ("Teléfono",   proveedor.telefono),
+                        ("Correo",     proveedor.correo or '—'),
+                        ("Dirección",  proveedor.direccion or '—'),
+                        ("Cond. pago", pago_labels.get(proveedor.condicion_pago, proveedor.condicion_pago)),
+                        ("Días entrega", proveedor.dias_entrega or '—'),
                     ] %}
                     {% for label, valor in datos %}
                     <div class="flex flex-col gap-0.5">
@@ -86,21 +100,18 @@
                         <span class="text-xs text-gray-700">{{ valor }}</span>
                     </div>
                     {% endfor %}
-                </div>
 
-                <!-- Productos que provee -->
-                <div class="border-t border-gray-100 pt-3">
-                    <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 block mb-2">Provee</span>
-                    <div class="flex flex-wrap gap-1.5">
-                        <span class="text-[10px] font-medium px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">Res</span>
-                        <span class="text-[10px] font-medium px-2 py-1 rounded-full bg-pink-50 text-pink-600 border border-pink-200">Cerdo</span>
+                    {% if proveedor.notas %}
+                    <div class="flex flex-col gap-0.5">
+                        <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Notas</span>
+                        <span class="text-xs text-gray-700">{{ proveedor.notas }}</span>
                     </div>
+                    {% endif %}
                 </div>
-
             </div>
         </div>
 
-        <!-- KPIs del proveedor -->
+        <!-- Estadísticas reales -->
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                 <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -109,19 +120,34 @@
                 <h3 class="text-sm font-semibold text-gray-700">Estadísticas</h3>
             </div>
             <div class="divide-y divide-gray-50">
-                {% set stats = [
-                    ("Órdenes totales",   "24"),
-                    ("Compras este mes",  "3"),
-                    ("Total comprado",    "$48,200"),
-                    ("Última compra",     "20 Feb 2026"),
-                    ("Días desde última", "7 días"),
-                ] %}
-                {% for label, valor in stats %}
                 <div class="flex items-center justify-between px-5 py-2.5">
-                    <span class="text-xs text-gray-500">{{ label }}</span>
-                    <span class="text-xs font-semibold text-gray-800">{{ valor }}</span>
+                    <span class="text-xs text-gray-500">Órdenes totales</span>
+                    <span class="text-xs font-semibold text-gray-800">{{ stats.total_ordenes }}</span>
                 </div>
-                {% endfor %}
+                <div class="flex items-center justify-between px-5 py-2.5">
+                    <span class="text-xs text-gray-500">Órdenes este mes</span>
+                    <span class="text-xs font-semibold text-gray-800">{{ stats.compras_mes }}</span>
+                </div>
+                <div class="flex items-center justify-between px-5 py-2.5">
+                    <span class="text-xs text-gray-500">Total comprado</span>
+                    <span class="text-xs font-semibold text-green-700">
+                        {% if stats.total_comprado > 0 %}
+                        ${{ "{:,.2f}".format(stats.total_comprado) }}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between px-5 py-2.5">
+                    <span class="text-xs text-gray-500">Última orden</span>
+                    <span class="text-xs font-semibold text-gray-800">
+                        {% if stats.ultima_compra %}
+                        {{ stats.ultima_compra.strftime('%d/%m/%Y') }}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -130,80 +156,144 @@
     <!-- ── Columna derecha: historial (2/3) ── -->
     <div class="xl:col-span-2">
 
-        <!-- Historial de compras (RDF1401 — parte del CRUD) -->
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
-                    <h3 class="text-sm font-semibold text-gray-700">Historial de compras</h3>
+                    <h3 class="text-sm font-semibold text-gray-700">Historial de órdenes de compra</h3>
+                    <span class="ml-1 text-[11px] font-medium text-gray-400">{{ ordenes|length }} total</span>
                 </div>
-                <a href="{{ url_for('admin.compras') }}"
-                    class="text-xs text-green-600 hover:text-green-800 font-medium hover:underline">Ver todas →</a>
+                <a href="{{ url_for('compras.compra') }}"
+                    class="text-xs text-green-600 hover:text-green-800 font-medium hover:underline">
+                    Ver todas las órdenes →
+                </a>
             </div>
 
+            {% if ordenes %}
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="text-left border-b border-gray-100">
-                            <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"># Orden</th>
+                            <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">N° Lote</th>
                             <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Fecha</th>
-                            <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Productos</th>
-                            <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Total</th>
-                            <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Estado</th>
+                            <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Artículos</th>
+                            <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Total</th>
+                            <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Estatus</th>
                             <th class="px-4 py-3"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
-                        {% set historial = [
-                            ("OC-0024", "20 Feb 2026", "1 canal res + 2 medias",  "$3,850.00", "recibida"),
-                            ("OC-0021", "15 Feb 2026", "2 canales res",            "$2,100.00", "recibida"),
-                            ("OC-0018", "08 Feb 2026", "1 canal res + 3 cerdos",  "$4,200.00", "recibida"),
-                            ("OC-0015", "01 Feb 2026", "4 cerdos",                "$1,800.00", "recibida"),
-                            ("OC-0012", "25 Ene 2026", "2 canales res",            "$3,600.00", "recibida"),
-                        ] %}
-                        {% for orden, fecha, productos, total, estado in historial %}
+                        {% for orden in ordenes %}
                         <tr class="hover:bg-gray-50/70 transition-colors group">
+
                             <td class="px-4 py-3">
-                                <span class="font-mono text-xs font-semibold text-gray-700">{{ orden }}</span>
-                            </td>
-                            <td class="px-4 py-3 text-xs text-gray-500">{{ fecha }}</td>
-                            <td class="px-4 py-3 text-xs text-gray-600">{{ productos }}</td>
-                            <td class="px-4 py-3">
-                                <span class="text-sm font-semibold text-gray-800">{{ total }}</span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                             bg-green-50 text-green-700 border border-green-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Recibida
+                                <span class="font-mono text-xs font-semibold text-gray-700">
+                                    {{ orden.numeroLote or '—' }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3">
-                                <a href="{{ url_for('admin.compras_detalle', id=loop.index) }}"
-                                    class="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center
-                                           rounded-md text-gray-400 hover:text-green-600 hover:bg-green-50 transition-all">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </a>
+
+                            <td class="px-4 py-3 text-xs text-gray-500">
+                                {{ orden.fechaDeOrden.strftime('%d/%m/%Y') }}
                             </td>
+
+                            <td class="px-4 py-3">
+                                {% set n = orden.lotes.count() %}
+                                <span class="text-xs text-gray-500">
+                                    {{ n }} artículo{{ 's' if n != 1 }}
+                                </span>
+                            </td>
+
+                            <td class="px-4 py-3 text-right">
+                                {% if orden.estatus == 'Cancelada' %}
+                                <span class="text-xs text-gray-400 line-through">
+                                    ${{ "{:,.2f}".format(orden.totalOrden) }}
+                                </span>
+                                {% else %}
+                                <span class="text-sm font-semibold text-gray-800">
+                                    ${{ "{:,.2f}".format(orden.totalOrden) }}
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="px-4 py-3">
+                                {% if orden.estatus == 'Recibida' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-700 border border-green-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Recibida
+                                </span>
+                                {% elif orden.estatus == 'EnCurso' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>En Curso
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-50 text-red-600 border border-red-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Cancelada
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <a href="{{ url_for('compras.compra_detalle', id=orden.idOrdenCompra) }}"
+                                        class="w-7 h-7 flex items-center justify-center rounded-md
+                                               text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
+                                        title="Ver detalle">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </a>
+                                    <a href="{{ url_for('compras.compra_imprimir', id=orden.idOrdenCompra) }}" target="_blank"
+                                        class="w-7 h-7 flex items-center justify-center rounded-md
+                                               text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                        title="Imprimir orden">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </td>
+
                         </tr>
                         {% endfor %}
                     </tbody>
-                    <tfoot>
-                        <tr class="border-t-2 border-gray-100 bg-gray-50/50">
-                            <td colspan="3" class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Total histórico
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="text-sm font-bold text-gray-800">$15,550.00</span>
-                            </td>
-                            <td colspan="2"></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
+
+            <!-- Totalizador al pie -->
+            {% set ordenes_activas = ordenes | selectattr('estatus', 'ne', 'Cancelada') | list %}
+            {% if ordenes_activas %}
+            <div class="flex justify-between items-center px-5 py-3 border-t border-gray-100 bg-gray-50/50">
+                <span class="text-xs text-gray-500">
+                    {{ ordenes_activas|length }} orden{{ 'es' if ordenes_activas|length != 1 }}
+                    (sin contar canceladas)
+                </span>
+                <span class="text-sm font-bold text-green-700">
+                    Total: ${{ "{:,.2f}".format(stats.total_comprado) }}
+                </span>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="px-5 py-10 text-center">
+                <svg class="w-8 h-8 text-gray-200 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <p class="text-xs text-gray-400 mb-3">Este proveedor aún no tiene órdenes de compra registradas.</p>
+                <a href="{{ url_for('compras.compra_nueva') }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white
+                           bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Crear primera orden
+                </a>
+            </div>
+            {% endif %}
+
         </div>
 
     </div>

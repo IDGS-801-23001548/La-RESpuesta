@@ -1,0 +1,347 @@
+{% extends "/venta/layout.html" %}
+{% block title %}VentaOnline — Carrito{% endblock %}
+
+{% block styles %}
+<style>
+  .cart-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  @media (max-width: 720px) { .cart-layout { grid-template-columns: 1fr; } }
+
+  .panel-card {
+    background: #fff; border-radius: 18px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 14px rgba(0,0,0,.06);
+    overflow: hidden; margin-bottom: 1rem;
+  }
+  .panel-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: .8rem 1.2rem; border-bottom: 1px solid #f5f5f5; background: #fafafa;
+  }
+  .panel-head h3 { font-size: .82rem; font-weight: 700; color: #374151; margin: 0; }
+  .panel-head svg { width: 16px; height: 16px; stroke: #16a34a; fill: none; }
+  .panel-body { padding: 1.1rem 1.2rem; }
+
+  .cart-item {
+    display: flex; align-items: center; gap: .9rem;
+    padding: .9rem 1.2rem; background: #fff; border-radius: 16px;
+    border: 1px solid #f0f0f0; box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    margin-bottom: .75rem; transition: all .18s;
+  }
+  .item-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name  { font-size: .85rem; font-weight: 800; color: #111827; margin: 0 0 2px; }
+  .item-sub   { font-size: .65rem; color: #9ca3af; font-weight: 600; margin: 0 0 3px; }
+  .item-price { font-size: .72rem; font-weight: 700; color: #16a34a; margin: 0; }
+  .qty-ctrl   { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .qty-val    { width: 40px; text-align: center; font-size: .85rem; font-weight: 800; color: #374151; }
+  .qty-unit   { font-size: .68rem; color: #9ca3af; font-weight: 600; }
+  .item-total { text-align: right; flex-shrink: 0; min-width: 60px; }
+  .item-subtotal { font-size: .9rem; font-weight: 900; color: #111827; }
+
+  .remove-btn {
+    width: 28px; height: 28px; border-radius: 9px; border: none;
+    background: transparent; cursor: pointer; color: #d1d5db; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; transition: all .15s;
+  }
+  .remove-btn:hover { background: #fef2f2; color: #ef4444; }
+  .remove-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; }
+
+  .add-more {
+    display: flex; align-items: center; gap: .85rem;
+    padding: .85rem 1.2rem; background: #fff; border-radius: 16px;
+    border: 2px dashed #e5e7eb; text-decoration: none; cursor: pointer;
+    transition: all .18s; margin-bottom: .75rem;
+  }
+  .add-more:hover { border-color: #16a34a; background: #f0fdf4; }
+  .add-more-icon { width: 40px; height: 40px; border-radius: 12px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; transition: background .18s; }
+  .add-more:hover .add-more-icon { background: #dcfce7; }
+  .add-more-icon svg { width: 18px; height: 18px; stroke: #9ca3af; fill: none; transition: stroke .18s; }
+  .add-more:hover .add-more-icon svg { stroke: #16a34a; }
+  .add-more span { font-size: .82rem; font-weight: 700; color: #9ca3af; transition: color .18s; }
+  .add-more:hover span { color: #16a34a; }
+
+  /* Selector entrega */
+  .entrega-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .entrega-card {
+    border: 2px solid #e5e7eb; border-radius: 14px;
+    padding: .9rem .75rem; text-align: center;
+    cursor: pointer; transition: all .18s; background: #fff;
+  }
+  .entrega-card:hover { border-color: #bbf7d0; background: #f9fffe; }
+  .entrega-card.selected { border-color: #16a34a; background: #f0fdf4; }
+  .entrega-card.selected .ec-label { color: #15803d; }
+  .ec-icon  { font-size: 1.5rem; margin-bottom: 5px; }
+  .ec-label { font-size: .8rem; font-weight: 800; color: #374151; margin: 0 0 2px; }
+  .ec-sub   { font-size: .62rem; color: #9ca3af; font-weight: 600; margin: 0; }
+
+  /* Summary */
+  .summary-row { display: flex; justify-content: space-between; font-size: .8rem; padding: .3rem 0; }
+  .summary-row .lbl { color: #6b7280; font-weight: 600; }
+  .summary-row .val { font-weight: 700; color: #374151; }
+  .summary-row .val.green { color: #16a34a; }
+  .summary-note { font-size: .62rem; color: #9ca3af; font-weight: 600; text-align: right; margin-top: 2px; }
+
+  .delivery-box {
+    border-radius: 12px; padding: .75rem 1rem;
+    display: flex; align-items: center; gap: 8px;
+    margin: .75rem 0; border: 1px solid;
+  }
+  .delivery-box svg { width: 16px; height: 16px; fill: none; flex-shrink: 0; }
+  .delivery-label { font-size: .68rem; font-weight: 700; margin: 0 0 1px; }
+  .delivery-value { font-size: .78rem; font-weight: 800; margin: 0; }
+  .delivery-box.domicilio { background: #f0fdf4; border-color: #bbf7d0; }
+  .delivery-box.domicilio svg { stroke: #16a34a; }
+  .delivery-box.domicilio .delivery-label { color: #15803d; }
+  .delivery-box.domicilio .delivery-value { color: #14532d; }
+  .delivery-box.sucursal  { background: #eff6ff; border-color: #bfdbfe; }
+  .delivery-box.sucursal svg { stroke: #2563eb; }
+  .delivery-box.sucursal .delivery-label { color: #1d4ed8; }
+  .delivery-box.sucursal .delivery-value { color: #1e40af; }
+
+  .btn-checkout {
+    display: block; width: 100%; padding: .85rem;
+    background: #16a34a; color: #fff; font-size: .85rem; font-weight: 800;
+    border-radius: 13px; text-align: center; text-decoration: none; border: none;
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+    box-shadow: 0 4px 14px rgba(22,163,74,.3); transition: all .2s;
+  }
+  .btn-checkout:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(22,163,74,.35); }
+
+  .btn-keep-shopping {
+    display: block; text-align: center; font-size: .72rem;
+    color: #9ca3af; font-weight: 600; text-decoration: none; padding: .6rem; transition: color .15s;
+  }
+  .btn-keep-shopping:hover { color: #374151; }
+
+  textarea, .form-input {
+    width: 100%; padding: .6rem .85rem; font-size: .82rem; font-family: 'Nunito', sans-serif;
+    color: #374151; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 11px;
+    outline: none; resize: none; transition: border-color .18s; box-sizing: border-box;
+  }
+  textarea:focus, .form-input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
+  textarea::placeholder { color: #d1d5db; }
+  .form-label { display: block; font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: #9ca3af; margin-bottom: 6px; }
+</style>
+{% endblock %}
+
+{% block container %}
+<div style="max-width:960px;margin:0 auto;" class="fade-in">
+
+  <h2 style="font-size:1.3rem;font-weight:900;color:#111827;margin:0 0 1.5rem;">Tu carrito</h2>
+
+  <div class="cart-layout">
+    <!-- LEFT -->
+    <div>
+      <div id="cart-items">
+        {% for item in items %}
+        <div class="cart-item">
+          <div class="item-icon" style="background:#fef2f2;">🥩</div>
+          <div class="item-info">
+            <p class="item-name">{{ item.producto.NombreProducto }}</p>
+            <p class="item-sub">{{ item.producto.DescripcionProducto or '' }}</p>
+            <p class="item-price">${{ '%.2f'|format(item.producto.PrecioVentaProducto) }} c/u (IVA incl.)</p>
+          </div>
+          <div class="qty-ctrl">
+            <span class="qty-val">{{ item.cantidad }}</span>
+            <span class="qty-unit">uds</span>
+          </div>
+          <div class="item-total">
+            <span class="item-subtotal">${{ '%.2f'|format(item.subtotal) }}</span>
+          </div>
+          <form action="{{ url_for('venta.quitar_del_carrito', id_producto_unitario=item.ultima_unidad_id) }}" method="POST" style="display:inline;">
+            {{ form.hidden_tag() }}
+            <button type="submit" class="remove-btn" title="Quitar una unidad">
+              <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </form>
+        </div>
+        {% else %}
+          {% if not items_cortes %}
+          <div style="text-align:center;padding:2rem;color:#9ca3af;font-size:.85rem;font-weight:600;">
+            Tu carrito esta vacio
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {# ── Cortes en el carrito ── #}
+      {% if items_cortes %}
+      <div style="margin-top:.5rem;margin-bottom:.5rem;">
+        <p style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.08em;margin:0 0 .5rem;">Cortes (por peso)</p>
+      </div>
+      {% for ic in items_cortes %}
+      <div class="cart-item" style="border-left:3px solid #fbbf24;">
+        <div class="item-icon" style="background:#fffbeb;">🥩</div>
+        <div class="item-info">
+          <p class="item-name">{{ ic.nombre }}</p>
+          <p class="item-sub">{{ ic.categoria }}</p>
+          <p class="item-price" style="color:#d97706;">{{ '%.2f'|format(ic.peso) }} kg × ${{ '%.2f'|format(ic.corte.precioPorKilo) }}/kg</p>
+        </div>
+        <div class="item-total">
+          <span class="item-subtotal">${{ '%.2f'|format(ic.costo) }}</span>
+        </div>
+        <form action="{{ url_for('venta.quitar_corte_del_carrito', id_corte_unitario=ic.corte_unitario.idCorteUnitario) }}" method="POST" style="display:inline;">
+          {{ form.hidden_tag() }}
+          <button type="submit" class="remove-btn" title="Quitar corte">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      <a href="{{ url_for('venta.catalogo') }}" class="add-more">
+        <div class="add-more-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <span>Agregar mas productos</span>
+      </a>
+      <a href="{{ url_for('venta.catalogo_cortes') }}" class="add-more" style="border-color:#fde68a;">
+        <div class="add-more-icon" style="background:#fffbeb;">
+          <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <span style="color:#d97706;">Agregar cortes por peso</span>
+      </a>
+
+      <!-- Tipo de entrega -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+          <h3>¿Cómo recibirás tu pedido?</h3>
+        </div>
+        <div class="panel-body">
+          <div class="entrega-grid">
+            <div class="entrega-card selected" id="ec-domicilio" onclick="seleccionarEntrega('domicilio')">
+              <div class="ec-icon">🚚</div>
+              <p class="ec-label">Envío a domicilio</p>
+              <p class="ec-sub">Te lo llevamos</p>
+            </div>
+            <div class="entrega-card" id="ec-sucursal" onclick="seleccionarEntrega('sucursal')">
+              <div class="ec-icon">🏪</div>
+              <p class="ec-label">Recoger en sucursal</p>
+              <p class="ec-sub">Llega con tu ticket</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dirección (oculto si es sucursal) -->
+      <div class="panel-card" id="panel-direccion">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <h3>Dirección de entrega</h3>
+        </div>
+        <div class="panel-body">
+          <label class="form-label">Dirección para este pedido</label>
+          <textarea id="direccion-carrito" rows="2" class="form-input"
+            placeholder="Calle, número, colonia, ciudad…">{{ direccion_usuario }}</textarea>
+          <p style="font-size:.62rem;color:#9ca3af;margin-top:4px;">No modifica los datos de tu cuenta.</p>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+          <h3>Notas del pedido</h3>
+        </div>
+        <div class="panel-body">
+          <textarea id="notas-carrito" rows="2" placeholder="Ej: Cortar en porciones de 250g, empacar al vacío…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: resumen -->
+    <div>
+      <div class="panel-card" style="position:sticky;top:80px;">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <h3>Resumen</h3>
+        </div>
+        <div class="panel-body">
+          <div class="summary-row">
+            <span class="lbl">Productos ({{ items|length }}){% if items_cortes %} + Cortes ({{ items_cortes|length }}){% endif %}</span>
+            <span class="val">${{ '%.2f'|format(total) }}</span>
+          </div>
+          <div class="summary-note">Precio con IVA incluido</div>
+          <div class="summary-row" style="margin-top:.4rem;">
+            <span class="lbl">Envío</span>
+            <span class="val green">Gratis</span>
+          </div>
+          <div style="border-top:1px solid #e5e7eb;padding-top:.6rem;margin-top:.6rem;">
+            <div class="summary-row">
+              <span class="lbl" style="font-size:.7rem;">Base sin IVA</span>
+              <span class="val" style="font-size:.7rem;">${{ '%.2f'|format(base_sin_iva) }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="lbl" style="font-size:.7rem;">IVA (16%) incluido</span>
+              <span class="val" style="font-size:.7rem;">${{ '%.2f'|format(iva) }}</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid #f0f0f0;padding-top:.7rem;margin-top:.4rem;" class="summary-row">
+            <span class="lbl" style="font-weight:800;color:#374151;">Total a pagar</span>
+            <span style="font-size:1.1rem;font-weight:900;color:#16a34a;">${{ '%.2f'|format(total) }}</span>
+          </div>
+          <p style="font-size:.6rem;color:#9ca3af;text-align:right;margin-top:2px;">IVA ya incluido en el total</p>
+
+          <div class="delivery-box domicilio" id="delivery-info">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+              <p class="delivery-label" id="delivery-label">Entrega estimada</p>
+              <p class="delivery-value" id="delivery-value">30 minutos</p>
+            </div>
+          </div>
+
+          <button onclick="irAPago()" class="btn-checkout">Proceder al pago →</button>
+          <a href="{{ url_for('venta.seleccionar_animal') }}" class="btn-keep-shopping">Seguir comprando</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form id="form-ir-pago" action="{{ url_for('venta.pago') }}" method="GET" style="display:none;">
+  <input type="hidden" name="direccion"    id="hidden-direccion">
+  <input type="hidden" name="notas"        id="hidden-notas">
+  <input type="hidden" name="tipo_entrega" id="hidden-entrega" value="domicilio">
+</form>
+
+<script>
+let modoEntrega = 'domicilio';
+
+function seleccionarEntrega(tipo) {
+  modoEntrega = tipo;
+  document.getElementById('ec-domicilio').classList.toggle('selected', tipo === 'domicilio');
+  document.getElementById('ec-sucursal').classList.toggle('selected',  tipo === 'sucursal');
+
+  const panelDir  = document.getElementById('panel-direccion');
+  const infoBox   = document.getElementById('delivery-info');
+
+  if (tipo === 'sucursal') {
+    panelDir.style.display = 'none';
+    infoBox.className      = 'delivery-box sucursal';
+    document.getElementById('delivery-label').textContent = 'Recoger en sucursal';
+    document.getElementById('delivery-value').textContent = 'Presenta tu ticket al llegar';
+  } else {
+    panelDir.style.display = '';
+    infoBox.className      = 'delivery-box domicilio';
+    document.getElementById('delivery-label').textContent = 'Entrega estimada';
+    document.getElementById('delivery-value').textContent = '30 minutos';
+  }
+}
+
+function irAPago() {
+  document.getElementById('hidden-entrega').value   = modoEntrega;
+  document.getElementById('hidden-notas').value     = document.getElementById('notas-carrito').value;
+  document.getElementById('hidden-direccion').value =
+    modoEntrega === 'sucursal'
+      ? 'En sucursal'
+      : document.getElementById('direccion-carrito').value;
+  document.getElementById('form-ir-pago').submit();
+}
+</script>
+{% endblock %}

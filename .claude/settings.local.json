@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m py_compile app/modules/compras/routes.py)",
+      "Bash(python -c \"from app import create_app; app = create_app\\(\\); print\\('App loaded OK'\\)\")",
+      "Bash(env/Scripts/python.exe -c \"from app import create_app; app = create_app\\(\\); print\\('App loaded OK'\\)\")",
+      "Bash(env/Scripts/python.exe -c ':*)",
+      "Bash(env/Scripts/python.exe -m flask db current)",
+      "Bash(env/Scripts/python.exe -m flask db check)",
+      "Bash(env/Scripts/python.exe -m flask db heads)",
+      "Bash(env/Scripts/python.exe -m flask db history)",
+      "Bash(python -c ':*)",
+      "Bash(.venvScriptspython.exe -c ':*)",
+      "Bash(pip show:*)",
+      "Bash(ls */python.exe)",
+      "Bash(ls */Scripts/)",
+      "Bash(venv/Scripts/python.exe -c ':*)",
+      "Bash(\"env/Scripts/python.exe\" -m flask db current)",
+      "Bash(\"env/Scripts/python.exe\" -m flask db heads)",
+      "Bash(\"env/Scripts/python.exe\" -m flask db upgrade)",
+      "Bash(\"env/Scripts/python.exe\" -m flask db migrate -m \"corte_unitario y precioPorKilo\")",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"log\\\\|audit\\\\|bitacora\\\\|registro\" /c/Users/Fernf/Documents/coding/La-RESpuesta/app/models/*.py)",
+      "Bash(grep -l \"app.logger\\\\|current_app.logger\" /c/Users/Fernf/Documents/coding/La-RESpuesta/app/modules/*/*.py)"
+    ]
+  }
+}

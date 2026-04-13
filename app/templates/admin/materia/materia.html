@@ -3,285 +3,502 @@
 {% block content %}
 
 <!-- Header -->
-<div class="flex items-start justify-between mb-5">
+<div class="flex items-start justify-between mb-6">
     <div>
         <h2 class="text-lg font-semibold text-gray-800">Materias Primas</h2>
-        <p class="text-xs text-gray-400 mt-0.5">Catálogo de canales, insumos y productos de reventa</p>
+        <p class="text-xs text-gray-400 mt-0.5">Catálogo de materias primas y relaciones con proveedores</p>
     </div>
-    <a href="{{ url_for('admin.materia_nueva') }}"
-        class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
+
+    <div class="flex items-start justify-between mb-6">
+        <a href="{{ url_for('materia.inventario') }}" class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700
                text-white text-sm font-medium rounded-lg shadow-sm shadow-green-200
                transition-all duration-150 hover:-translate-y-px active:translate-y-0">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-        </svg>
-        Nueva materia prima
-    </a>
-</div>
-
-<!-- Tarjetas resumen -->
-<div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 text-lg">🗂️</div>
-        <div>
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total</p>
-            <p class="text-xl font-bold text-gray-800">{{ materias | length }}</p>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl border border-red-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0 text-lg">🥩</div>
-        <div>
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-red-400">Canales</p>
-            <p class="text-xl font-bold text-red-600">{{ materias | selectattr('categoria', 'equalto', 'Canal') | list | length }}</p>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl border border-amber-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 text-lg">🧂</div>
-        <div>
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-amber-500">Insumos</p>
-            <p class="text-xl font-bold text-amber-600">{{ materias | selectattr('categoria', 'equalto', 'Insumo') | list | length }}</p>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl border border-blue-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 text-lg">🛍️</div>
-        <div>
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-blue-500">Reventa</p>
-            <p class="text-xl font-bold text-blue-600">{{ materias | selectattr('categoria', 'equalto', 'Reventa') | list | length }}</p>
-        </div>
+            Inventario de materias
+        </a>
     </div>
 </div>
 
-<!-- Alerta stock bajo -->
-{% set bajos = materias | selectattr('esta_bajo_minimo') | list %}
-{% if bajos %}
-<div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
-    <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-    </svg>
-    <p class="text-xs text-amber-700 font-medium">
-        <strong>{{ bajos | length }} materia(s) prima(s)</strong> están por debajo del stock mínimo —
-        <a href="{{ url_for('admin.compras_nueva') }}" class="underline hover:text-amber-900">registrar compra</a>
-    </p>
-</div>
-{% endif %}
+{# Flash messages se renderizan globalmente en _sidebar.html #}
 
-<!-- Tabla -->
-<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 
-    <!-- Filtros -->
-    <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-100">
-        <div class="relative flex-1 min-w-48">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+<!-- ══════════════════════════════════════════════
+     SECCIÓN 1 — MATERIAS PRIMAS
+══════════════════════════════════════════════ -->
+<div class="mb-8">
+
+    <div class="flex items-center gap-2 mb-3">
+        <div class="w-1 h-5 bg-green-600 rounded-full"></div>
+        <h3 class="text-sm font-semibold text-gray-700">Materias Primas</h3>
+        <span class="text-[10px] font-semibold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">{{ materias |
+            length }}</span>
+    </div>
+
+    <!-- Formulario de alta -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm mb-4 overflow-hidden">
+        <div class="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+            <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            <input type="text" id="buscador" placeholder="Buscar materia prima..."
-                class="w-full pl-9 pr-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
-                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
-                       placeholder-gray-300 transition-all">
+            <span class="text-xs font-semibold text-gray-600">Agregar materia prima</span>
         </div>
-        <select id="filtro-cat"
-            class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg
-                   outline-none focus:border-green-400 transition-all">
-            <option value="">Todas las categorías</option>
-            <option value="Canal">Canal</option>
-            <option value="Insumo">Insumo</option>
-            <option value="Reventa">Reventa</option>
-        </select>
-        <select id="filtro-stock"
-            class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg
-                   outline-none focus:border-green-400 transition-all">
-            <option value="">Todo el stock</option>
-            <option value="bajo">Stock bajo</option>
-            <option value="ok">Stock OK</option>
-        </select>
+        <form method="POST" action="{{ url_for('materia.materia_nueva') }}" class="p-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+
+                <!-- Nombre -->
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                        Nombre <span class="text-red-400">*</span>
+                    </label>
+                    <input type="text" name="nombreMateriaPrima" required maxlength="25" placeholder="Ej. Res en canal"
+                        class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                               transition-all placeholder-gray-300">
+                </div>
+
+                <!-- Categoría -->
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                        Categoría
+                    </label>
+                    <select name="idCategoria" required
+                        class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                        <option value="">Sin categoría</option>
+                        {% for cat in categorias %}
+                        <option value="{{ cat.idCategoria }}">{{ cat.nombreCategoria }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Tipo -->
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                        Tipo <span class="text-red-400">*</span>
+                    </label>
+                    <select name="tipo" id="sel-tipo-nuevo" required
+                        class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                        <option value="">Seleccionar...</option>
+                        <option value="Materia">Materia</option>
+                        <option value="Producto">Producto</option>
+                        <option value="Canal">Canal</option>
+                    </select>
+                </div>
+
+                <!-- Producto (condicional) -->
+                <div id="div-producto-nuevo">
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                        Producto vinculado
+                    </label>
+                    <select name="idProducto" id="sel-producto-nuevo" required class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all
+                               disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                        <option value="">Seleccionar producto...</option>
+                        {% for prod in productos %}
+                        <option value="{{ prod.idProducto }}">{{ prod.NombreProducto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+            </div>
+            <div class="mt-3 flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold
+                           rounded-lg shadow-sm shadow-green-200 transition-all duration-150 hover:-translate-y-px">
+                    Agregar materia prima
+                </button>
+            </div>
+        </form>
     </div>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="text-left border-b border-gray-100">
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Materia prima</th>
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Categoría</th>
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Conversión</th>
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Merma</th>
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Stock actual</th>
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Costo prom.</th>
-                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50">
-
-                {% for m in materias %}
-                <tr class="hover:bg-gray-50/70 transition-colors group fila-materia"
-                    data-nombre="{{ m.nombre | lower }}"
-                    data-categoria="{{ m.categoria }}"
-                    data-stock="{{ 'bajo' if m.esta_bajo_minimo() else 'ok' }}">
-
-                    <td class="px-4 py-3">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-2 h-2 rounded-full shrink-0
-                                {% if m.esta_critico() %}bg-red-400
-                                {% elif m.esta_bajo_minimo() %}bg-amber-400
-                                {% else %}bg-green-400{% endif %}">
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-gray-800">{{ m.nombre }}</p>
-                                <p class="text-[10px] text-gray-400">
-                                    Mín:
-                                    {% if m.unidad_estandar == 'g' and m.stock_minimo >= 1000 %}
-                                        {{ (m.stock_minimo / 1000) | round(1) }} kg
-                                    {% else %}
-                                        {{ m.stock_minimo }} {{ m.unidad_estandar }}
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <span class="text-[10px] font-semibold px-2 py-1 rounded-full border
-                            {% if m.categoria == 'Canal' %}bg-red-50 text-red-600 border-red-200
-                            {% elif m.categoria == 'Insumo' %}bg-amber-50 text-amber-600 border-amber-200
-                            {% else %}bg-blue-50 text-blue-600 border-blue-200{% endif %}">
-                            {{ m.categoria }}
-                        </span>
-                    </td>
-
-                    <td class="px-4 py-3">
-                        {% if m.factor_conversion %}
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
-                                1 {{ m.unidad_compra }}
+    <!-- Tabla de materias primas -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm" id="tabla-materias">
+                <thead>
+                    <tr class="text-left border-b border-gray-100">
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Nombre</th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Categoría</th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Tipo
+                        </th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Producto vinculado</th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50" id="tbody-materias">
+                    {% for m in materias %}
+                    <tr class="hover:bg-gray-50/70 transition-colors group">
+                        <td class="px-4 py-3">
+                            <span class="text-xs font-semibold text-gray-800">{{ m.nombreMateriaPrima }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if m.categoria %}
+                            <span class="text-[10px] font-semibold px-2 py-1 rounded-full border
+                                {% if m.categoria.nombreCategoria == 'Res' %}bg-red-50 text-red-600 border-red-200
+                                {% elif m.categoria.nombreCategoria == 'Pollo' %}bg-amber-50 text-amber-600 border-amber-200
+                                {% elif m.categoria.nombreCategoria == 'Cerdo' %}bg-pink-50 text-pink-600 border-pink-200
+                                {% elif m.categoria.nombreCategoria == 'Borrego' %}bg-purple-50 text-purple-600 border-purple-200
+                                {% else %}bg-gray-50 text-gray-600 border-gray-200{% endif %}">
+                                {{ m.categoria.nombreCategoria }}
                             </span>
-                            <svg class="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                            </svg>
-                            <span class="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded font-medium">
-                                {% if m.unidad_estandar == 'g' and m.factor_conversion >= 1000 %}
-                                    {{ (m.factor_conversion / 1000) | round(1) }} kg
-                                {% else %}
-                                    {{ m.factor_conversion }} {{ m.unidad_estandar }}
-                                {% endif %}
-                            </span>
-                        </div>
-                        {% else %}
-                        <span class="text-xs text-gray-300">—</span>
-                        {% endif %}
-                    </td>
-
-                    <td class="px-4 py-3">
-                        {% if m.categoria != 'Reventa' and m.pct_merma %}
-                        <span class="text-xs font-medium
-                            {% if m.pct_merma > 3 %}text-amber-600{% else %}text-gray-600{% endif %}">
-                            {{ m.pct_merma }}%
-                        </span>
-                        {% else %}
-                        <span class="text-xs text-gray-300">—</span>
-                        {% endif %}
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <span class="text-sm font-bold
-                            {% if m.esta_critico() %}text-red-600
-                            {% elif m.esta_bajo_minimo() %}text-amber-600
-                            {% else %}text-gray-800{% endif %}">
-                            {% if m.unidad_estandar == 'g' and m.stock_actual >= 1000 %}
-                                {{ (m.stock_actual / 1000) | round(2) }} kg
                             {% else %}
-                                {{ m.stock_actual }} {{ m.unidad_estandar }}
+                            <span class="text-xs text-gray-300">—</span>
                             {% endif %}
-                        </span>
-                        {% if m.esta_critico() %}
-                        <span class="ml-1 text-[9px] font-bold text-red-500 bg-red-50
-                                     border border-red-200 px-1.5 py-0.5 rounded-full">¡Crítico!</span>
-                        {% elif m.esta_bajo_minimo() %}
-                        <span class="ml-1 text-[9px] font-bold text-amber-500 bg-amber-50
-                                     border border-amber-200 px-1.5 py-0.5 rounded-full">Bajo</span>
-                        {% endif %}
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <span class="text-xs font-medium text-gray-700">
-                            ${{ "%.4f"|format(m.costo_promedio) }} / {{ m.unidad_estandar }}
-                        </span>
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href="{{ url_for('admin.materia_editar', id=m.id_materia) }}"
-                                class="w-7 h-7 flex items-center justify-center rounded-md
-                                       text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                title="Editar">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                            </a>
-                            <form method="POST" action="{{ url_for('admin.materia_eliminar', id=m.id_materia) }}"
-                                  onsubmit="return confirm('¿Eliminar {{ m.nombre }}?')">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit"
-                                    class="w-7 h-7 flex items-center justify-center rounded-md
-                                           text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if m.tipo %}
+                            <span class="text-[10px] font-semibold px-2 py-1 rounded-full border
+                                {% if m.tipo == 'Producto' %}bg-blue-50 text-blue-600 border-blue-200
+                                {% else %}bg-green-50 text-green-700 border-green-200{% endif %}">
+                                {{ m.tipo }}
+                            </span>
+                            {% else %}
+                            <span class="text-xs text-gray-300">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if m.tipo == 'Producto' and m.idProducto %}
+                            <span class="text-xs text-gray-600">
+                                {% for p in productos %}{% if p.idProducto == m.idProducto %}{{ p.NombreProducto
+                                }}{% endif %}{% endfor %}
+                            </span>
+                            {% else %}
+                            <span class="text-xs text-gray-300">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a href="{{ url_for('materia.materia_editar', id=m.idMateriaPrima) }}" class="w-7 h-7 flex items-center justify-center rounded-md
+                                           text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                    title="Editar">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" class="px-4 py-12 text-center">
-                        <p class="text-xs text-gray-400 mb-2">No hay materias primas registradas</p>
-                        <a href="{{ url_for('admin.materia_nueva') }}"
-                            class="text-xs text-green-600 hover:underline">Registrar la primera →</a>
-                    </td>
-                </tr>
-                {% endfor %}
-
-            </tbody>
-        </table>
-    </div>
-
-    <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-        <div class="flex items-center gap-4 text-[10px] text-gray-400">
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>OK</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>Bajo</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>Crítico</span>
+                                </a>
+                                <form method="POST"
+                                    action="{{ url_for('materia.materia_eliminar', id=m.idMateriaPrima) }}"
+                                    onsubmit="return confirm('¿Eliminar {{ m.nombreMateriaPrima }}?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="w-7 h-7 flex items-center justify-center rounded-md
+                                               text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                        title="Eliminar">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="px-4 py-10 text-center text-xs text-gray-400">
+                            No hay materias primas registradas. Usa el formulario de arriba para agregar la primera.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <p class="text-xs text-gray-400" id="contador">{{ materias | length }} registro(s)</p>
+        <!-- Paginación Materias Primas -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100" id="pag-materias-wrap">
+            <span class="text-xs text-gray-400" id="pag-materias-info"></span>
+            <div class="flex items-center gap-1" id="pag-materias-btns"></div>
+        </div>
     </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SECCIÓN 2 — MATERIAS PROVEIDAS
+══════════════════════════════════════════════ -->
+<div>
+
+    <div class="flex items-center gap-2 mb-3">
+        <div class="w-1 h-5 bg-blue-600 rounded-full"></div>
+        <h3 class="text-sm font-semibold text-gray-700">Materias Proveidas</h3>
+        <span class="text-[10px] font-semibold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">{{
+            materias_proveidas | length }}</span>
+    </div>
+
+    <!-- Formulario de alta -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm mb-4 overflow-hidden">
+        <div class="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span class="text-xs font-semibold text-gray-600">Agregar materia proveida</span>
+        </div>
+        <form method="POST" action="{{ url_for('materia.materia_proveida_nueva') }}" class="p-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+
+                <!-- Nombre -->
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                        Nombre <span class="text-red-400">*</span>
+                    </label>
+                    <input type="text" name="nombreMateriaProveida" required maxlength="25"
+                        placeholder="Ej. Res canal norteña" class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                               transition-all placeholder-gray-300">
+                </div>
+
+                <!-- Proveedor -->
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                        Proveedor <span class="text-red-400">*</span>
+                    </label>
+                    <select name="idProveedor" required
+                        class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                        <option value="">Seleccionar...</option>
+                        {% for prov in proveedores %}
+                        <option value="{{ prov.id }}">{{ prov.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if not proveedores %}
+                    <p class="mt-1 text-[10px] text-amber-500">No hay proveedores activos registrados.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Materia Prima -->
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                        Materia Prima <span class="text-red-400">*</span>
+                    </label>
+                    <select name="idMateriaPrima" required
+                        class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                               rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                        <option value="">Seleccionar...</option>
+                        {% for m in materias %}
+                        <option value="{{ m.idMateriaPrima }}">{{ m.nombreMateriaPrima }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if not materias %}
+                    <p class="mt-1 text-[10px] text-amber-500">Registra materias primas primero.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Unidad de medida + Conversor -->
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                        Unidad de medida <span class="text-red-400">*</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <select name="idUnidadMedida" id="sel-unidad" required
+                            class="flex-1 min-w-0 px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+                            <option value="">Seleccionar...</option>
+                            {% for u in unidades %}
+                            <option value="{{ u.idUnidadMedida }}">{{ u.nombreUnidadMedida }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" id="conversor-display" readonly value="—"
+                            title="Conversor vinculado a la unidad seleccionada" class="w-28 shrink-0 px-3 py-2 text-xs text-gray-500 bg-gray-100 border border-gray-200
+                                   rounded-lg outline-none cursor-default" placeholder="Conversor">
+                    </div>
+                    {% if not unidades %}
+                    <p class="mt-1 text-[10px] text-amber-500">No hay unidades de medida registradas.</p>
+                    {% endif %}
+                </div>
+
+            </div>
+            <div class="mt-3 flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold
+                           rounded-lg shadow-sm shadow-blue-200 transition-all duration-150 hover:-translate-y-px">
+                    Agregar materia proveida
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de materias proveidas -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left border-b border-gray-100">
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Nombre</th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Proveedor</th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Materia Prima</th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Unidad de medida</th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Conversor</th>
+                        <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50" id="tbody-proveidas">
+                    {% for mp in materias_proveidas %}
+                    <tr class="hover:bg-gray-50/70 transition-colors group">
+                        <td class="px-4 py-3">
+                            <span class="text-xs font-semibold text-gray-800">{{ mp.nombreMateriaProveida }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs text-gray-700">{{ mp.proveedor.nombre }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs text-gray-700">{{ mp.materiaPrima.nombreMateriaPrima }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs text-gray-700">{{ mp.unidadMedida.nombreUnidadMedida }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if mp.unidadMedida.conversor %}
+                            <span class="text-[10px] font-semibold px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                                {{ mp.unidadMedida.conversor.nombreConversor }}
+                            </span>
+                            {% else %}
+                            <span class="text-xs text-gray-300">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <form method="POST"
+                                    action="{{ url_for('materia.materia_proveida_eliminar', id=mp.idMateriaProveida) }}"
+                                    onsubmit="return confirm('¿Eliminar {{ mp.nombreMateriaProveida }}?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="w-7 h-7 flex items-center justify-center rounded-md
+                                               text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                        title="Eliminar">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="px-4 py-10 text-center text-xs text-gray-400">
+                            No hay materias proveidas registradas. Usa el formulario de arriba para agregar la
+                            primera.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Paginación Materias Proveidas -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100" id="pag-proveidas-wrap">
+            <span class="text-xs text-gray-400" id="pag-proveidas-info"></span>
+            <div class="flex items-center gap-1" id="pag-proveidas-btns"></div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    const buscador  = document.getElementById('buscador');
-    const filtroCat = document.getElementById('filtro-cat');
-    const filtroStk = document.getElementById('filtro-stock');
-    const filas     = document.querySelectorAll('.fila-materia');
-    const contador  = document.getElementById('contador');
+    // ── Conversor lookup ─────────────────────────────────────────────────
+    const conversorMap = {
+        {% for u in unidades %}
+    "{{ u.idUnidadMedida }}": "{{ u.conversor.nombreConversor if u.conversor else '—' }}",
+        {% endfor %}
+    };
 
-    function filtrar() {
-        const txt   = buscador.value.toLowerCase();
-        const cat   = filtroCat.value;
-        const stk   = filtroStk.value;
-        let n = 0;
-        filas.forEach(f => {
-            const ok = f.dataset.nombre.includes(txt)
-                    && (!cat || f.dataset.categoria === cat)
-                    && (!stk || f.dataset.stock === stk);
-            f.style.display = ok ? '' : 'none';
-            if (ok) n++;
-        });
-        contador.textContent = n + ' registro(s)';
+    const selUnidad = document.getElementById('sel-unidad');
+    const conversorDisplay = document.getElementById('conversor-display');
+
+    selUnidad.addEventListener('change', function () {
+        conversorDisplay.value = conversorMap[this.value] || '—';
+    });
+
+    // ── Tipo → mostrar/ocultar producto (formulario nuevo) ───────────────
+    const selTipoNuevo = document.getElementById('sel-tipo-nuevo');
+    const selProductoNuevo = document.getElementById('sel-producto-nuevo');
+
+    selTipoNuevo.addEventListener('change', function () {
+        const esProducto = this.value === 'Producto';
+        selProductoNuevo.disabled = !esProducto;
+        selProductoNuevo.closest('div').style.opacity = esProducto ? '1' : '0.4';
+        if (!esProducto) selProductoNuevo.value = '';
+    });
+
+    // Quitar flash duplicados (ya se renderizan en el sidebar)
+
+    // ── Paginación genérica ───────────────────────────────────────────────────
+    const POR_PAGINA = 5;
+
+    function initPaginacion(tbodyId, infoId, btnsId) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        const filas = [...tbody.querySelectorAll('tr')].filter(r => !r.querySelector('[colspan]'));
+        const info = document.getElementById(infoId);
+        const btns = document.getElementById(btnsId);
+        let pagina = 1;
+
+        function render() {
+            const total = Math.ceil(filas.length / POR_PAGINA) || 1;
+            if (pagina > total) pagina = total;
+            const inicio = (pagina - 1) * POR_PAGINA;
+            const fin = inicio + POR_PAGINA;
+
+            filas.forEach((f, i) => f.style.display = (i >= inicio && i < fin) ? '' : 'none');
+
+            if (filas.length <= POR_PAGINA) {
+                info.textContent = '';
+                btns.innerHTML = '';
+                return;
+            }
+
+            const desde = inicio + 1;
+            const hasta = Math.min(fin, filas.length);
+            info.textContent = `Mostrando ${desde}–${hasta} de ${filas.length}`;
+
+            const cls = 'w-7 h-7 flex items-center justify-center rounded-md text-xs font-semibold transition-colors';
+            const active = 'bg-green-600 text-white';
+            const inactive = 'text-gray-500 hover:bg-gray-100';
+
+            btns.innerHTML = '';
+
+            const prev = document.createElement('button');
+            prev.className = cls + ' ' + (pagina === 1 ? 'opacity-30 cursor-default' : inactive);
+            prev.innerHTML = '‹';
+            prev.disabled = pagina === 1;
+            prev.onclick = () => { pagina--; render(); };
+            btns.appendChild(prev);
+
+            for (let p = 1; p <= total; p++) {
+                const btn = document.createElement('button');
+                btn.className = cls + ' ' + (p === pagina ? active : inactive);
+                btn.textContent = p;
+                btn.onclick = () => { pagina = p; render(); };
+                btns.appendChild(btn);
+            }
+
+            const next = document.createElement('button');
+            next.className = cls + ' ' + (pagina === total ? 'opacity-30 cursor-default' : inactive);
+            next.innerHTML = '›';
+            next.disabled = pagina === total;
+            next.onclick = () => { pagina++; render(); };
+            btns.appendChild(next);
+        }
+
+        render();
     }
 
-    buscador.addEventListener('input', filtrar);
-    filtroCat.addEventListener('change', filtrar);
-    filtroStk.addEventListener('change', filtrar);
+    initPaginacion('tbody-materias', 'pag-materias-info', 'pag-materias-btns');
+    initPaginacion('tbody-proveidas', 'pag-proveidas-info', 'pag-proveidas-btns');
+
 </script>
 
 {% endblock %}

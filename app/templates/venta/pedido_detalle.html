@@ -1,0 +1,340 @@
+{% extends "/venta/layout.html" %}
+{% block title %}VentaOnline — Pedido #VO-{{ '%04d'|format(pedido.idPedido) }}{% endblock %}
+
+{% block styles %}
+<style>
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .detail-layout { grid-template-columns: 1fr; }
+  }
+
+  .panel-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 14px rgba(0,0,0,.06);
+    overflow: hidden;
+    margin-bottom: 1.1rem;
+  }
+  .panel-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: .8rem 1.2rem;
+    border-bottom: 1px solid #f5f5f5;
+    background: #fafafa;
+  }
+  .panel-head h3 { font-size: .82rem; font-weight: 700; color: #374151; margin: 0; }
+  .panel-head svg { width: 16px; height: 16px; stroke: #16a34a; fill: none; }
+  .panel-body { padding: 1.1rem 1.2rem; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 11px; border-radius: 99px;
+    font-size: .72rem; font-weight: 700; border: 1px solid;
+  }
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .badge-pulse { animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .badge-en-curso    { background:#fffbeb; color:#b45309;  border-color:#fde68a; }
+  .badge-en-curso .badge-dot { background:#fbbf24; }
+  .badge-finalizado  { background:#f0fdf4; color:#15803d;  border-color:#bbf7d0; }
+  .badge-finalizado .badge-dot { background:#22c55e; }
+  .badge-cancelado   { background:#fef2f2; color:#b91c1c;  border-color:#fecaca; }
+  .badge-cancelado .badge-dot { background:#f87171; }
+
+  /* Timeline */
+  .timeline { display: flex; align-items: flex-start; }
+  .tl-step  { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .tl-circle {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 6px;
+  }
+  .tl-circle svg    { width: 16px; height: 16px; stroke: #fff; fill: none; }
+  .tl-circle.done   { background: #16a34a; }
+  .tl-circle.active { background: #f59e0b; box-shadow: 0 0 0 6px #fef3c7; }
+  .tl-circle.pending{ background: #f0f0f0; }
+  .tl-circle.pending svg { stroke: #9ca3af; }
+  .tl-label         { font-size: .68rem; font-weight: 700; text-align: center; }
+  .tl-label.done    { color: #16a34a; }
+  .tl-label.active  { color: #d97706; }
+  .tl-label.pending { color: #9ca3af; }
+  .tl-sublabel      { font-size: .58rem; color: #9ca3af; font-weight: 600; text-align: center; margin-top: 2px; }
+  .tl-line          { flex: 1; height: 2px; margin-top: 16px; }
+  .tl-line.done     { background: #22c55e; }
+  .tl-line.partial  { background: #fbbf24; }
+  .tl-line.pending  { background: #f0f0f0; }
+
+  /* Product rows */
+  .product-row {
+    display: flex; align-items: center; gap: .9rem;
+    padding: .85rem 1.2rem;
+    border-top: 1px solid #f9f9f9;
+  }
+  .product-row:first-child { border-top: none; }
+  .product-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+  }
+  .product-info { flex: 1; }
+  .product-name { font-size: .85rem; font-weight: 700; color: #111827; margin: 0 0 2px; }
+  .product-sub  { font-size: .65rem; color: #9ca3af; font-weight: 600; margin: 0; }
+  .product-price { text-align: right; flex-shrink: 0; }
+  .product-price .unit  { font-size: .65rem; color: #9ca3af; font-weight: 600; }
+  .product-price .total { font-size: .88rem; font-weight: 800; color: #111827; }
+
+  .total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: .85rem 1.2rem;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+  }
+  .total-row .label { font-size: .8rem; font-weight: 700; color: #6b7280; }
+  .total-row .value { font-size: 1.1rem; font-weight: 900; color: #111827; }
+
+  /* Info rows */
+  .info-row {
+    display: flex; justify-content: space-between;
+    font-size: .78rem; padding: .35rem 0;
+  }
+  .info-row .lbl { color: #6b7280; font-weight: 600; }
+  .info-row .val { font-weight: 700; color: #374151; }
+  .info-row .val.green { color: #16a34a; }
+  .info-row .val.small { font-size: .7rem; }
+
+  .page-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem; flex-wrap: wrap;
+  }
+  .btn-ticket {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: .5rem 1.1rem;
+    font-size: .72rem; font-weight: 700; color: #fff;
+    background: #16a34a; border: none;
+    border-radius: 10px; cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 3px 10px rgba(22,163,74,.28);
+    transition: all .18s;
+  }
+  .btn-ticket:hover { background: #15803d; transform: translateY(-1px); }
+  .btn-ticket svg { width: 14px; height: 14px; stroke: #fff; fill: none; }
+
+  .nota-box {
+    font-size: .82rem; color: #6b7280; font-style: italic;
+    background: #f9fafb; border: 1px solid #f0f0f0;
+    border-radius: 10px; padding: .75rem; margin: 0;
+  }
+  .nota-vacia { color: #d1d5db; font-style: italic; font-size: .78rem; }
+</style>
+{% endblock %}
+
+{% block container %}
+<div style="max-width:860px;margin:0 auto;" class="fade-in">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <h2 style="font-size:1.3rem;font-weight:900;color:#111827;font-family:monospace;margin:0;">
+          #VO-{{ '%04d'|format(pedido.idPedido) }}
+        </h2>
+        {% if pedido.Estatus == 'EnCurso' %}
+          <span class="badge badge-en-curso"><span class="badge-dot badge-pulse"></span>En curso</span>
+        {% elif pedido.Estatus == 'Finalizado' %}
+          <span class="badge badge-finalizado"><span class="badge-dot"></span>Finalizado</span>
+        {% else %}
+          <span class="badge badge-cancelado"><span class="badge-dot"></span>Cancelado</span>
+        {% endif %}
+      </div>
+      <p style="font-size:.72rem;color:#9ca3af;font-weight:600;margin:0;">
+        Realizado el {{ pedido.fechaCreacion.strftime('%d de %B de %Y a las %H:%M') }}
+      </p>
+    </div>
+    <a href="{{ url_for('venta.ticket_pedido', id_pedido=pedido.idPedido) }}" class="btn-ticket">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+      Ver ticket
+    </a>
+  </div>
+
+  <!-- Timeline -->
+  <div class="panel-card fade-in-2">
+    <div class="panel-head">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+      <h3>Estado del pedido</h3>
+    </div>
+    <div class="panel-body">
+      <div class="timeline">
+        <div class="tl-step">
+          <div class="tl-circle {{ timeline[0] }}">
+            <svg viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <span class="tl-label {{ timeline[0] }}">Confirmado</span>
+          <span class="tl-sublabel">{{ pedido.fechaCreacion.strftime('%d %b · %H:%M') }}</span>
+        </div>
+        <div class="tl-line {{ 'done' if timeline[1] == 'done' else 'pending' }}"></div>
+        <div class="tl-step">
+          <div class="tl-circle {{ timeline[1] }}">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <span class="tl-label {{ timeline[1] }}">Preparando</span>
+          <span class="tl-sublabel">{{ pedido.fechaCreacion.strftime('%d %b') if timeline[1] == 'done' else '—' }}</span>
+        </div>
+        <div class="tl-line {{ 'done' if timeline[2] == 'done' else ('partial' if timeline[2] == 'active' else 'pending') }}"></div>
+        <div class="tl-step">
+          <div class="tl-circle {{ timeline[2] }}">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+          </div>
+          <span class="tl-label {{ timeline[2] }}">En camino</span>
+          <span class="tl-sublabel">{{ 'En progreso' if timeline[2] == 'active' else ('—' if timeline[2] == 'pending' else 'Completado') }}</span>
+        </div>
+        <div class="tl-line {{ 'done' if timeline[3] == 'done' else 'pending' }}"></div>
+        <div class="tl-step">
+          <div class="tl-circle {{ timeline[3] }}">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          </div>
+          <span class="tl-label {{ timeline[3] }}">Entregado</span>
+          <span class="tl-sublabel">{{ 'Completado' if timeline[3] == 'done' else 'Pendiente' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-layout fade-in-3">
+    <!-- LEFT -->
+    <div>
+      <!-- Productos -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <span style="font-size:1.1rem;">🥩</span>
+          <h3>Productos del pedido</h3>
+        </div>
+        <div>
+          {% for item in items %}
+          <div class="product-row">
+            <div class="product-icon" style="background:#fffbeb;">🥩</div>
+            <div class="product-info">
+              <p class="product-name">{{ item.producto.NombreProducto }}</p>
+              <p class="product-sub">{{ item.producto.DescripcionProducto or '' }}</p>
+            </div>
+            <div class="product-price">
+              <p class="unit">{{ item.cantidad }} ud{{ 's' if item.cantidad != 1 }} × ${{ '%.2f'|format(item.producto.PrecioVentaProducto) }} (IVA incl.)</p>
+              <p class="total">${{ '%.2f'|format(item.subtotal) }}</p>
+            </div>
+          </div>
+          {% endfor %}
+          {% if items_cortes %}
+          <div style="padding:.5rem 0 .25rem;border-top:1px dashed #fde68a;margin-top:.5rem;">
+            <p style="font-size:.62rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.08em;margin:0;">Cortes por peso</p>
+          </div>
+          {% for ic in items_cortes %}
+          <div class="product-row">
+            <div class="product-icon" style="background:#fffbeb;border-left:3px solid #fbbf24;">🥩</div>
+            <div class="product-info">
+              <p class="product-name">{{ ic.nombre }}</p>
+              <p class="product-sub">{{ ic.categoria }}</p>
+            </div>
+            <div class="product-price">
+              <p class="unit">{{ '%.2f'|format(ic.peso) }} kg × ${{ '%.2f'|format(ic.corte.precioPorKilo) }}/kg</p>
+              <p class="total">${{ '%.2f'|format(ic.costo) }}</p>
+            </div>
+          </div>
+          {% endfor %}
+          {% endif %}
+        </div>
+        <div class="total-row">
+          <span class="label">Total del pedido (IVA incluido)</span>
+          <span class="value" style="color:#16a34a;">${{ '%.2f'|format(total) }}</span>
+        </div>
+      </div>
+
+      <!-- Notas del pedido -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+          <h3>Notas del pedido</h3>
+        </div>
+        <div class="panel-body">
+          {% if pedido.Notas %}
+            <p class="nota-box">"{{ pedido.Notas }}"</p>
+          {% else %}
+            <p class="nota-vacia">Sin notas adicionales para este pedido.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <!-- Desglose de pago -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          <h3>Desglose de pago</h3>
+        </div>
+        <div class="panel-body">
+          <div class="info-row">
+            <span class="lbl">Método</span>
+            <span class="val">{{ pedido.Tipo or '—' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="lbl">Envío</span>
+            <span class="val green">Gratis</span>
+          </div>
+          <div style="border-top:1px solid #f0f0f0;padding-top:.5rem;margin-top:.5rem;">
+            <div class="info-row">
+              <span class="lbl small" style="font-size:.7rem;">Base sin IVA</span>
+              <span class="val small" style="font-size:.7rem;">${{ '%.2f'|format(base_sin_iva) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="lbl small" style="font-size:.7rem;">IVA (16%) incluido</span>
+              <span class="val small" style="font-size:.7rem;">${{ '%.2f'|format(iva) }}</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid #f0f0f0;padding-top:.6rem;margin-top:.4rem;" class="info-row">
+            <span class="lbl" style="font-weight:800;color:#374151;">Total pagado</span>
+            <span class="val" style="color:#16a34a;font-size:.95rem;font-weight:900;">${{ '%.2f'|format(total) }}</span>
+          </div>
+          <p style="font-size:.6rem;color:#9ca3af;text-align:right;margin-top:2px;">IVA ya incluido en el total</p>
+        </div>
+      </div>
+
+      <!-- Entrega -->
+      <div class="panel-card">
+        <div class="panel-head">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <h3>Entrega</h3>
+        </div>
+        <div class="panel-body">
+          <p style="font-size:.85rem;font-weight:700;color:#111827;margin:0 0 4px;">
+            {{ current_user.persona.nombre if current_user.persona else '' }}
+            {{ current_user.persona.apellido_paterno if current_user.persona else '' }}
+          </p>
+          <!-- Dirección exclusiva de este pedido -->
+          <p style="font-size:.75rem;color:#6b7280;font-weight:600;margin:0 0 .75rem;">
+            {% if pedido.Direccion %}
+              {{ pedido.Direccion }}
+            {% elif current_user.persona and current_user.persona.direccion %}
+              {{ current_user.persona.direccion }}
+            {% else %}
+              Sin dirección registrada
+            {% endif %}
+          </p>
+          <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:#d97706;font-weight:700;">
+            <svg style="width:14px;height:14px;stroke:#d97706;fill:none;flex-shrink:0;" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Modalidad: {{ pedido.Entrega or '—' }}
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /RIGHT -->
+  </div>
+
+</div>
+{% endblock %}

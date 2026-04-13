@@ -6,12 +6,13 @@ from flask import session, redirect, url_for
 from flask_login import current_user, logout_user
 from app.models import Persona
 from app import create_app, user_datastore
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.models import User
 
 if __name__ == '__main__':
     app = create_app()
     with app.app_context():
+        db.create_all()
         #Primer log de la aplicación en ejecución
         app.logger.debug("La aplicación ha iniciado correctamente")
 
@@ -37,10 +38,10 @@ if __name__ == '__main__':
 
         encrypted_password = hash_password('password')
 
-        if not user_datastore.find_user(email='admin@example.com'):
+        if not user_datastore.find_user(email='emmanuelortizreyes3@gmail.com'):
             user = user_datastore.create_user(
                 name        = 'admin', 
-                email       = 'admin@example.com', 
+                email       = 'emmanuelortizreyes3@gmail.com', 
                 password    = encrypted_password)
             
             user_datastore.add_role_to_user(user, 'admin')
@@ -49,34 +50,16 @@ if __name__ == '__main__':
                 nombre              ='admin',
                 apellido_paterno    ='admin',
                 apellido_materno    ='admin',
-                telefono            ='9999999999',
+                telefono            ='4773845271',
                 direccion           ='León, Gto',
                 user=user
             )
 
             db.session.add(persona)
 
-        if not user_datastore.find_user(email='emmanuel@example.com'):
-            user = user_datastore.create_user(
-                name        = 'Emmanuel', 
-                email       = 'emmanuel@example.com', 
-                password    = encrypted_password)
- 
-            user_datastore.add_role_to_user(user, 'admin')
-
-            persona = Persona(
-                nombre              ='Emmanuel',
-                apellido_paterno    ='Ortiz',
-                apellido_materno    ='Reyes',
-                telefono            ='4773845271',
-                direccion           ='León, Gto',
-                user                =user
-            )
-            db.session.add(persona)
-
         db.session.commit()
 
-        user = user_datastore.find_user(email='emmanuel@example.com')
+        user = user_datastore.find_user(email='emmanuelortizreyes3@gmail.com')
         if user:
             user_datastore.add_role_to_user(user, 'admin')
 
@@ -94,9 +77,15 @@ if __name__ == '__main__':
             return
         
         if current_user.is_authenticated:
-            token_db = current_user.session_token
+            token_db    = current_user.session_token
             token_session = session.get("session_token")
-            expiration = current_user.session_expiration
+            expiration  = current_user.session_expiration
+
+            # Limpiar tokens expirados del usuario actual (housekeeping)
+            if expiration and expiration < datetime.now() and token_db:
+                current_user.session_token = None
+                current_user.session_expiration = None
+                db.session.commit()
 
             if not token_db or not token_session or token_db != token_session or not expiration or expiration < datetime.now():
                 app.logger.warning(
@@ -104,8 +93,14 @@ if __name__ == '__main__':
                 )
                 current_user.session_token = None
                 current_user.session_expiration = None
-                logout_user()
                 session.clear()
+                logout_user()
                 return redirect(url_for("auth.login"))
+
+            # Sesión válida — renovar expiración (sliding session)
+            remember_me = session.get("remember_me", False)
+            delta = timedelta(days=7) if remember_me else timedelta(minutes=10)
+            current_user.session_expiration = datetime.now() + delta
+            db.session.commit()
 
     app.run(debug=True)

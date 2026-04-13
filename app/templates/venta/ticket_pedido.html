@@ -1,0 +1,389 @@
+{% extends "/venta/layout.html" %}
+{% block title %}Ticket #VO-{{ '%04d'|format(pedido.idPedido) }}{% endblock %}
+
+{% block styles %}
+<style>
+  /* ── Ocultar chrome de la app en pantalla ── */
+  body { background: #f3f4f6; }
+
+  .ticket-wrap {
+    max-width: 400px;
+    margin: 2rem auto;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  /* Acciones (solo pantalla, no imprimir) */
+  .ticket-actions {
+    display: flex; gap: .65rem; margin-bottom: 1.25rem; justify-content: center;
+  }
+  .btn-print-ticket {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: .6rem 1.3rem;
+    background: #16a34a; color: #fff;
+    font-size: .8rem; font-weight: 800;
+    border-radius: 11px; border: none; cursor: pointer;
+    box-shadow: 0 3px 12px rgba(22,163,74,.3);
+    font-family: 'Nunito', sans-serif;
+    transition: all .18s;
+  }
+  .btn-print-ticket:hover { background: #15803d; transform: translateY(-1px); }
+  .btn-print-ticket svg { width: 15px; height: 15px; stroke: #fff; fill: none; }
+
+  .btn-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: .6rem 1.1rem;
+    background: #fff; color: #6b7280;
+    font-size: .8rem; font-weight: 700;
+    border-radius: 11px; border: 1px solid #e5e7eb; cursor: pointer;
+    font-family: 'Nunito', sans-serif; text-decoration: none;
+    transition: all .18s;
+  }
+  .btn-back:hover { background: #f9fafb; }
+  .btn-back svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+
+  /* ── Ticket ── */
+  .ticket {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Cabecera verde */
+  .ticket-header {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    padding: 1.75rem 1.5rem 1.25rem;
+    text-align: center;
+    color: #fff;
+  }
+  .ticket-logo {
+    font-size: 2rem; margin-bottom: .4rem;
+  }
+  .ticket-brand {
+    font-size: .72rem; font-weight: 800; letter-spacing: .2em;
+    text-transform: uppercase; opacity: .85; margin: 0 0 .75rem;
+  }
+  .ticket-folio {
+    font-size: 1.6rem; font-weight: 900; letter-spacing: .05em;
+    font-family: monospace; margin: 0 0 .35rem;
+  }
+  .ticket-fecha {
+    font-size: .7rem; opacity: .8; font-weight: 600; margin: 0;
+  }
+
+  /* Badge estatus */
+  .ticket-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: .75rem;
+    padding: 4px 14px; border-radius: 99px;
+    font-size: .7rem; font-weight: 800;
+    background: rgba(255,255,255,.2);
+    border: 1px solid rgba(255,255,255,.35);
+    color: #fff;
+  }
+  .ticket-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+  .ticket-badge-dot.pulse { animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  /* Borde dentado */
+  .ticket-tear {
+    height: 24px;
+    background:
+      radial-gradient(circle at 0 50%, #f3f4f6 12px, transparent 12px),
+      radial-gradient(circle at 100% 50%, #f3f4f6 12px, transparent 12px);
+    background-color: #fff;
+    background-size: 20px 24px;
+    background-repeat: repeat-x;
+    position: relative;
+  }
+  .ticket-tear::after {
+    content: '';
+    display: block;
+    border-top: 1px dashed #e5e7eb;
+    margin: 0 16px;
+    position: absolute; top: 50%; left: 0; right: 0;
+  }
+
+  /* Cuerpo del ticket */
+  .ticket-body { padding: 1.25rem 1.5rem; }
+
+  /* Sección genérica */
+  .t-section { margin-bottom: 1.1rem; }
+  .t-section-title {
+    font-size: .58rem; font-weight: 900; letter-spacing: .15em;
+    text-transform: uppercase; color: #9ca3af;
+    margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px dashed #f0f0f0;
+  }
+
+  /* Fila producto */
+  .t-product-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: .4rem 0; font-size: .82rem;
+  }
+  .t-product-row:not(:last-child) { border-bottom: 1px dotted #f5f5f5; }
+  .t-product-name { font-weight: 700; color: #111827; }
+  .t-product-qty  { font-size: .7rem; color: #9ca3af; font-weight: 600; margin-top: 1px; }
+  .t-product-price { font-weight: 800; color: #374151; white-space: nowrap; }
+
+  /* Totales */
+  .t-total-row {
+    display: flex; justify-content: space-between;
+    font-size: .78rem; padding: .22rem 0;
+  }
+  .t-total-row .lbl { color: #6b7280; font-weight: 600; }
+  .t-total-row .val { font-weight: 700; color: #374151; }
+  .t-total-final {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: .65rem 0 .35rem;
+    border-top: 2px solid #111827; margin-top: .35rem;
+  }
+  .t-total-final .lbl { font-size: .88rem; font-weight: 900; color: #111827; }
+  .t-total-final .val { font-size: 1.25rem; font-weight: 900; color: #16a34a; }
+
+  /* Info row */
+  .t-info-row {
+    display: flex; justify-content: space-between;
+    font-size: .76rem; padding: .22rem 0;
+  }
+  .t-info-row .lbl { color: #9ca3af; font-weight: 600; }
+  .t-info-row .val { font-weight: 700; color: #374151; text-align: right; max-width: 55%; }
+
+  /* Nota */
+  .t-nota {
+    background: #f9fafb; border: 1px solid #f0f0f0; border-radius: 10px;
+    padding: .6rem .75rem; font-size: .75rem; color: #6b7280;
+    font-style: italic; margin-top: .4rem;
+  }
+
+  /* QR placeholder */
+  .t-qr-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 1rem 0 .5rem;
+  }
+  .t-qr-box {
+    width: 100px; height: 100px;
+    border: 2px solid #e5e7eb; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fafafa; margin-bottom: .5rem;
+  }
+  .t-qr-box svg { width: 60px; height: 60px; }
+  .t-qr-label { font-size: .62rem; color: #9ca3af; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+  /* Sucursal badge */
+  .t-sucursal-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 12px; padding: .75rem 1rem;
+  }
+  .t-sucursal-badge svg { width: 20px; height: 20px; stroke: #2563eb; fill: none; flex-shrink: 0; }
+  .t-sucursal-badge p { margin: 0; font-size: .75rem; font-weight: 700; color: #1d4ed8; }
+  .t-sucursal-badge small { font-size: .65rem; color: #3b82f6; font-weight: 600; }
+
+  /* Footer del ticket */
+  .ticket-footer {
+    background: #fafafa; border-top: 1px dashed #e5e7eb;
+    padding: 1rem 1.5rem; text-align: center;
+  }
+  .ticket-footer p { font-size: .65rem; color: #9ca3af; font-weight: 600; margin: 2px 0; }
+  .ticket-footer strong { color: #374151; }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff !important; }
+    .ticket-actions { display: none !important; }
+    .ticket-wrap { margin: 0; max-width: 100%; }
+    .ticket { box-shadow: none; border-radius: 0; }
+    .ticket-tear { background-color: #fff; }
+  }
+</style>
+{% endblock %}
+
+{% block container %}
+<div class="ticket-wrap">
+
+  <!-- Botones (solo pantalla) -->
+  <div class="ticket-actions">
+    <a href="{{ url_for('venta.pedido_detalle', id_pedido=pedido.idPedido) }}" class="btn-back">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      Detalle del pedido
+    </a>
+    <button class="btn-print-ticket" onclick="window.print()">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      Imprimir / Guardar PDF
+    </button>
+  </div>
+
+  <!-- TICKET -->
+  <div class="ticket">
+
+    <!-- Cabecera -->
+    <div class="ticket-header">
+      <div class="ticket-logo">🥩</div>
+      <p class="ticket-brand">La Respuesta — Carnicería</p>
+      <p class="ticket-folio">#VO-{{ '%04d'|format(pedido.idPedido) }}</p>
+      <p class="ticket-fecha">{{ pedido.fechaCreacion.strftime('%d de %B de %Y · %H:%M hrs') }}</p>
+      <div class="ticket-badge">
+        <span class="ticket-badge-dot {% if pedido.Estatus == 'EnCurso' %}pulse{% endif %}"></span>
+        {% if pedido.Estatus == 'EnCurso' %}En curso
+        {% elif pedido.Estatus == 'Finalizado' %}Entregado
+        {% else %}Cancelado{% endif %}
+      </div>
+    </div>
+
+    <!-- Borde dentado -->
+    <div class="ticket-tear"></div>
+
+    <!-- Cuerpo -->
+    <div class="ticket-body">
+
+      <!-- Cliente -->
+      <div class="t-section">
+        <p class="t-section-title">Cliente</p>
+        <div class="t-info-row">
+          <span class="lbl">Nombre</span>
+          <span class="val">
+            {{ current_user.persona.nombre if current_user.persona else '' }}
+            {{ current_user.persona.apellido_paterno if current_user.persona else current_user.email }}
+          </span>
+        </div>
+        <div class="t-info-row">
+          <span class="lbl">Correo</span>
+          <span class="val">{{ current_user.email }}</span>
+        </div>
+        {% if current_user.persona and current_user.persona.telefono %}
+        <div class="t-info-row">
+          <span class="lbl">Teléfono</span>
+          <span class="val">{{ current_user.persona.telefono }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Entrega -->
+      <div class="t-section">
+        <p class="t-section-title">Entrega</p>
+        {% if pedido.Entrega == 'Mostrador' %}
+          <div class="t-sucursal-badge">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/></svg>
+            <div>
+              <p>Recoger en sucursal</p>
+              <small>Presenta este ticket en mostrador</small>
+            </div>
+          </div>
+        {% else %}
+          <div class="t-info-row">
+            <span class="lbl">Modalidad</span>
+            <span class="val">🚚 Domicilio</span>
+          </div>
+          <div class="t-info-row">
+            <span class="lbl">Dirección</span>
+            <span class="val">{{ pedido.Direccion or 'Sin dirección registrada' }}</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Productos -->
+      <div class="t-section">
+        <p class="t-section-title">Productos</p>
+        {% for item in items %}
+        <div class="t-product-row">
+          <div>
+            <p class="t-product-name">{{ item.producto.NombreProducto }}</p>
+            <p class="t-product-qty">{{ item.cantidad }} unidad{{ 'es' if item.cantidad != 1 else '' }}</p>
+          </div>
+          <span class="t-product-price">${{ '%.2f'|format(item.subtotal) }}</span>
+        </div>
+        {% endfor %}
+        {% if items_cortes %}
+        <p style="font-size:.55rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.1em;margin:.6rem 0 .3rem;border-top:1px dashed #fde68a;padding-top:.4rem;">Cortes por peso</p>
+        {% for ic in items_cortes %}
+        <div class="t-product-row">
+          <div>
+            <p class="t-product-name">{{ ic.nombre }}</p>
+            <p class="t-product-qty">{{ '%.2f'|format(ic.peso) }} kg ({{ ic.categoria }})</p>
+          </div>
+          <span class="t-product-price">${{ '%.2f'|format(ic.costo) }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+
+      <!-- Totales -->
+      <div class="t-section">
+        <p class="t-section-title">Desglose</p>
+        <div class="t-total-row">
+          <span class="lbl">Base sin IVA</span>
+          <span class="val">${{ '%.2f'|format(base_sin_iva) }}</span>
+        </div>
+        <div class="t-total-row">
+          <span class="lbl">IVA (16%) incluido</span>
+          <span class="val">${{ '%.2f'|format(iva) }}</span>
+        </div>
+        <div class="t-total-row">
+          <span class="lbl">Envío</span>
+          <span class="val" style="color:#16a34a;">Gratis</span>
+        </div>
+        <div class="t-total-final">
+          <span class="lbl">Total pagado</span>
+          <span class="val">${{ '%.2f'|format(total) }}</span>
+        </div>
+        <p style="font-size:.6rem;color:#9ca3af;text-align:right;margin-top:3px;">IVA incluido en el total</p>
+      </div>
+
+      <!-- Pago -->
+      <div class="t-section">
+        <p class="t-section-title">Pago</p>
+        <div class="t-info-row">
+          <span class="lbl">Método</span>
+          <span class="val">{{ pedido.Tipo or '—' }}</span>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      {% if pedido.Notas %}
+      <div class="t-section">
+        <p class="t-section-title">Notas</p>
+        <div class="t-nota">"{{ pedido.Notas }}"</div>
+      </div>
+      {% endif %}
+
+      <!-- QR placeholder -->
+      <div class="t-qr-wrap">
+        <div class="t-qr-box">
+          <!-- QR representativo — integrar librería real si se desea -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Esquina TL -->
+            <rect x="10" y="10" width="30" height="30" rx="4" fill="none" stroke="#374151" stroke-width="5"/>
+            <rect x="18" y="18" width="14" height="14" rx="2" fill="#374151"/>
+            <!-- Esquina TR -->
+            <rect x="60" y="10" width="30" height="30" rx="4" fill="none" stroke="#374151" stroke-width="5"/>
+            <rect x="68" y="18" width="14" height="14" rx="2" fill="#374151"/>
+            <!-- Esquina BL -->
+            <rect x="10" y="60" width="30" height="30" rx="4" fill="none" stroke="#374151" stroke-width="5"/>
+            <rect x="18" y="68" width="14" height="14" rx="2" fill="#374151"/>
+            <!-- Puntos centro -->
+            <rect x="50" y="45" width="7" height="7" rx="1" fill="#374151"/>
+            <rect x="62" y="45" width="7" height="7" rx="1" fill="#374151"/>
+            <rect x="50" y="57" width="7" height="7" rx="1" fill="#374151"/>
+            <rect x="62" y="57" width="7" height="7" rx="1" fill="#374151"/>
+            <rect x="50" y="69" width="7" height="7" rx="1" fill="#374151"/>
+            <rect x="74" y="57" width="7" height="7" rx="1" fill="#374151"/>
+            <rect x="74" y="69" width="7" height="7" rx="1" fill="#374151"/>
+          </svg>
+        </div>
+        <p class="t-qr-label">{{ '%04d'|format(pedido.idPedido) }} · Folio de pedido</p>
+      </div>
+
+    </div><!-- /ticket-body -->
+
+    <!-- Footer -->
+    <div class="ticket-footer">
+      <p>Gracias por tu compra 🙌</p>
+      <p>Cancelaciones solo en sucursal o vía telefónica</p>
+      <p style="margin-top:.5rem;"><strong>La Respuesta — Carnicería</strong></p>
+    </div>
+
+  </div><!-- /ticket -->
+</div>
+{% endblock %}

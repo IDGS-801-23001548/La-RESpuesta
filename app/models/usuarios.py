@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
     confirmed_at        = db.Column(db.DateTime)
     roles               = db.relationship('Role',
                                     secondary=users_roles,
-                                    backref= db.backref('users', lazy='dynamic'))
+                                    backref= db.backref('user', lazy='dynamic'))
     
     intentos_fallidos   = db.Column(db.Integer, default=0, nullable=False)
     bloqueado_hasta     = db.Column(db.DateTime, nullable=True)
@@ -25,7 +25,12 @@ class User(db.Model, UserMixin):
     ultima_ip           = db.Column(db.String(45), nullable=True)
     session_token       = db.Column(db.String(255), nullable=True)
     session_expiration  = db.Column(db.DateTime, nullable=True)
+
+    autenticacion_doble_factor = db.Column(db.Boolean)
     
     persona             = db.relationship('Persona', 
                                     backref='user', 
                                     uselist=False)
+    
+    pedido              = db.relationship('Pedido', 
+                                    backref='userPedido')

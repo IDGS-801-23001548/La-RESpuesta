@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VentaOnline — Crear cuenta</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:       #16a34a;
+    --green-dark:  #14532d;
+    --green-light: #dcfce7;
+    --green-mid:   #f0fdf4;
+    --amber:       #d97706;
+    --gray-900:    #111827;
+    --gray-700:    #374151;
+    --gray-500:    #6b7280;
+    --gray-300:    #d1d5db;
+    --gray-100:    #f5f5f5;
+    --white:       #ffffff;
+    --page-bg:     #f8faf8;
+    --radius:      14px;
+    --shadow:      0 4px 24px rgba(0,0,0,.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--page-bg);
+    background-image: radial-gradient(circle, #d1fae5 1px, transparent 1px);
+    background-size: 28px 28px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── NAVBAR ── */
+  .navbar {
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    box-shadow: 0 1px 0 rgba(0,0,0,.04);
+  }
+  .nav-inner {
+    max-width: 1100px; margin: 0 auto;
+    padding: 0 1.5rem; height: 62px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px; text-decoration: none;
+  }
+  .nav-logo-icon {
+    width: 38px; height: 38px; background: var(--green);
+    border-radius: 11px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(22,163,74,.32);
+  }
+  .nav-logo-icon svg { width: 18px; height: 18px; stroke: #fff; fill: none; }
+  .nav-logo-text { font-weight: 900; font-size: 1.05rem; color: var(--gray-900); }
+  .nav-logo-text span { color: var(--green); }
+  .nav-login-link {
+    font-size: .8rem; font-weight: 700; color: var(--gray-500);
+    text-decoration: none; transition: color .18s;
+  }
+  .nav-login-link:hover { color: var(--green); }
+
+  /* ── MAIN WRAPPER ── */
+  .page-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.25rem;
+  }
+
+  /* ── CARD ── */
+  .register-card {
+    background: var(--white);
+    border-radius: 24px;
+    border: 1px solid #f0f0f0;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 560px;
+    overflow: hidden;
+    animation: fadeUp .45s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #f0fdf4 0%, #fff 60%);
+    border-bottom: 1px solid #f5f5f5;
+    padding: 2rem 2rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-header::before {
+    content: '';
+    position: absolute; right: -40px; top: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, #bbf7d0, transparent 70%);
+    opacity: .5; pointer-events: none;
+  }
+  .card-header-icon {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 14px rgba(22,163,74,.2);
+    font-size: 1.5rem;
+  }
+  .card-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; font-weight: 900;
+    color: var(--gray-900); margin-bottom: .35rem;
+  }
+  .card-header p {
+    font-size: .82rem; color: var(--gray-500); font-weight: 600;
+  }
+
+  .card-body { padding: 1.75rem 2rem; }
+
+  /* ── FLASHES ── */
+  .flash-list { margin-bottom: 1.25rem; }
+  .flash-msg {
+    display: flex; align-items: center; gap: 8px;
+    padding: .75rem 1rem; border-radius: 12px;
+    font-size: .8rem; font-weight: 700; margin-bottom: .5rem;
+    border: 1px solid transparent;
+  }
+  .flash-msg.error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  .flash-msg.success { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+  .flash-msg svg { width: 15px; height: 15px; stroke: currentColor; fill: none; flex-shrink: 0; }
+
+  /* ── FORM ── */
+  .section-label {
+    font-size: .6rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .12em; color: var(--gray-500);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: .85rem; margin-top: 1.25rem;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--gray-100);
+  }
+
+  .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .form-row   { margin-bottom: .85rem; }
+
+  .form-label {
+    display: block;
+    font-size: .62rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: #9ca3af; margin-bottom: 6px;
+  }
+  .form-input {
+    width: 100%;
+    padding: .65rem .9rem;
+    font-size: .85rem; font-family: 'Nunito', sans-serif;
+    color: var(--gray-700); background: #f9fafb;
+    border: 1.5px solid #e5e7eb; border-radius: 11px;
+    outline: none; transition: all .18s;
+  }
+  .form-input:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(22,163,74,.1);
+    background: #fff;
+  }
+  .form-input.is-error { border-color: #fca5a5; background: #fff5f5; }
+
+  /* ── HINTS DE CONTRASEÑA ── */
+  .hint-box {
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 11px; padding: .75rem .9rem;
+    font-size: .72rem; color: #1d4ed8; font-weight: 600;
+    margin-top: .5rem; margin-bottom: .85rem;
+  }
+  .hint-box ul { list-style: none; padding: 0; }
+  .hint-box li::before { content: '·'; margin-right: 6px; }
+
+  /* ── SUBMIT ── */
+  .btn-submit {
+    width: 100%; padding: .9rem;
+    background: var(--green); color: #fff;
+    font-size: .9rem; font-weight: 800;
+    border: none; border-radius: 13px; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(22,163,74,.3);
+    transition: all .2s; font-family: 'Nunito', sans-serif;
+    margin-top: .5rem;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 8px 22px rgba(22,163,74,.4); }
+  .btn-submit svg { width: 16px; height: 16px; stroke: #fff; fill: none; }
+
+  /* ── LOGIN LINK ── */
+  .login-nudge {
+    text-align: center; margin-top: 1.25rem;
+    font-size: .78rem; color: var(--gray-500); font-weight: 600;
+  }
+  .login-nudge a { color: var(--green); font-weight: 800; text-decoration: none; }
+  .login-nudge a:hover { text-decoration: underline; }
+
+  /* ── FOOTER ── */
+  .page-footer {
+    text-align: center; font-size: .7rem; color: #bbb;
+    font-weight: 600; padding: 1.25rem; letter-spacing: .2px;
+  }
+
+  @media (max-width: 500px) {
+    .card-body { padding: 1.5rem 1.25rem; }
+    .form-grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="{{ url_for('index') }}" class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg viewBox="0 0 24 24" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 6h11M10 19a1 1 0 100 2 1 1 0 000-2zm7 0a1 1 0 100 2 1 1 0 000-2z"/>
+        </svg>
+      </div>
+      <span class="nav-logo-text">Venta<span>Online</span></span>
+    </a>
+    <a href="{{ url_for('auth.login') }}" class="nav-login-link">
+      ¿Ya tienes cuenta? Inicia sesión →
+    </a>
+  </div>
+</nav>
+
+<!-- CONTENIDO -->
+<div class="page-wrap">
+  <div class="register-card">
+
+    <div class="card-header">
+      <div class="card-header-icon">🛒</div>
+      <h1>Crea tu cuenta</h1>
+      <p>Regístrate gratis y recibe 15% de descuento en tu primer pedido</p>
+    </div>
+
+    <div class="card-body">
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-list">
+        {% for category, message in messages %}
+        <div class="flash-msg {{ category }}">
+          {% if category == 'error' %}
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z"/></svg>
+          {% else %}
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          {% endif %}
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('user.registro_cliente_post') }}" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <!-- Datos personales -->
+        <p class="section-label">Datos personales</p>
+
+        <div class="form-grid2">
+          <div class="form-row" style="margin:0;">
+            {{ form.nombre.label(class='form-label') }}
+            {{ form.nombre(class='form-input' + (' is-error' if form.nombre.errors else ''), placeholder='Tu nombre') }}
+          </div>
+          <div class="form-row" style="margin:0;">
+            {{ form.apellido_paterno.label(class='form-label') }}
+            {{ form.apellido_paterno(class='form-input' + (' is-error' if form.apellido_paterno.errors else ''), placeholder='Apellido paterno') }}
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:.75rem;">
+          {{ form.apellido_materno.label(class='form-label') }}
+          {{ form.apellido_materno(class='form-input', placeholder='Apellido materno (opcional)') }}
+        </div>
+
+        <div class="form-grid2">
+          <div class="form-row" style="margin:0;">
+            {{ form.telefono.label(class='form-label') }}
+            {{ form.telefono(class='form-input', placeholder='477 123 4567') }}
+          </div>
+          <div class="form-row" style="margin:0;">
+            <!-- Spacer visual -->
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:.75rem;">
+          {{ form.direccion.label(class='form-label') }}
+          {{ form.direccion(class='form-input', placeholder='Calle, número, colonia, ciudad...') }}
+        </div>
+
+        <!-- Acceso -->
+        <p class="section-label" style="margin-top:1.5rem;">Acceso a tu cuenta</p>
+
+        <div class="form-row">
+          {{ form.email.label(class='form-label') }}
+          {{ form.email(class='form-input' + (' is-error' if form.email.errors else ''), placeholder='tu@correo.com') }}
+        </div>
+
+        <div class="form-grid2">
+          <div class="form-row" style="margin:0;">
+            {{ form.password.label(class='form-label') }}
+            {{ form.password(class='form-input' + (' is-error' if form.password.errors else ''), placeholder='Mínimo 8 caracteres') }}
+          </div>
+          <div class="form-row" style="margin:0;">
+            {{ form.password_confirm.label(class='form-label') }}
+            {{ form.password_confirm(class='form-input' + (' is-error' if form.password_confirm.errors else ''), placeholder='Repite tu contraseña') }}
+          </div>
+        </div>
+
+        <div class="hint-box">
+          <ul>
+            <li>Mínimo 8 caracteres</li>
+            <li>Al menos una mayúscula y una minúscula</li>
+            <li>Al menos un número</li>
+          </ul>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          <svg viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+          Crear mi cuenta gratis
+        </button>
+
+      </form>
+
+      <p class="login-nudge">
+        ¿Ya tienes cuenta?
+        <a href="{{ url_for('auth.login') }}">Inicia sesión aquí</a>
+      </p>
+
+    </div>
+  </div>
+</div>
+
+<footer class="page-footer">
+  © 2026 VentaOnline &nbsp;·&nbsp; Hecho con 🥩 en León, Gto.
+</footer>
+
+</body>
+</html>
