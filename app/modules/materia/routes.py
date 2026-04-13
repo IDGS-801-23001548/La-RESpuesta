@@ -10,7 +10,7 @@ from app.models.proveedor import Proveedor
 from app.models.unidad_medida import UnidadMedida
 from flask_login import login_required
 from flask_security import roles_required
-from app.models import MateriaPrima, MateriaProveida, Lote, Categoria
+from app.models import MateriaPrima, MateriaProveida, Lote, Categoria, Canal
 from sqlalchemy import func
 
 
@@ -64,12 +64,43 @@ def inventario():
             'stock_total': row.stock_total or 0,
             'costo_total': row.costo_total or 0.0,
             'n_lotes':     row.n_lotes or 0,
-            # Costo promedio por unidad de conversor
             'costo_promedio': (float(row.costo_total) / float(row.stock_total))
             if row.stock_total and row.stock_total > 0 else 0.0
         }
         for row in stock_query
     }
+
+    # ── Stock de canales (tipo Canal) ──────────────────────────────────────
+    # Canales disponibles agrupadas por idCategoria → mapear a MateriaPrima con tipo='Canal'
+    canal_stock_query = (
+        db.session.query(
+            Canal.idCategoria,
+            func.sum(Canal.Peso).label('peso_total'),
+            func.count(Canal.idCanal).label('n_canales'),
+        )
+        .filter(Canal.estatus.in_(['Disponible', 'EnEspera']))
+        .group_by(Canal.idCategoria)
+        .all()
+    )
+    canal_stock_by_cat = {
+        row.idCategoria: {
+            'peso_total': row.peso_total or 0,
+            'n_canales':  row.n_canales or 0,
+        }
+        for row in canal_stock_query
+    }
+
+    # Mapear canales a MateriaPrima con tipo='Canal' por idCategoria
+    for m in materias:
+        if m.tipo == 'Canal' and m.idCategoria and m.idCategoria in canal_stock_by_cat:
+            canal_info = canal_stock_by_cat[m.idCategoria]
+            existing = stock_map.get(m.idMateriaPrima, {})
+            stock_map[m.idMateriaPrima] = {
+                'stock_total':    existing.get('stock_total', 0) + canal_info['peso_total'],
+                'costo_total':    existing.get('costo_total', 0.0),
+                'n_lotes':        existing.get('n_lotes', 0) + canal_info['n_canales'],
+                'costo_promedio': existing.get('costo_promedio', 0.0),
+            }
 
     # Calcular totales generales para KPI cards
     total_valor = sum(v['costo_total'] for v in stock_map.values())

@@ -79,7 +79,7 @@ def _enviar_codigo_2fa(user):
 def login():
     if current_user.is_authenticated:
         if current_user.has_role('admin'):
-            return redirect(url_for('admin.dashboard'))
+            return redirect(url_for('admin.dashboard_ventas'))
         return redirect(url_for('venta.inicio'))
 
     return render_template("security/login_user.html")
@@ -254,7 +254,7 @@ def _completar_login(user, remember):
     )
 
     if user.has_role('admin'):
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('admin.dashboard_ventas'))
 
     if user.has_role('Cajero'):
         return redirect(url_for('mostrador.mostradorVenta'))
