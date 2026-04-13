@@ -1,8 +1,12 @@
 from flask import render_template, redirect, url_for, flash, request
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from . import repartidor_bp
 from app.extensions import db
 from app.models import Pedido 
+import logging
+
+# Configuramos el logger para que escriba en app.log con el formato de tus compas
+logger = logging.getLogger('app')
 
 @repartidor_bp.route("/", methods=['GET'])
 @login_required
@@ -51,12 +55,16 @@ def actualizar_estado(id_pedido):
         if viaje_activo:
             flash("Ya tienes un pedido en curso.", "warning")
             return redirect(url_for('repartidor.detalle_pedido', id_pedido=id_pedido))
+        # LOG DE INICIO DE VIAJE
+        logger.info(f"VIAJE INICIADO - Repartidor: {current_user.name} - Pedido: #{id_pedido}")
 
     if nuevo_estado:
         pedido_db.Estatus = nuevo_estado
         if nuevo_estado == 'Cancelado':
             motivo = request.form.get('motivo_cancelacion')
             pedido_db.Notas = f"MOTIVO CANCELACIÓN: {motivo}"
+            # LOG DE CANCELACIÓN
+            logger.warning(f"CANCELACION SOLICITADA - Pedido: #{id_pedido} - Motivo: {motivo}")
         
         db.session.commit()
         flash(f"Estado actualizado", "success")
@@ -75,13 +83,15 @@ def entregar_pedido(id_pedido):
     pedido_db.Estatus = 'Finalizado'
     db.session.commit()
     
+    # LOG DE ENTREGA EXITOSA
+    logger.info(f"PEDIDO ENTREGADO - Repartidor: {current_user.name} - Pedido: #{id_pedido} - Total: ${pedido_db.Total}")
+    
     return redirect(url_for("repartidor.pedidos"))
-
 
 @repartidor_bp.route("/cerrar-ruta")
 @login_required
 def cerrar_ruta():
-    
+    # Candado: No dejar salir si hay algo pendiente
     pedido_abierto = Pedido.query.filter(
         Pedido.idRepartidor == current_user.id,
         Pedido.Estatus.in_(['Pendiente', 'EnCurso'])
@@ -90,6 +100,7 @@ def cerrar_ruta():
     if pedido_abierto:
         return redirect(url_for('repartidor.pedidos'))
 
+    # Cálculo de efectivo para el log y el mensaje
     pedidos_del_dia = Pedido.query.filter_by(
         idRepartidor=current_user.id, 
         Estatus='Finalizado', 
@@ -98,13 +109,15 @@ def cerrar_ruta():
     
     total_efectivo = sum(p.Total for p in pedidos_del_dia)
 
-    
+    # Limpieza del dashboard (desvincular pedidos)
     for p in Pedido.query.filter_by(idRepartidor=current_user.id).all():
         p.idRepartidor = None 
     
     db.session.commit()
 
-    from flask_login import logout_user
+    # LOG DE CIERRE DE JORNADA
+    logger.info(f"JORNADA FINALIZADA - Repartidor: {current_user.name} - Efectivo entregado: ${total_efectivo:.2f}")
+
     logout_user()
     
     flash(f"Ruta finalizada. Entrega ${total_efectivo:.2f} en caja.", "success")
