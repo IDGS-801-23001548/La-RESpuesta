@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from . import solicitud_de_produccion
 from app.extensions import db, mongo_fotos
 from app.models import (
@@ -6,7 +6,7 @@ from app.models import (
     SolicitudProduccion, SolicitudProduccionDetalle,
     MateriaPrima, MateriaProveida, Lote,
     Producto,
-    Canal, CanalCorte, Corte, Categoria,
+    Canal, CanalCorte, Corte, ProductoUnitario
 )
 from flask_login import login_required, current_user
 from flask_security import roles_required
@@ -150,6 +150,54 @@ def _serializar_lote_corte(lote):
         'caducidad':    lote.fechaCaducidad.strftime('%d/%m/%Y') if lote.fechaCaducidad else '—',
     }
 
+def _generar_numero_lote_produccion():
+    """Numero de lote para Lote producido por corte."""
+    meses_corto = {1:'Ene',2:'Feb',3:'Mar',4:'Abr',5:'May',6:'Jun',
+                   7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic'}
+    hoy = date.today()
+    prefijo = f"LP-{meses_corto[hoy.month]}{hoy.day:02d}"
+
+    ultimo = (
+        Lote.query
+        .filter(Lote.numeroLote.like(f"{prefijo}%"))
+        .order_by(Lote.numeroLote.desc())
+        .first()
+    )
+
+    if ultimo and ultimo.numeroLote:
+        try:
+            ultimo_num = int(ultimo.numeroLote[len(prefijo):])
+        except:
+            ultimo_num = 0
+    else:
+        ultimo_num = 0
+
+    return f"{prefijo}{ultimo_num + 1:02d}"
+
+
+def _generar_numero_lote_producto():
+    """Numero de lote para ProductoUnitario."""
+    meses_corto = {1:'Ene',2:'Feb',3:'Mar',4:'Abr',5:'May',6:'Jun',
+                   7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic'}
+    hoy = date.today()
+    prefijo = f"PP-{meses_corto[hoy.month]}{hoy.day:02d}"
+
+    ultimo = (
+        ProductoUnitario.query
+        .filter(ProductoUnitario.NumeroLote.like(f"{prefijo}%"))
+        .order_by(ProductoUnitario.NumeroLote.desc())
+        .first()
+    )
+
+    if ultimo and ultimo.NumeroLote:
+        try:
+            ultimo_num = int(ultimo.NumeroLote[len(prefijo):])
+        except:
+            ultimo_num = 0
+    else:
+        ultimo_num = 0
+
+    return f"{prefijo}{ultimo_num + 1:02d}"
 
 # ═════════════════════════════════════════════════════════════════════════════
 #  LISTADO PRINCIPAL
@@ -317,6 +365,14 @@ def _solicitud_nueva_personalizada():
                 ))
 
             db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Solicitud de produccion creada (Personalizada) | receta={receta_obj.nombreReceta} "
+                f"| cantidad={cantidad_producir} uds | solicitud=#{nueva.idSolicitud} "
+                f"| usuario={email_usuario} | ip={request.remote_addr}"
+            )
+
             flash(
                 f'Solicitud de produccion creada como Pendiente para '
                 f'"{receta_obj.nombreReceta}" ({cantidad_producir} unidades). '
@@ -326,6 +382,9 @@ def _solicitud_nueva_personalizada():
             return redirect(url_for('solicitud_de_produccion.solicitudes'))
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(
+                f"Error al crear solicitud (Personalizada) | receta={receta_obj.nombreReceta} | error={e}"
+            )
             flash(f'Error al crear la solicitud: {e}', 'danger')
             return redirect(url_for(
                 'solicitud_de_produccion.solicitudes_nueva',
@@ -470,6 +529,14 @@ def _solicitud_nueva_corte():
             db.session.commit()
             cat_nombre = corte.categoria.nombreCategoria if (corte and corte.categoria) else ''
             nombre_corte = f'{corte.nombreCorte} ({cat_nombre})' if (corte and cat_nombre) else (corte.nombreCorte if corte else '—')
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Solicitud de produccion creada (Corte) | corte={nombre_corte} "
+                f"| canal=#{canal_corte.idCanal} | solicitud=#{nueva.idSolicitud} "
+                f"| usuario={email_usuario} | ip={request.remote_addr}"
+            )
+
             flash(
                 f'Solicitud de corte "{nombre_corte}" creada como Pendiente. '
                 f'Complétala en el modulo de Produccion.',
@@ -479,6 +546,9 @@ def _solicitud_nueva_corte():
 
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(
+                f"Error al crear solicitud (Corte) | canal_corte=#{id_canal_corte} | error={e}"
+            )
             flash(f'Error al crear la solicitud: {e}', 'danger')
             return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte', idCanal=canal_id_get))
 
@@ -541,5 +611,163 @@ def solicitudes_cancelar(id):
     else:
         sol.estatus = 'Cancelada'
         db.session.commit()
+
+        email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+        current_app.logger.info(
+            f"Solicitud de produccion cancelada | solicitud=#{sol.idSolicitud} "
+            f"| tipo={sol.tipoReceta} | nombre={sol.nombreReceta or '—'} "
+            f"| usuario={email_usuario} | ip={request.remote_addr}"
+        )
+
         flash('Solicitud cancelada.', 'success')
     return redirect(url_for('solicitud_de_produccion.solicitudes'))
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  COMPLETAR PRODUCCION
+# ═════════════════════════════════════════════════════════════════════════════
+
+def _completar_corte(sol):
+    detalle = sol.detalles.first()
+    cc = CanalCorte.query.get(detalle.idCanalCorte) if detalle else None
+    corte = Corte.query.get(cc.idCorte) if cc else None
+    canal = Canal.query.get(cc.idCanal) if cc else None
+
+    if request.method == 'POST':
+        cantidad_obtenida = float(request.form.get('cantidadObtenida') or 0)
+
+        if cantidad_obtenida <= 0:
+            flash('Cantidad invalida.', 'danger')
+            return redirect(request.url)
+
+        try:
+            merma = (cc.CantidadEsperada or 0) - cantidad_obtenida
+
+            cc.CantidadObtenida = cantidad_obtenida
+            cc.Merma = merma
+            cc.estatus = 'Consumido'
+
+            numero_lote = _generar_numero_lote_produccion()
+
+            lote = Lote(
+                idCanalCorte=cc.idCanalCorte,
+                numeroLote=numero_lote,
+                totalMateria=cantidad_obtenida,
+                estatus='Disponible',
+                idUsuario=current_user.id
+            )
+
+            db.session.add(lote)
+            db.session.flush()
+
+            sol.estatus = 'Completada'
+            sol.fechaCompletada = datetime.now()
+
+            detalle.idLoteProducido = lote.idLote
+            detalle.cantidadConsumida = cantidad_obtenida
+
+            db.session.commit()
+
+            flash(f'Corte completado. Lote {numero_lote}', 'success')
+            return redirect(url_for('solicitud_de_produccion.solicitudes'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
+
+    info = {
+        'foto_b64': _foto_b64_de(corte.idFoto) if corte else None,
+        'corte_nombre': corte.nombreCorte if corte else '—',
+        'categoria': corte.categoria.nombreCategoria if (corte and corte.categoria) else '—',
+        'canal_id': canal.idCanal if canal else '—',
+        'canal_peso': canal.Peso if canal else 0,
+        'fecha_sacrificio': canal.fechaSacrificio.strftime('%d/%m/%Y') if (canal and canal.fechaSacrificio) else '—',
+        'cantidad_esperada': cc.CantidadEsperada if cc else 0,
+    }
+
+    return render_template(
+        'admin/produccion/produccion_completar.html',  # 👈 mismo template
+        solicitud=sol,
+        info=info,
+        tipo='Corte'
+    )
+
+def _completar_personalizada(sol):
+    detalles = sol.detalles.all()
+    receta = sol.receta
+    producto = receta.producto if receta else None
+
+    ingredientes_info = []
+    for det in detalles:
+        lote = Lote.query.get(det.idLote) if det.idLote else None
+        mp = det.materiaPrima
+
+        ingredientes_info.append({
+            'nombre': mp.nombreMateriaPrima if mp else '—',
+            'lote': (lote.numeroLote or f'#{lote.idLote}') if lote else '—',
+            'necesario': det.cantidadConsumida,
+            'disponible': lote.totalMateria if lote else 0,
+            'lote_ok': lote and lote.estatus == 'Disponible' and (lote.totalMateria or 0) >= det.cantidadConsumida,
+        })
+
+    info = {
+        'nombre': sol.nombreReceta,
+        'cantidad_producir': sol.cantidadProducir,
+        'foto_b64': _foto_b64_de(receta.idFoto) if receta else None,
+        'ingredientes': ingredientes_info,
+        'producto': producto.NombreProducto if producto else '—',
+    }
+
+    if request.method == 'POST':
+        try:
+            for det in detalles:
+                lote = Lote.query.get(det.idLote)
+
+                if lote.totalMateria < det.cantidadConsumida:
+                    raise ValueError('Stock insuficiente')
+
+                lote.totalMateria -= det.cantidadConsumida
+
+                if lote.totalMateria <= 0:
+                    lote.estatus = 'Agotado'
+
+            numero_lote = _generar_numero_lote_producto()
+
+            for _ in range(sol.cantidadProducir):
+                db.session.add(ProductoUnitario(
+                    idProducto=producto.idProducto,
+                    NumeroLote=numero_lote,
+                    estatus='Disponible'
+                ))
+
+            sol.estatus = 'Completada'
+            sol.fechaCompletada = datetime.now()
+
+            db.session.commit()
+
+            flash('Producción completada.', 'success')
+            return redirect(url_for('solicitud_de_produccion.solicitudes'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
+
+    return render_template(
+        'admin/produccion/produccion_completar.html',
+        solicitud=sol,
+        info=info,
+        tipo='Personalizada'
+    )
+
+@solicitud_de_produccion.route('/produccion/<int:id>/completar', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin')
+def completar_produccion(id):
+    sol = SolicitudProduccion.query.get_or_404(id)
+
+    if sol.estatus != 'Pendiente':
+        flash('Esta solicitud ya fue completada o cancelada.', 'warning')
+        return redirect(url_for('solicitud_de_produccion.solicitudes'))
+
+    if sol.tipoReceta == 'Personalizada':
+        return _completar_personalizada(sol)
+    return _completar_corte(sol)

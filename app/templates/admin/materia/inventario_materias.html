@@ -204,8 +204,8 @@
 
                     <td class="px-4 py-3 text-right">
                         {% if tiene_stock %}
-                        <span class="text-xs font-bold text-gray-800">{{ stock_total }}</span>
-                        <span class="text-[10px] text-gray-400 ml-0.5">uds.</span>
+                        <span class="text-xs font-bold text-gray-800">{{ '%.2f'|format(stock_total) }}</span>
+                        <span class="text-[10px] text-gray-400 ml-0.5">{% if m.tipo == 'Canal' %}kg{% else %}uds.{% endif %}</span>
                         {% else %}
                         <span class="text-xs text-gray-300">0</span>
                         {% endif %}

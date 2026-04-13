@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, session, jsonify
+from flask import render_template, redirect, url_for, flash, request, session, jsonify, current_app
 from flask_login import login_required, current_user
 from flask_security.decorators import roles_required
 from . import mostrador
@@ -6,12 +6,20 @@ from datetime import datetime
 import uuid
 from app.extensions import db, mongo_fotos
 from app.models.producto import Producto
+from app.models.producto_unitario import ProductoUnitario
 from app.models.pedido import Pedido
 from app.models.ticket import Ticket
 from app.models.vistaResumenPedido import VistaResumenPedido
 from app.models.detallesTicket import DetalleTicket
+from app.models.corte import Corte
+from app.models.categoria import Categoria
+from app.models.lote import Lote
+from app.models.canal_corte import CanalCorte
+from sqlalchemy import func
+from app.models.corte_unitario import CorteUnitario
 from .forms import (
     AgregarProductoForm,
+    AgregarCorteForm,
     ModificarCantidadForm,
     EliminarProductoForm,
     VaciarCarritoForm,
@@ -64,26 +72,100 @@ def _build_carrito():
     return _build_carrito_from(_get_carrito_activo())
 
 
+# ─── HELPERS DE FOTOS ───────────────────────────────────────
+
+def _fetch_fotos_bulk(ids_foto):
+    """
+    Recibe una lista de idFoto (strings) y devuelve un dict
+    {idFoto: data_uri} con UNA sola consulta a MongoDB.
+    """
+    if not ids_foto or mongo_fotos is None:
+        return {}
+    try:
+        ids_str = [str(i) for i in ids_foto if i]
+        docs = mongo_fotos.find(
+            {'idFoto': {'$in': ids_str}},
+            {'idFoto': 1, 'foto': 1, '_id': 0}   # solo los campos necesarios
+        )
+        resultado = {}
+        for doc in docs:
+            raw = doc.get('foto')
+            if raw:
+                if not raw.startswith('data:'):
+                    raw = f'data:image/jpeg;base64,{raw}'
+                resultado[doc['idFoto']] = raw
+        return resultado
+    except Exception:
+        return {}
+
+
 def _enrich_productos_con_fotos(productos):
+    ids = [p.idFoto for p in productos if p.idFoto]
+    fotos = _fetch_fotos_bulk(ids)
+    return [
+        {'producto': p, 'foto_b64': fotos.get(str(p.idFoto))}
+        for p in productos
+    ]
+
+
+def _enrich_cortes_con_fotos(cortes_con_stock):
+    ids = [e['corte'].idFoto for e in cortes_con_stock if e['corte'].idFoto]
+    fotos = _fetch_fotos_bulk(ids)
+    return [
+        {
+            'corte':    e['corte'],
+            'stock_kg': e['stock_kg'],
+            'foto_b64': fotos.get(str(e['corte'].idFoto)),
+        }
+        for e in cortes_con_stock
+    ]
+
+
+def _get_cortes_con_stock():
     """
-    Recibe una lista de objetos Producto (SQLAlchemy) y devuelve una lista
-    de dicts enriquecidos con la foto en base64 obtenida de MongoDB.
+    Devuelve todos los cortes junto con su stock_kg real,
+    calculado como la suma de Lote.totalMateria de los lotes
+    con estatus='Disponible' y totalMateria > 0, enlazados
+    via CanalCorte.
     """
-    resultado = []
-    for p in productos:
-        foto_b64 = None
-        if p.idFoto and mongo_fotos is not None:
-            try:
-                doc = mongo_fotos.find_one({'idFoto': str(p.idFoto)})
-                if doc and doc.get('foto'):
-                    raw = doc['foto']
-                    if not raw.startswith('data:'):
-                        raw = f'data:image/jpeg;base64,{raw}'
-                    foto_b64 = raw
-            except Exception:
-                pass
-        resultado.append({'producto': p, 'foto_b64': foto_b64})
-    return resultado    
+    from app.models.lote import Lote
+
+    stock_sq = (
+        db.session.query(
+            CanalCorte.idCorte,
+            func.coalesce(func.sum(Lote.totalMateria), 0.0).label('stock_kg')
+        )
+        .join(Lote, Lote.idCanalCorte == CanalCorte.idCanalCorte)
+        .filter(
+            Lote.estatus == 'Disponible',
+            Lote.totalMateria > 0,
+        )
+        .group_by(CanalCorte.idCorte)
+        .subquery()
+    )
+
+    rows = (
+        db.session.query(Corte, func.coalesce(stock_sq.c.stock_kg, 0.0).label('stock_kg'))
+        .outerjoin(stock_sq, Corte.idCorte == stock_sq.c.idCorte)
+        .order_by(Corte.nombreCorte)
+        .all()
+    )
+
+    return [{'corte': corte, 'stock_kg': round(float(stock_kg), 3)} for corte, stock_kg in rows]
+
+
+# ─── CATÁLOGO DE CORTES (solo lectura) ──────────────────────
+
+@mostrador.route("/catalogo-cortes", methods=['GET'])
+@login_required
+@roles_required('admin')
+def catalogo_cortes():
+    cortes_raw  = _get_cortes_con_stock()
+    items_cortes = _enrich_cortes_con_fotos(cortes_raw)
+    return render_template("mostrador/cortes_catalogo.html", items_cortes=items_cortes)
+
+
+# ─── VISTA PRINCIPAL ────────────────────────────────────────
 
 @mostrador.route("/venta", methods=['GET'])
 @login_required
@@ -94,39 +176,50 @@ def mostradorVenta():
         session['ticket_activo'] = '1'
         session.modified = True
     else:
-        # Limpiar sesiones viejas con claves mixtas
         session['tickets'] = {str(k): v for k, v in session['tickets'].items()}
         session['ticket_activo'] = str(session.get('ticket_activo', '1'))
         session.modified = True
 
-
+    # ── Productos normales ──
     productos      = Producto.query.order_by(Producto.NombreProducto).all()
+    items_productos = _enrich_productos_con_fotos(productos)
+
+    # ── Cortes con stock ──
+    cortes_raw     = _get_cortes_con_stock()
+    items_cortes   = _enrich_cortes_con_fotos(cortes_raw)
+
+    # ── Carrito ──
     carrito_items, total = _build_carrito()
     tickets        = _get_tickets()
     ticket_activo  = _get_ticket_activo()
 
-    agregar_form   = AgregarProductoForm()
-    modificar_form = ModificarCantidadForm()
-    eliminar_form  = EliminarProductoForm()
-    vaciar_form    = VaciarCarritoForm()
-    cobrar_form    = CobrarForm()
-    items          = _enrich_productos_con_fotos(productos)
+    # ── Forms ──
+    agregar_form        = AgregarProductoForm()
+    agregar_corte_form  = AgregarCorteForm()
+    modificar_form      = ModificarCantidadForm()
+    eliminar_form       = EliminarProductoForm()
+    vaciar_form         = VaciarCarritoForm()
+    cobrar_form         = CobrarForm()
 
     return render_template(
         "mostrador/mostrador.html",
-        productos      = productos,
-        carrito        = carrito_items,
-        total          = total,
-        items          = items,
-        tickets        = tickets,
-        ticket_activo  = ticket_activo,
-        agregar_form   = agregar_form,
-        modificar_form = modificar_form,
-        eliminar_form  = eliminar_form,
-        vaciar_form    = vaciar_form,
-        cobrar_form    = cobrar_form,
+        productos           = productos,
+        items               = items_productos,
+        items_cortes        = items_cortes,
+        carrito             = carrito_items,
+        total               = total,
+        tickets             = tickets,
+        ticket_activo       = ticket_activo,
+        agregar_form        = agregar_form,
+        agregar_corte_form  = agregar_corte_form,
+        modificar_form      = modificar_form,
+        eliminar_form       = eliminar_form,
+        vaciar_form         = vaciar_form,
+        cobrar_form         = cobrar_form,
     )
 
+
+# ─── PRODUCTOS — AGREGAR ────────────────────────────────────
 
 @mostrador.route("/venta/agregar/<int:id_producto>", methods=['POST'])
 @login_required
@@ -148,12 +241,12 @@ def agregarProducto(id_producto):
     carrito = _get_carrito_activo()
 
     for item in carrito:
-        if item['id_producto'] == id_producto:
+        if item.get('id_producto') == id_producto and item.get('tipo') != 'corte':
             nueva_cantidad = round(item['cantidad'] + cantidad, 3)
             if nueva_cantidad > producto.StockProducto:
                 flash(
                     f'Stock insuficiente. Máximo disponible: '
-                    f'{producto.StockProducto} {item["unidad"]}.',
+                    f'{producto.StockProducto} {item.get("unidad", "")}.',
                     'warning'
                 )
                 return redirect(url_for('mostrador.mostradorVenta'))
@@ -162,17 +255,15 @@ def agregarProducto(id_producto):
             flash(f'"{producto.NombreProducto}" actualizado en el carrito.', 'success')
             return redirect(url_for('mostrador.mostradorVenta'))
 
-    
-
     if cantidad > producto.StockProducto:
         flash(
-            f'Stock insuficiente. Máximo disponible: '
-            f'{producto.StockProducto}.',
+            f'Stock insuficiente. Máximo disponible: {producto.StockProducto}.',
             'warning'
         )
         return redirect(url_for('mostrador.mostradorVenta'))
 
     carrito.append({
+        'tipo':        'producto',
         'id_producto': id_producto,
         'nombre':      producto.NombreProducto,
         'precio':      producto.PrecioVentaProducto,
@@ -184,6 +275,78 @@ def agregarProducto(id_producto):
     flash(f'"{producto.NombreProducto}" agregado al carrito.', 'success')
     return redirect(url_for('mostrador.mostradorVenta'))
 
+
+# ─── CORTES — AGREGAR ───────────────────────────────────────
+
+@mostrador.route("/venta/agregar-corte/<int:id_corte>", methods=['POST'])
+@login_required
+@roles_required('Cajero')
+def agregarCorte(id_corte):
+    form = AgregarCorteForm()
+
+    if not form.validate_on_submit():
+        flash('Peso inválido.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    peso   = round(form.peso.data, 3)
+    corte  = Corte.query.get_or_404(id_corte)
+
+    # Calcular stock actual
+    stock_kg = db.session.query(
+        func.coalesce(func.sum(Lote.totalMateria), 0.0)
+        ).join(CanalCorte, Lote.idCanalCorte == CanalCorte.idCanalCorte
+    ).filter(
+        CanalCorte.idCorte == id_corte,
+        Lote.estatus       == 'Disponible',
+        Lote.totalMateria  > 0,
+    ).scalar() or 0.0
+    stock_kg = round(float(stock_kg), 3)
+
+    if stock_kg <= 0:
+        flash(f'"{corte.nombreCorte}" no tiene stock disponible.', 'warning')
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    carrito = _get_carrito_activo()
+
+    # Clave única para cortes en el carrito
+    for item in carrito:
+        if item.get('tipo') == 'corte' and item.get('id_producto') == id_corte:
+            nueva_cantidad = round(item['cantidad'] + peso, 3)
+            if nueva_cantidad > stock_kg:
+                flash(
+                    f'Stock insuficiente. Máximo disponible: {stock_kg} kg.',
+                    'warning'
+                )
+                return redirect(url_for('mostrador.mostradorVenta'))
+            item['cantidad'] = nueva_cantidad
+            item['stock']    = stock_kg
+            _save_carrito_activo(carrito)
+            flash(f'"{corte.nombreCorte}" actualizado en el carrito.', 'success')
+            return redirect(url_for('mostrador.mostradorVenta'))
+
+    if peso > stock_kg:
+        flash(
+            f'Stock insuficiente. Máximo disponible: {stock_kg} kg.',
+            'warning'
+        )
+        return redirect(url_for('mostrador.mostradorVenta'))
+
+    carrito.append({
+        'tipo':        'corte',
+        'id_producto': id_corte,          # reutilizamos la clave para que el carrito funcione igual
+        'nombre':      corte.nombreCorte,
+        'precio':      corte.precioPorKilo,
+        'cantidad':    peso,
+        'stock':       stock_kg,
+        'unidad':      'kg',
+    })
+
+    _save_carrito_activo(carrito)
+    flash(f'"{corte.nombreCorte}" agregado al carrito.', 'success')
+    return redirect(url_for('mostrador.mostradorVenta'))
+
+
+# ─── MODIFICAR CANTIDAD ─────────────────────────────────────
 
 @mostrador.route("/venta/modificar/<int:id_producto>", methods=['POST'])
 @login_required
@@ -197,37 +360,49 @@ def modificarCantidad(id_producto):
 
     cantidad = form.cantidad.data
     accion   = request.form.get('accion')   # 'sumar' | 'restar' | None
+    tipo     = request.form.get('tipo', 'producto')
     carrito  = _get_carrito_activo()
 
+    # Paso para incremento: 1 para productos, 0.1 para cortes
+    paso = 0.1 if tipo == 'corte' else 1
+
     for item in carrito:
-        if item['id_producto'] == id_producto:
-            if accion == 'sumar':
-                nueva_cantidad = cantidad + 1
-            elif accion == 'restar':
-                nueva_cantidad = cantidad - 1
-            else:
-                nueva_cantidad = cantidad
+        match = (
+            item.get('id_producto') == id_producto and
+            item.get('tipo', 'producto') == tipo
+        )
+        if not match:
+            continue
 
-            if nueva_cantidad <= 0:
-                carrito.remove(item)
-                _save_carrito_activo(carrito)
-                flash(f'"{item["nombre"]}" eliminado del carrito.', 'info')
-                return redirect(url_for('mostrador.mostradorVenta'))
+        if accion == 'sumar':
+            nueva_cantidad = round(cantidad + paso, 3)
+        elif accion == 'restar':
+            nueva_cantidad = round(cantidad - paso, 3)
+        else:
+            nueva_cantidad = round(cantidad, 3)
 
-            if nueva_cantidad > item['stock']:
-                flash(
-                    f'Stock insuficiente. Máximo: {item["stock"]}.',
-                    'warning'
-                )
-                return redirect(url_for('mostrador.mostradorVenta'))
-
-            item['cantidad'] = round(nueva_cantidad, 3)
+        if nueva_cantidad <= 0:
+            carrito.remove(item)
             _save_carrito_activo(carrito)
+            flash(f'"{item["nombre"]}" eliminado del carrito.', 'info')
             return redirect(url_for('mostrador.mostradorVenta'))
+
+        if nueva_cantidad > item['stock']:
+            flash(
+                f'Stock insuficiente. Máximo: {item["stock"]}.',
+                'warning'
+            )
+            return redirect(url_for('mostrador.mostradorVenta'))
+
+        item['cantidad'] = round(nueva_cantidad, 3)
+        _save_carrito_activo(carrito)
+        return redirect(url_for('mostrador.mostradorVenta'))
 
     flash('Producto no encontrado en el carrito.', 'warning')
     return redirect(url_for('mostrador.mostradorVenta'))
 
+
+# ─── ELIMINAR PRODUCTO ──────────────────────────────────────
 
 @mostrador.route("/venta/eliminar/<int:id_producto>", methods=['POST'])
 @login_required
@@ -239,11 +414,16 @@ def eliminarProducto(id_producto):
         flash('Acción no válida.', 'warning')
         return redirect(url_for('mostrador.mostradorVenta'))
 
+    tipo    = request.form.get('tipo', 'producto')
     carrito = _get_carrito_activo()
     nombre  = ''
 
     for item in carrito:
-        if item['id_producto'] == id_producto:
+        match = (
+            item.get('id_producto') == id_producto and
+            item.get('tipo', 'producto') == tipo
+        )
+        if match:
             nombre = item['nombre']
             carrito.remove(item)
             break
@@ -255,6 +435,8 @@ def eliminarProducto(id_producto):
 
     return redirect(url_for('mostrador.mostradorVenta'))
 
+
+# ─── VACIAR CARRITO ─────────────────────────────────────────
 
 @mostrador.route("/venta/vaciar", methods=['POST'])
 @login_required
@@ -270,10 +452,12 @@ def vaciarCarrito():
     return redirect(url_for('mostrador.mostradorVenta'))
 
 
+# ─── COBRAR ─────────────────────────────────────────────────
+
 @mostrador.route("/venta/cobrar", methods=['POST'])
 @login_required
 @roles_required('Cajero')
-def cobrar():
+def cobrar():    
     form = CobrarForm()
 
     if not form.validate_on_submit():
@@ -286,68 +470,136 @@ def cobrar():
         flash('El carrito está vacío.', 'warning')
         return redirect(url_for('mostrador.mostradorVenta'))
 
+    items_productos = [i for i in carrito_items if i.get('tipo') != 'corte']
+    items_cortes    = [i for i in carrito_items if i.get('tipo') == 'corte']
+
     try:
-        # ── 1. Generar el ticket ──────────────────────────────
-        folio = f"TK-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+        # ── 1. Crear el Pedido ────────────────────────────────
+        tipo_pago  = form.tipo_pago.data  or 'Efectivo'
+        referencia = form.referencia.data or ''
 
-        ticket = Ticket(
-            folioTicket = folio,
-            fechaCompra = datetime.now(),
-            totalCompra = total,
+        # Validar que el tipo sea uno de los valores permitidos
+        if tipo_pago not in ('Efectivo', 'Tarjeta'):
+            tipo_pago = 'Efectivo'
+
+        notas_pago = f'Ref. tarjeta: {referencia}' if tipo_pago == 'Tarjeta' and referencia else None
+
+        pedido = Pedido(
+            idUsuario = current_user.id,
+            Total     = total,
+            Tipo      = tipo_pago,
+            Estatus   = 'Finalizado',   # mostrador = venta inmediata
+            Entrega   = 'Mostrador',
+            Notas     = notas_pago,
         )
-        db.session.add(ticket)
-        db.session.flush()
+        db.session.add(pedido)
+        db.session.flush()  # obtener idPedido antes de los detalles
 
-        for item in carrito_items:
-            detalle = DetalleTicket(
-                idTicket   = ticket.idTicket,
-                idProducto = item['id_producto'],
-                cantidad   = item['cantidad'],
-                subtotal   = item['subtotal'],
+        # ── 2. Procesar productos (unidades) ──────────────────
+        for item in items_productos:
+            id_producto = item['id_producto']
+            cantidad    = int(round(item['cantidad']))
+
+            unidades = (
+                ProductoUnitario.query
+                .filter_by(idProducto=id_producto, estatus='Disponible')
+                .limit(cantidad)
+                .all()
             )
-            db.session.add(detalle)
 
+            if not unidades:
+                raise Exception(
+                    f'Sin stock disponible para "{item["nombre"]}".'
+                )
+
+            if len(unidades) < cantidad:
+                raise Exception(
+                    f'Stock insuficiente para "{item["nombre"]}": '
+                    f'se pidieron {cantidad} y solo hay {len(unidades)}.'
+                )
+
+            for u in unidades:
+                u.estatus   = 'Vendido'
+                u.idPedido  = pedido.idPedido
+                u.idCarrito = None
+
+        # ── 3. Procesar cortes (peso/kg) ──────────────────────
+        for item in items_cortes:
+            id_corte = item['id_producto']   # reutilizamos la clave del carrito
+            peso     = round(float(item['cantidad']), 3)
+
+            # Buscar lote FIFO con stock suficiente
+            lote = (
+                Lote.query
+                .join(CanalCorte, Lote.idCanalCorte == CanalCorte.idCanalCorte)
+                .filter(
+                    CanalCorte.idCorte == id_corte,
+                    Lote.estatus       == 'Disponible',
+                    Lote.totalMateria  >= peso,
+                )
+                .order_by(
+                    Lote.fechaCaducidad.is_(None),
+                    Lote.fechaCaducidad.asc(),
+                    Lote.idLote.asc(),
+                )
+                .first()
+            )
+
+            if not lote:
+                raise Exception(
+                    f'Sin stock suficiente para el corte "{item["nombre"]}" '
+                    f'({peso} kg solicitados).'
+                )
+
+            # Descontar del lote
+            lote.totalMateria = round(lote.totalMateria - peso, 3)
+            if lote.totalMateria <= 0:
+                lote.totalMateria = 0.0
+                lote.estatus      = 'Agotado'
+
+            # Registrar el CorteUnitario
+            corte_u = CorteUnitario(
+                idCorte  = id_corte,
+                idLote   = lote.idLote,
+                idPedido = pedido.idPedido,
+                peso     = peso,
+                costo    = round(item['precio'] * peso, 2),
+                estatus  = 'Vendido',
+            )
+            db.session.add(corte_u)
+
+        # ── 4. Guardar todo ───────────────────────────────────
         db.session.commit()
 
-        # ── 2. Crear el pedido via procedure ──────────────────
-        conn = db.engine.raw_connection()
-        try:
-            cursor = conn.cursor()
+        current_app.logger.info(
+            f"venta_mostrador | pedido_id={pedido.idPedido} "
+            f"| total={total:.2f} | tipo_pago={tipo_pago} "
+            f"| productos={len(items_productos)} | cortes={len(items_cortes)} "
+            f"| estatus={pedido.Estatus} "
+            f"| usuario={current_user.email} "
+            f"| ip={request.remote_addr}"
+        )
 
-            # Procedure 1: crear pedido
-            cursor.execute('CALL crear_pedido_mostrador(%s, %s)', (current_user.id, 'Efectivo'))
-            row = cursor.fetchone()
-
-            if not row:
-                raise Exception('El procedure no devolvió un idPedido válido.')
-
-            id_pedido = row[0]
-
-            # Procedure 2: asignar cada producto al pedido
-            for item in carrito_items:
-                cursor.nextset()  # limpiar resultset anterior antes del siguiente CALL
-                cursor.execute('CALL asignar_productos_a_pedido(%s, %s, %s)', (
-                    id_pedido,
-                    item['id_producto'],
-                    item['cantidad'],
-                ))
-
-            conn.commit()
-
-        finally:
-            cursor.close()
-            conn.close()
-        
-        # ── 3. Limpiar carrito ────────────────────────────────
+        # ── 5. Limpiar carrito ────────────────────────────────
         _save_carrito_activo([])
 
-        flash(f'Venta registrada correctamente. Folio: {folio}', 'success')
+        flash(
+            f'Venta registrada correctamente. Pedido #MO-{pedido.idPedido:04d}',
+            'success'
+        )
 
     except Exception as e:
         db.session.rollback()
+
+        current_app.logger.error(
+            f"Error en venta mostrador | usuario={current_user.email} "
+            f"| error={str(e)} | total=${total:.2f} "
+            f"| ip={request.remote_addr}"
+        )
         flash(f'Error al registrar la venta: {str(e)}', 'error')
 
     return redirect(url_for('mostrador.mostradorVenta'))
+
 
 # ─── GESTIÓN DE TICKETS ─────────────────────────────────────
 
@@ -356,7 +608,6 @@ def cobrar():
 @roles_required('Cajero')
 def nuevoTicket():
     tickets = _get_tickets()
-    # El siguiente número es el máximo actual + 1
     siguiente = str(max([int(k) for k in tickets.keys()]) + 1)
     tickets[siguiente] = []
     _save_tickets(tickets)
@@ -383,7 +634,6 @@ def cambiarTicket(num):
 def cerrarTicket(num):
     tickets = _get_tickets()
     num = str(num)
-    # No permitir cerrar si es el único ticket
     if len(tickets) <= 1:
         flash('No puedes cerrar el único ticket abierto.', 'warning')
         return redirect(url_for('mostrador.mostradorVenta'))
@@ -391,21 +641,19 @@ def cerrarTicket(num):
     tickets.pop(num, None)
     _save_tickets(tickets)
 
-    # Si se cerró el activo, cambiar al primero disponible
     if session.get('ticket_activo') == num:
         session['ticket_activo'] = min(tickets.keys(), key=int)
         session.modified = True
 
     return redirect(url_for('mostrador.mostradorVenta'))
 
-# ─────────────────────────────────────────────────────────────
-#  PEDIDOS — VISTA PRINCIPAL
-# ─────────────────────────────────────────────────────────────
+
+# ─── PEDIDOS — VISTA PRINCIPAL ──────────────────────────────
+
 @mostrador.route("/pedidos", methods=['GET'])
 @login_required
 @roles_required('Cajero')
 def mostradorPedido():
-    # Solo pedidos de tipo Mostrador que no estén finalizados ni cancelados
     pedidos = (
         Pedido.query
         .filter(
@@ -416,32 +664,29 @@ def mostradorPedido():
         .all()
     )
 
-     # Cargar resumen de productos por pedido desde la vista
-    ids_pedidos = [p.idPedido for p in pedidos]
-    renglones = (
-        VistaResumenPedido.query
-        .filter(VistaResumenPedido.idPedido.in_(ids_pedidos))
-        .all()
-    )
-
-    # Agrupar por idPedido → dict { idPedido: [renglones] }
-    resumen_por_pedido = {}
-    for r in renglones:
-        resumen_por_pedido.setdefault(r.idPedido, []).append(r)
+    # Preview por pedido: contar productos y cortes sin cargar todo
+    preview_por_pedido = {}
+    for p in pedidos:
+        n_prod   = p.unidadesPedido.filter_by(estatus='Vendido').count()
+        n_cortes = p.cortesPedido.filter_by(estatus='Vendido').count()
+        preview_por_pedido[p.idPedido] = {
+            'n_prod':   n_prod,
+            'n_cortes': n_cortes,
+            'total':    n_prod + n_cortes,
+        }
 
     entregar_form = EntregarPedidoForm()
 
     return render_template(
         "mostrador/pedidos.html",
-        pedidos       = pedidos,
-        resumen_por_pedido = resumen_por_pedido,
-        entregar_form = entregar_form,
+        pedidos            = pedidos,
+        preview_por_pedido = preview_por_pedido,
+        entregar_form      = entregar_form,
     )
 
 
-# ─────────────────────────────────────────────────────────────
-#  PEDIDOS — DETALLE (JSON para el panel derecho)
-# ─────────────────────────────────────────────────────────────
+# ─── PEDIDOS — DETALLE ──────────────────────────────────────
+
 @mostrador.route("/pedidos/detalle/<int:id_pedido>", methods=['GET'])
 @login_required
 @roles_required('Cajero')
@@ -452,38 +697,66 @@ def detallePedido(id_pedido):
         Pedido.Estatus  == 'EnCurso'
     ).first_or_404()
 
-    cliente = pedido.user.name if pedido.user else 'Cliente desconocido'
-
-    renglones = (
-        VistaResumenPedido.query
-        .filter(VistaResumenPedido.idPedido == id_pedido)
+    # ── Productos ──
+    unidades_db = (
+        ProductoUnitario.query
+        .filter_by(idPedido=id_pedido, estatus='Vendido')
         .all()
     )
+    # Agrupar por producto
+    productos_agrupados = {}
+    for u in unidades_db:
+        pid = u.idProducto
+        if pid not in productos_agrupados:
+            from app.models.producto import Producto as Prod
+            prod = Prod.query.get(pid)
+            productos_agrupados[pid] = {
+                'nombre':   prod.NombreProducto if prod else f'Producto #{pid}',
+                'precio':   prod.PrecioVentaProducto if prod else 0.0,
+                'cantidad': 0,
+                'tipo':     'producto',
+            }
+        productos_agrupados[pid]['cantidad'] += 1
 
-    unidades = [
+    items_productos = []
+    for d in productos_agrupados.values():
+        d['subtotal'] = round(d['precio'] * d['cantidad'], 2)
+        items_productos.append(d)
+
+    # ── Cortes ──
+    cortes_db = (
+        CorteUnitario.query
+        .filter_by(idPedido=id_pedido, estatus='Vendido')
+        .all()
+    )
+    items_cortes = [
         {
-            'nombre':   r.NombreProducto,
-            'cantidad': r.cantidad,
-            'precio':   r.PrecioVentaProducto,
-            'subtotal': r.subtotal,
+            'nombre':   cu.corte.nombreCorte if cu.corte else f'Corte #{cu.idCorte}',
+            'cantidad': cu.peso,
+            'precio':   cu.corte.precioPorKilo if cu.corte else 0.0,
+            'subtotal': cu.costo,
+            'tipo':     'corte',
         }
-        for r in renglones
+        for cu in cortes_db
     ]
 
+    todos = items_productos + items_cortes
+    cliente = pedido.user.name if pedido.user else 'Sin cliente'
+
     return jsonify({
-        'idPedido':      pedido.idPedido,
-        'cliente':       cliente,
-        'total':         pedido.Total,
-        'tipo':          pedido.Tipo,
-        'estatus':       pedido.Estatus,
-        'num_productos': len(unidades),   # ← conteo real desde la vista
-        'unidades':      unidades,
+        'idPedido':        pedido.idPedido,
+        'cliente':         cliente,
+        'total':           pedido.Total,
+        'tipo':            pedido.Tipo,
+        'estatus':         pedido.Estatus,
+        'fecha':           pedido.fechaCreacion.strftime('%d/%m/%Y %H:%M'),
+        'num_items':       len(todos),
+        'items':           todos,
     })
 
 
-# ─────────────────────────────────────────────────────────────
-#  PEDIDOS — ENTREGAR
-# ─────────────────────────────────────────────────────────────
+# ─── PEDIDOS — ENTREGAR ─────────────────────────────────────
+
 @mostrador.route("/pedidos/entregar/<int:id_pedido>", methods=['POST'])
 @login_required
 @roles_required('Cajero')
@@ -501,11 +774,32 @@ def entregarPedido(id_pedido):
     ).first_or_404()
 
     try:
+        # Si viene tipo_pago del modal de cobro, registrarlo en el pedido
+        tipo_pago  = form.tipo_pago.data  or ''
+        referencia = form.referencia.data or ''
+
+        if tipo_pago in ('Efectivo', 'Tarjeta'):
+            pedido.Tipo = tipo_pago
+            if tipo_pago == 'Tarjeta' and referencia:
+                notas_actuales = pedido.Notas or ''
+                ref_txt = f'Ref. tarjeta: {referencia}'
+                pedido.Notas = f'{notas_actuales} | {ref_txt}'.strip(' |') if notas_actuales else ref_txt
+
         pedido.Estatus = 'Finalizado'
         db.session.commit()
+
+        current_app.logger.info(
+            f"pedido_entregado | pedido_id={pedido.idPedido} "
+            f"| total={pedido.Total:.2f} | tipo_pago={pedido.Tipo} "
+            f"| estatus={pedido.Estatus} "
+            f"| usuario={current_user.email} "
+            f"| ip={request.remote_addr}"
+        )
+        
         flash(f'Pedido #{id_pedido:04d} marcado como entregado.', 'success')
     except Exception as e:
         db.session.rollback()
+        
         flash(f'Error al actualizar el pedido: {str(e)}', 'error')
 
     return redirect(url_for('mostrador.mostradorPedido'))

@@ -65,7 +65,12 @@ def usuarios_nuevo():
         db.session.commit()
 
         flash("Usuario creado correctamente.", "success")
-        current_app.logger.info(f"Usuario {form.email.data} creado — {nombre_completo}")
+        email_admin = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+        current_app.logger.info(
+            f"Usuario creado | email={form.email.data} | nombre={nombre_completo} "
+            f"| rol={rol.name if rol else '—'} | creado_por={email_admin} "
+            f"| ip={request.remote_addr}"
+        )
         return redirect(url_for("user.usuarios"))
 
     if form.errors:
@@ -98,10 +103,9 @@ def usuarios_toggle_estatus(id):
     flash("Estatus actualizado correctamente", "success")
 
     current_app.logger.info(
-        f"user = {usuario.name} {usuario.email} "
-        f"estado: {anterior} -> {usuario.active} "
-        f"desbloqueado={usuario.active} "
-        f"cambiado por: {current_user.email}"
+        f"Usuario estado: {anterior} -> {usuario.active} | email={usuario.email} "
+        f"| nombre={usuario.name} | desbloqueado={usuario.active} "
+        f"| cambiado_por={current_user.email} | ip={request.remote_addr}"
     )
 
     return redirect(url_for("user.usuarios"))
@@ -122,7 +126,10 @@ def usuarios_eliminar(id):
         db.session.delete(persona)
         db.session.commit()
         flash("Usuario eliminado correctamente.", "success")
-        current_app.logger.warning(f"user={usuario.name} {usuario.email} eliminado por {current_user.email} ")
+        current_app.logger.warning(
+            f"Usuario eliminado | email={usuario.email} | nombre={usuario.name} "
+            f"| eliminado_por={current_user.email} | ip={request.remote_addr}"
+        )
 
     except Exception as e:
         db.session.rollback()
@@ -206,7 +213,10 @@ def usuarios_editar(id):
         db.session.commit()
 
         flash("Usuario actualizado correctamente.", "success")
-        current_app.logger.info(f"Usuario {usuario.email} actualizado por {current_user.email}")
+        current_app.logger.info(
+            f"Usuario actualizado | email={usuario.email} | nombre={usuario.name} "
+            f"| actualizado_por={current_user.email} | ip={request.remote_addr}"
+        )
         return redirect(url_for("user.usuarios_detalles", id=usuario.id))
 
     if form.errors:
@@ -382,7 +392,10 @@ def verificar_registro_post():
     session.pop('registro_2fa_expira', None)
     session.modified = True
 
-    current_app.logger.info(f"Cliente registrado con verificación: {datos['email']}")
+    current_app.logger.info(
+        f"Cliente registrado con verificacion | email={datos['email']} "
+        f"| nombre={nombre_completo} | ip={request.remote_addr}"
+    )
     flash("¡Cuenta creada exitosamente! Ya puedes iniciar sesión.", "success")
     return redirect(url_for("auth.login"))
 

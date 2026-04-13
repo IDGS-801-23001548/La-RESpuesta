@@ -18,19 +18,29 @@ POR_PAGINA = 15
 #  Formato esperado: 2026-03-31 19:17:27,686 - INFO - mensaje
 # ─────────────────────────────────────────────────────────────────────────────
 PATRON = re.compile(
-    r"^(?P<fecha>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d+ - (?P<nivel>INFO|WARNING|DEBUG|ERROR) - (?P<mensaje>.+)$"
+    r"^(?P<fecha>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d+ - (?P<nivel>INFO|WARNING|DEBUG|ERROR|CRITICAL) - (?P<mensaje>.+)$"
 )
 
 # Clasificación de eventos según palabras clave en el mensaje
+# IMPORTANTE: el orden importa — la primera coincidencia gana
 TIPOS = [
-    ("login_ok",   re.compile(r"login exitoso|loggin exitoso", re.I)),
-    ("login_fail", re.compile(r"intento fallido", re.I)),
-    ("bloqueado",  re.compile(r"bloqueado por intentos|cuenta bloqueada|intento en cuenta bloqueada", re.I)),
-    ("creacion",   re.compile(r"creado", re.I)),
-    ("edicion",    re.compile(r"actualizado", re.I)),
-    ("estado",     re.compile(r"estado:", re.I)),
-    ("eliminado",  re.compile(r"eliminado", re.I)),
-    ("sesion",     re.compile(r"sesi[oó]n inv[aá]lida|tokens de sesi[oó]n", re.I)),
+    ("login_ok",    re.compile(r"login exitoso|loggin exitoso", re.I)),
+    ("login_fail",  re.compile(r"intento fallido", re.I)),
+    ("bloqueado",   re.compile(r"bloqueado por intentos|cuenta bloqueada|intento en cuenta bloqueada", re.I)),
+    ("compra",      re.compile(r"orden de compra|orden .+ registrada|recepci[oó]n confirmada|orden .+ cancelada", re.I)),
+    ("pago",        re.compile(r"pago a proveedor|orden .+ pagada", re.I)),
+    ("produccion",  re.compile(r"producci[oó]n completada|producci[oó]n autorizada", re.I)),
+    ("solicitud",   re.compile(r"solicitud de producci[oó]n|solicitud .+ creada|solicitud .+ cancelada", re.I)),
+    ("receta",      re.compile(r"receta .+ creada|receta .+ actualizada|receta .+ eliminada", re.I)),
+    ("proveedor",   re.compile(r"proveedor .+ creado|proveedor .+ actualizado|proveedor .+ eliminado|proveedor .+ estado:", re.I)),
+    ("finanzas",    re.compile(r"movimiento financiero", re.I)),
+    ("venta",       re.compile(r"venta_mostrador", re.I)),
+    ("pedido",      re.compile(r"pedido_entregado", re.I)),
+    ("creacion",    re.compile(r"creado", re.I)),
+    ("edicion",     re.compile(r"actualizado", re.I)),
+    ("estado",      re.compile(r"estado:", re.I)),
+    ("eliminado",   re.compile(r"eliminado", re.I)),
+    ("sesion",      re.compile(r"sesi[oó]n inv[aá]lida|tokens de sesi[oó]n", re.I)),
 ]
 
 IP_RE = re.compile(r"ip=(\d{1,3}(?:\.\d{1,3}){3})")
@@ -123,6 +133,7 @@ def logs():
     conteo = {
         "info":    sum(1 for e in todas if e["nivel"] == "INFO"),
         "warning": sum(1 for e in todas if e["nivel"] == "WARNING"),
+        "error":   sum(1 for e in todas if e["nivel"] == "ERROR"),
         "debug":   sum(1 for e in todas if e["nivel"] == "DEBUG"),
     }
 

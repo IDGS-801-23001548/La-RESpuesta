@@ -1,6 +1,6 @@
 from collections import defaultdict
 from types import SimpleNamespace
-from flask import render_template, redirect, url_for, flash, request, jsonify, abort
+from flask import render_template, redirect, url_for, flash, request, jsonify, abort, current_app
 from . import compras
 from .forms import OrdenCompraForm
 from app.extensions import db
@@ -462,6 +462,14 @@ def compra_nueva():
                 db.session.add(lote)
 
         db.session.commit()
+
+        email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+        current_app.logger.info(
+            f"Orden de compra registrada | lote={numero_lote} | proveedor={proveedor.nombre} "
+            f"| total=${total_orden:.2f} | estatus={estatus} | usuario={email_usuario} "
+            f"| ip={request.remote_addr}"
+        )
+
         flash(f'Orden {numero_lote} registrada correctamente.', 'success')
         return redirect(url_for('compras.compra_detalle', id=orden.idOrdenCompra))
 
@@ -505,6 +513,13 @@ def compra_recibir(id):
                 canal.fechaCaducidad = canal.fechaSacrificio + timedelta(days=7)
 
         db.session.commit()
+
+        email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+        current_app.logger.info(
+            f"Recepcion confirmada | lote={orden.numeroLote} | proveedor={orden.proveedor.nombre} "
+            f"| usuario={email_usuario} | ip={request.remote_addr}"
+        )
+
         flash('Orden marcada como Recibida. Los ítems ahora están Disponibles.', 'success')
     return redirect(url_for('compras.compra_detalle', id=id))
 
@@ -540,6 +555,13 @@ def compra_cancelar(id):
             canal.estatus = 'Cancelado'
 
         db.session.commit()
+
+        email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+        current_app.logger.warning(
+            f"Orden de compra cancelada | lote={orden.numeroLote} | proveedor={orden.proveedor.nombre} "
+            f"| usuario={email_usuario} | ip={request.remote_addr}"
+        )
+
         flash('Orden cancelada. Los ítems pendientes han sido marcados como cancelados/desechados.', 'warning')
     return redirect(url_for('compras.compra_detalle', id=id))
 

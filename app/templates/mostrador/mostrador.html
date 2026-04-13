@@ -74,7 +74,8 @@
     /* ── LEFT: CATÁLOGO ── */
     .panel-left {
       flex: 1; display: flex; flex-direction: column;
-      padding: 16px 16px 16px 24px; gap: 12px; overflow: hidden;
+      padding: 16px 16px 16px 24px; gap: 12px;
+      overflow: hidden; min-height: 0;
     }
 
     /* Search */
@@ -90,6 +91,18 @@
     .search-wrap input:focus { border-color: #4ade80; box-shadow: 0 0 0 3px #dcfce7; }
     .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
     .search-icon svg { width: 14px; height: 14px; color: #9ca3af; display: block; }
+
+    /* Tabs catálogo / cortes */
+    .catalog-tabs {
+      display: flex; gap: 6px; flex-shrink: 0;
+    }
+    .catalog-tab {
+      padding: 6px 16px; border-radius: 8px; font-size: .8rem; font-weight: 600;
+      cursor: pointer; border: 1px solid #e5e7eb; background: #ffffff; color: #6b7280;
+      transition: all .15s; font-family: 'Inter', sans-serif;
+    }
+    .catalog-tab.active { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .catalog-tab:hover:not(.active) { background: #f3f4f6; border-color: #d1d5db; color: #374151; }
 
     /* Filtros */
     .filtros { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -107,8 +120,15 @@
 
     /* Grid */
     .productos-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-      gap: 10px; overflow-y: auto; flex: 1; padding-right: 4px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      grid-auto-rows: max-content;
+      gap: 10px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      padding-right: 4px;
+      align-content: start;
     }
     .productos-grid::-webkit-scrollbar { width: 4px; }
     .productos-grid::-webkit-scrollbar-track { background: transparent; }
@@ -125,6 +145,7 @@
       background: #ffffff; border-radius: 12px; overflow: hidden;
       border: 1px solid #e5e7eb; display: flex; flex-direction: column;
       transition: box-shadow .2s, transform .15s; position: relative;
+      height: 220px; /* altura fija para consistencia */
     }
     .producto-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-2px); }
     .producto-card.sin-stock { opacity: .55; }
@@ -141,15 +162,24 @@
     .producto-img {
       width: 100%; height: 80px; background: #f3f4f6;
       display: flex; align-items: center; justify-content: center; font-size: 2rem;
+      overflow: hidden;
     }
-    .producto-info { padding: 9px 10px 10px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
-    .producto-nombre { font-size: .8125rem; font-weight: 600; color: #111827; line-height: 1.3; }
+    .producto-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    .producto-info {
+      padding: 9px 10px 10px; display: flex; flex-direction: column;
+      gap: 4px; flex: 1; overflow: hidden; min-height: 0;
+    }
+    .producto-nombre {
+      font-size: .8125rem; font-weight: 600; color: #111827; line-height: 1.3;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
     .producto-precio-row { display: flex; align-items: baseline; gap: 4px; }
     .producto-precio { font-size: .875rem; font-weight: 700; color: #16a34a; }
     .producto-unidad { font-size: .6875rem; color: #9ca3af; }
     .producto-stock-txt { font-size: .6875rem; color: #9ca3af; }
 
-    /* Formulario de agregar (inline en la card) */
+    /* Formulario agregar producto (inline en la card) */
     .form-agregar {
       display: flex; gap: 4px; margin-top: auto; padding-top: 4px;
     }
@@ -163,6 +193,32 @@
     .form-agregar input[type="number"]::-webkit-inner-spin-button,
     .form-agregar input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
     .form-agregar input[type="number"]:focus { border-color: #4ade80; }
+
+    /* Formulario agregar corte — input de kg más ancho */
+    .form-agregar-corte {
+      display: flex; gap: 4px; margin-top: auto; padding-top: 4px;
+      flex-direction: column;
+    }
+    /* Las cards dentro del panel de cortes necesitan un poco más de alto */
+    #grid-cortes .producto-card { height: 240px; }
+    .form-agregar-corte .kg-row {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .form-agregar-corte input[type="number"] {
+      flex: 1; height: 30px; border: 1px solid #e5e7eb; border-radius: 7px;
+      text-align: right; padding: 0 6px;
+      font-size: .8rem; font-family: 'Inter', sans-serif;
+      font-weight: 600; color: #111827; outline: none;
+      transition: border-color .15s;
+      -moz-appearance: textfield;
+    }
+    .form-agregar-corte input[type="number"]::-webkit-inner-spin-button,
+    .form-agregar-corte input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .form-agregar-corte input[type="number"]:focus { border-color: #d97706; }
+    .form-agregar-corte .kg-unit {
+      font-size: .7rem; font-weight: 700; color: #9ca3af;
+    }
+
     .btn-agregar {
       flex: 1; padding: 6px 0; background: #16a34a; color: #fff; border: none;
       border-radius: 7px; font-size: .75rem; font-weight: 600; cursor: pointer;
@@ -171,6 +227,10 @@
     }
     .btn-agregar:hover:not(:disabled) { background: #15803d; }
     .btn-agregar:disabled { background: #d1d5db; cursor: not-allowed; }
+
+    /* Color ámbar para botón de cortes */
+    .btn-agregar.corte-btn { background: #d97706; }
+    .btn-agregar.corte-btn:hover:not(:disabled) { background: #b45309; }
 
     /* ── DIVIDER ── */
     .divider { width: 1px; background: #e5e7eb; flex-shrink: 0; }
@@ -195,7 +255,6 @@
     }
     .carrito-badge.empty { background: #d1d5db; }
 
-    /* Vaciar carrito (botón pequeño junto al badge) */
     .btn-vaciar {
       margin-left: 6px; background: none; border: none; cursor: pointer;
       color: #9ca3af; font-size: .6875rem; font-weight: 500;
@@ -225,18 +284,29 @@
       background: #f9fafb; border-radius: 10px; padding: 10px 11px;
       display: flex; flex-direction: column; gap: 7px; border: 1px solid #e5e7eb;
     }
+    /* Borde izquierdo ámbar para ítems de tipo corte */
+    .carrito-item.item-corte { border-left: 3px solid #d97706; }
+
     .item-top { display: flex; align-items: flex-start; gap: 6px; }
     .item-nombre { font-size: .8rem; font-weight: 600; color: #111827; flex: 1; line-height: 1.3; }
-    .item-unidad-tag {
+    .item-tipo-tag {
       font-size: .6rem; font-weight: 700; padding: 1px 5px; border-radius: 4px;
-      background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb;
       white-space: nowrap; flex-shrink: 0; margin-top: 1px;
     }
-    /* Precio unitario pequeño */
+    .item-tipo-tag.tag-producto { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .item-tipo-tag.tag-corte    { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
     .item-precio-unit { font-size: .6875rem; color: #9ca3af; }
 
     .item-bottom { display: flex; align-items: center; justify-content: space-between; }
     .item-subtotal { font-size: .8125rem; font-weight: 700; color: #16a34a; }
+
+    .btn-eliminar-item {
+      background: none; border: none; cursor: pointer; color: #9ca3af;
+      padding: 0; line-height: 1; flex-shrink: 0; transition: color .15s;
+      margin-left: auto;
+    }
+    .btn-eliminar-item:hover { color: #dc2626; }
+    .btn-eliminar-item svg { width: 14px; height: 14px; display: block; }
 
     /* Formulario modificar cantidad */
     .form-modificar {
@@ -247,11 +317,10 @@
       background: #ffffff; font-size: .9rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       font-weight: 600; color: #374151; transition: all .15s; line-height: 1;
-      /* sin tipo submit en formularios — usamos type=button en JS */
     }
     .qty-btn:hover { background: #16a34a; border-color: #16a34a; color: #fff; }
     .qty-input {
-      width: 48px; height: 26px; border: 1px solid #e5e7eb; border-radius: 6px;
+      width: 52px; height: 26px; border: 1px solid #e5e7eb; border-radius: 6px;
       text-align: center; font-size: .8125rem; font-weight: 700;
       font-family: 'Inter', sans-serif; color: #111827;
       background: #ffffff; outline: none;
@@ -262,15 +331,6 @@
     .qty-input::-webkit-outer-spin-button { -webkit-appearance: none; }
     .qty-input:focus { border-color: #4ade80; box-shadow: 0 0 0 2px #dcfce7; }
     .qty-unit { font-size: .6875rem; color: #9ca3af; }
-
-    /* Botón eliminar ítem */
-    .btn-eliminar-item {
-      background: none; border: none; cursor: pointer; color: #9ca3af;
-      padding: 0; line-height: 1; flex-shrink: 0; transition: color .15s;
-      margin-left: auto;
-    }
-    .btn-eliminar-item:hover { color: #dc2626; }
-    .btn-eliminar-item svg { width: 14px; height: 14px; display: block; }
 
     /* Footer carrito */
     .carrito-footer {
@@ -297,49 +357,187 @@
     .btn-cobrar:hover { background: #15803d; transform: translateY(-1px); }
 
     /* ── TABS DE TICKETS ── */
-.tickets-tabs {
-  display: flex; align-items: center; gap: 4px;
-  padding: 8px 12px; border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb; flex-shrink: 0; overflow-x: auto;
-  scrollbar-width: none;
-}
-.tickets-tabs::-webkit-scrollbar { display: none; }
+    .tickets-tabs {
+      display: flex; align-items: center; gap: 4px;
+      padding: 8px 12px; border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb; flex-shrink: 0; overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tickets-tabs::-webkit-scrollbar { display: none; }
 
-.ticket-tab {
-  display: flex; align-items: center; gap: 5px;
-  padding: 4px 10px; border-radius: 6px; font-size: .75rem;
-  font-weight: 600; cursor: pointer; white-space: nowrap;
-  border: 1px solid #e5e7eb; background: #ffffff; color: #6b7280;
-  font-family: 'Inter', sans-serif; transition: all .15s;
-}
-.ticket-tab.active {
-  background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;
-}
-.ticket-tab:not(.active):hover { background: #f3f4f6; }
+    .ticket-tab {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 6px; font-size: .75rem;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
+      border: 1px solid #e5e7eb; background: #ffffff; color: #6b7280;
+      font-family: 'Inter', sans-serif; transition: all .15s;
+    }
+    .ticket-tab.active {
+      background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;
+    }
+    .ticket-tab:not(.active):hover { background: #f3f4f6; }
 
-.ticket-tab-close {
-  background: none; border: none; cursor: pointer; color: #9ca3af;
-  padding: 0; line-height: 1; font-size: .7rem; transition: color .15s;
-}
-.ticket-tab-close:hover { color: #dc2626; }
+    .ticket-tab-close {
+      background: none; border: none; cursor: pointer; color: #9ca3af;
+      padding: 0; line-height: 1; font-size: .7rem; transition: color .15s;
+    }
+    .ticket-tab-close:hover { color: #dc2626; }
 
-.btn-nuevo-ticket {
-  padding: 4px 8px; border-radius: 6px; border: 1px dashed #d1d5db;
-  background: none; color: #9ca3af; font-size: .75rem; font-weight: 600;
-  cursor: pointer; font-family: 'Inter', sans-serif;
-  transition: all .15s; white-space: nowrap; flex-shrink: 0;
-}
-.btn-nuevo-ticket:hover { border-color: #16a34a; color: #16a34a; }
+    .btn-nuevo-ticket {
+      padding: 4px 8px; border-radius: 6px; border: 1px dashed #d1d5db;
+      background: none; color: #9ca3af; font-size: .75rem; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all .15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-nuevo-ticket:hover { border-color: #16a34a; color: #16a34a; }
 
-/* ── LOGOUT ── */
-.btn-logout {
-  padding: 5px 12px; border-radius: 8px; border: 1px solid #e5e7eb;
-  background: #ffffff; color: #6b7280; font-size: .8rem; font-weight: 500;
-  cursor: pointer; font-family: 'Inter', sans-serif;
-  text-decoration: none; display: flex; align-items: center; gap: 5px;
-  transition: all .15s;
-}
-.btn-logout:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    /* ── LOGOUT ── */
+    .btn-logout {
+      padding: 5px 12px; border-radius: 8px; border: 1px solid #e5e7eb;
+      background: #ffffff; color: #6b7280; font-size: .8rem; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      text-decoration: none; display: flex; align-items: center; gap: 5px;
+      transition: all .15s;
+    }
+    .btn-logout:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+
+    /* ── Paneles de contenido (productos / cortes) ── */
+    .catalog-panel {
+      display: flex; flex-direction: column; gap: 10px;
+      flex: 1; overflow: hidden; min-height: 0;
+    }
+    .catalog-panel.hidden { display: none; }
+
+    /* ── MODAL DE PAGO ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500; opacity: 0; pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: #fff; border-radius: 18px; width: 420px; max-width: 95vw;
+      box-shadow: 0 24px 60px rgba(0,0,0,.2);
+      transform: translateY(16px) scale(.97);
+      transition: transform .22s cubic-bezier(.34,1.56,.64,1);
+      overflow: hidden;
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+    .modal-header {
+      padding: 18px 20px 0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-title {
+      font-size: .95rem; font-weight: 700; color: #111827;
+    }
+    .modal-close {
+      background: none; border: none; cursor: pointer; color: #9ca3af;
+      font-size: 1.1rem; line-height: 1; padding: 0; transition: color .15s;
+    }
+    .modal-close:hover { color: #374151; }
+
+    /* Paso 1: elegir método */
+    .modal-metodos {
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .modal-total-display {
+      background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 14px 16px; text-align: center; margin-bottom: 4px;
+    }
+    .modal-total-label { font-size: .72rem; color: #6b7280; font-weight: 600; }
+    .modal-total-monto { font-size: 1.75rem; font-weight: 800; color: #111827; }
+
+    .metodo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-metodo {
+      padding: 14px 10px; border-radius: 12px; border: 2px solid #e5e7eb;
+      background: #fff; cursor: pointer; font-family: 'Inter', sans-serif;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      transition: all .18s;
+    }
+    .btn-metodo:hover { border-color: #16a34a; background: #f0fdf4; }
+    .btn-metodo .metodo-icon { font-size: 1.6rem; }
+    .btn-metodo .metodo-label { font-size: .8rem; font-weight: 700; color: #374151; }
+    .btn-metodo .metodo-sub   { font-size: .68rem; color: #9ca3af; }
+
+    /* Paso 2: formulario del método */
+    .modal-form { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+
+    .modal-back {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: none; cursor: pointer; color: #6b7280;
+      font-size: .78rem; font-weight: 600; font-family: 'Inter', sans-serif;
+      padding: 0; transition: color .15s;
+    }
+    .modal-back:hover { color: #111827; }
+
+    .modal-step-title {
+      font-size: .88rem; font-weight: 700; color: #111827;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .modal-step-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .modal-step-icon.efectivo { background: #f0fdf4; }
+    .modal-step-icon.tarjeta  { background: #eff6ff; }
+
+    .modal-resumen {
+      background: #f9fafb; border: 1px solid #f0f0f0; border-radius: 10px;
+      padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-resumen-label { font-size: .75rem; color: #6b7280; font-weight: 600; }
+    .modal-resumen-monto { font-size: 1.1rem; font-weight: 800; color: #111827; }
+
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-field label { font-size: .75rem; font-weight: 700; color: #374151; }
+    .form-field input {
+      padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 9px;
+      font-size: .875rem; font-family: 'Inter', sans-serif; color: #111827;
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    .form-field input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
+    .form-field input.tarjeta-focus:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px #dbeafe; }
+
+    .cambio-display {
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+      padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
+      min-height: 42px;
+    }
+    .cambio-display.negativo { background: #fef2f2; border-color: #fecaca; }
+    .cambio-label { font-size: .75rem; font-weight: 700; color: #15803d; }
+    .cambio-display.negativo .cambio-label { color: #dc2626; }
+    .cambio-monto { font-size: 1rem; font-weight: 800; color: #15803d; }
+    .cambio-display.negativo .cambio-monto { color: #dc2626; }
+
+    .terminal-msg {
+      background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px;
+      padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px;
+    }
+    .terminal-msg-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+    .terminal-msg-text { font-size: .78rem; color: #1d4ed8; font-weight: 500; line-height: 1.5; }
+
+    .btn-confirmar-pago {
+      width: 100%; padding: 12px; border: none; border-radius: 11px;
+      font-size: .875rem; font-weight: 700; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: all .15s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn-confirmar-pago.efectivo-confirm {
+      background: #16a34a; color: #fff;
+      box-shadow: 0 2px 8px rgba(22,163,74,.3);
+    }
+    .btn-confirmar-pago.efectivo-confirm:hover { background: #15803d; }
+    .btn-confirmar-pago.tarjeta-confirm {
+      background: #2563eb; color: #fff;
+      box-shadow: 0 2px 8px rgba(37,99,235,.3);
+    }
+    .btn-confirmar-pago.tarjeta-confirm:hover { background: #1d4ed8; }
+    .btn-confirmar-pago:disabled { opacity: .5; cursor: not-allowed; }
+
   </style>
 </head>
 <body>
@@ -364,7 +562,6 @@
       </svg>
       Salir
     </a>
-  </div>      
   </div>
   <div class="nav-tabs">
     <a href="{{ url_for('mostrador.mostradorVenta') }}" class="nav-tab active">
@@ -383,6 +580,14 @@
       </svg>
       Pedidos
     </a>
+    <a href="{{ url_for('mostrador.catalogo_cortes') }}" class="nav-tab">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2
+             M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+      </svg>
+      Ver Cortes
+    </a>
   </div>
 </nav>
 
@@ -392,7 +597,6 @@
     <div class="flash-wrap" id="flash-wrap">
       {% for category, message in messages %}
         <div class="flash {{ category }}">
-          {# Ícono según categoría #}
           {% if category == 'success' %}
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -410,8 +614,7 @@
             </svg>
           {% else %}
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M6 18L18 6M6 6l12 12"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           {% endif %}
           {{ message }}
@@ -428,7 +631,7 @@
   {# ══════════ LEFT: CATÁLOGO ══════════ #}
   <div class="panel-left">
 
-    {# Búsqueda (solo JS, no requiere servidor) #}
+    {# Búsqueda #}
     <div class="search-wrap">
       <span class="search-icon">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -436,23 +639,35 @@
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
       </span>
-      <input id="buscar" type="text" placeholder="Buscar producto…" autocomplete="off"/>
+      <input id="buscar" type="text" placeholder="Buscar…" autocomplete="off"/>
     </div>
 
-    <div class="filtros" id="filtros">
-  <span class="filtro-count">
-    <span id="contador">{{ productos | length }}</span> productos
-  </span>
-</div>
+    {# Tabs Productos / Cortes #}
+    <div class="catalog-tabs">
+      <button class="catalog-tab active" id="tab-productos" onclick="switchTab('productos')">
+        🛒 Productos
+        <span id="count-productos" style="font-size:.65rem; opacity:.7;">({{ productos | length }})</span>
+      </button>
+      <button class="catalog-tab" id="tab-cortes" onclick="switchTab('cortes')">
+        🥩 Cortes
+        <span id="count-cortes" style="font-size:.65rem; opacity:.7;">({{ items_cortes | length }})</span>
+      </button>
+    </div>
 
-    {# Grid de productos #}
-    <div class="productos-grid" id="productos-grid">
+    {# ──────── PANEL PRODUCTOS ──────── #}
+    <div class="catalog-panel" id="panel-productos">
 
-      {% if productos %}
-        {% for item in items %}
-        {% set p = item.producto %}
+      <div class="filtros">
+        <span class="filtro-count">
+          <span id="contador-productos">{{ productos | length }}</span> productos
+        </span>
+      </div>
 
-          {# Stock badge #}
+      <div class="productos-grid" id="grid-productos">
+        {% if productos %}
+          {% for item in items %}
+          {% set p = item.producto %}
+
           {% if p.StockProducto <= 0 %}
             {% set badge_cls = 'out' %}
             {% set badge_txt = 'Sin stock' %}
@@ -464,33 +679,32 @@
             {% set badge_txt = 'Stock: ' ~ p.StockProducto %}
           {% endif %}
 
-          
-
           <div class="producto-card {% if p.StockProducto <= 0 %}sin-stock{% endif %}"
-     data-nombre="{{ p.NombreProducto | lower }}">
+               data-nombre="{{ p.NombreProducto | lower }}"
+               data-panel="productos">
 
             <span class="stock-badge {{ badge_cls }}">{{ badge_txt }}</span>
 
             <div class="producto-img">
-  {% if item.foto_b64 %}
-    <img src="{{ item.foto_b64 }}" style="width:100%; height:100%; object-fit:cover;">
-  {% else %}
-    🥩
-  {% endif %}
-</div>
+              {% if item.foto_b64 %}
+                <img src="{{ item.foto_b64 }}" alt="{{ p.NombreProducto }}" loading="lazy">
+              {% else %}
+                🛒
+              {% endif %}
+            </div>
 
             <div class="producto-info">
               <div class="producto-nombre">{{ p.NombreProducto }}</div>
-               <div class="producto-precio-row">
-    <span class="producto-precio">${{ "%.2f" | format(p.PrecioVentaProducto) }}</span>
-  </div>
-  <div class="producto-stock-txt">Disponible: {{ p.StockProducto }} pzas</div>
+              <div class="producto-precio-row">
+                <span class="producto-precio">${{ "%.2f" | format(p.PrecioVentaProducto) }}</span>
+                <span class="producto-unidad">c/u</span>
+              </div>
+              <div class="producto-stock-txt">Disponible: {{ p.StockProducto }} pzas</div>
 
-              {# Formulario POST → agregarProducto #}
               <form class="form-agregar"
                     action="{{ url_for('mostrador.agregarProducto', id_producto=p.idProducto) }}"
                     method="POST">
-                    {{ agregar_form.hidden_tag() }}
+                {{ agregar_form.hidden_tag() }}
                 <input
                   type="number"
                   name="cantidad"
@@ -501,10 +715,8 @@
                   title="Cantidad"
                   {% if p.StockProducto <= 0 %}disabled{% endif %}
                 />
-                <button
-                  class="btn-agregar"
-                  type="submit"
-                  {% if p.StockProducto <= 0 %}disabled{% endif %}>
+                <button class="btn-agregar" type="submit"
+                        {% if p.StockProducto <= 0 %}disabled{% endif %}>
                   <svg width="11" height="11" fill="none" viewBox="0 0 24 24"
                        stroke="currentColor" stroke-width="3">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -512,66 +724,161 @@
                   {% if p.StockProducto <= 0 %}Sin stock{% else %}Agregar{% endif %}
                 </button>
               </form>
-
             </div>
           </div>
+          {% endfor %}
+        {% else %}
+          <div class="grid-empty">
+            <svg width="48" height="48" fill="none" viewBox="0 0 24 24"
+                 stroke="#e5e7eb" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <p>No hay productos registrados</p>
+          </div>
+        {% endif %}
+      </div>
 
-        {% endfor %}
-      {% else %}
-        <div class="grid-empty">
-          <svg width="48" height="48" fill="none" viewBox="0 0 24 24"
-               stroke="#e5e7eb" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-          </svg>
-          <p>No hay productos registrados</p>
-        </div>
-      {% endif %}
+    </div>{# /panel-productos #}
 
-    </div>{# /productos-grid #}
+    {# ──────── PANEL CORTES ──────── #}
+    <div class="catalog-panel hidden" id="panel-cortes">
+
+      <div class="filtros">
+        <span class="filtro-count">
+          <span id="contador-cortes">{{ items_cortes | length }}</span> cortes
+        </span>
+      </div>
+
+      <div class="productos-grid" id="grid-cortes">
+        {% if items_cortes %}
+          {% for item in items_cortes %}
+          {% set c = item.corte %}
+
+          {% if item.stock_kg <= 0 %}
+            {% set badge_cls = 'out' %}
+            {% set badge_txt = 'Sin stock' %}
+          {% elif item.stock_kg <= 2 %}
+            {% set badge_cls = 'low' %}
+            {% set badge_txt = "%.1f kg" | format(item.stock_kg) %}
+          {% else %}
+            {% set badge_cls = 'ok' %}
+            {% set badge_txt = "%.1f kg" | format(item.stock_kg) %}
+          {% endif %}
+
+          <div class="producto-card {% if item.stock_kg <= 0 %}sin-stock{% endif %}"
+               data-nombre="{{ c.nombreCorte | lower }}"
+               data-panel="cortes">
+
+            <span class="stock-badge {{ badge_cls }}">{{ badge_txt }}</span>
+
+            <div class="producto-img">
+              {% if item.foto_b64 %}
+                <img src="{{ item.foto_b64 }}" alt="{{ c.nombreCorte }}" loading="lazy">
+              {% else %}
+                🥩
+              {% endif %}
+            </div>
+
+            <div class="producto-info">
+              <div class="producto-nombre">{{ c.nombreCorte }}</div>
+              <div class="producto-precio-row">
+                <span class="producto-precio" style="color:#d97706;">
+                  ${{ "%.2f" | format(c.precioPorKilo) }}
+                </span>
+                <span class="producto-unidad">/kg</span>
+              </div>
+              <div class="producto-stock-txt">
+                {% if item.stock_kg > 0 %}
+                  Disponible: {{ "%.2f" | format(item.stock_kg) }} kg
+                {% else %}
+                  Sin stock disponible
+                {% endif %}
+              </div>
+
+              <form class="form-agregar-corte"
+                    action="{{ url_for('mostrador.agregarCorte', id_corte=c.idCorte) }}"
+                    method="POST">
+                {{ agregar_corte_form.hidden_tag() }}
+                <div class="kg-row">
+                  <input
+                    type="number"
+                    name="peso"
+                    value="0.5"
+                    min="0.1"
+                    max="{{ item.stock_kg if item.stock_kg > 0 else 0.1 }}"
+                    step="0.1"
+                    title="Peso en kg"
+                    {% if item.stock_kg <= 0 %}disabled{% endif %}
+                  />
+                  <span class="kg-unit">kg</span>
+                </div>
+                <button class="btn-agregar corte-btn" type="submit"
+                        {% if item.stock_kg <= 0 %}disabled{% endif %}>
+                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24"
+                       stroke="currentColor" stroke-width="3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  {% if item.stock_kg <= 0 %}Sin stock{% else %}Agregar{% endif %}
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="grid-empty">
+            <p style="font-size:2rem;">🥩</p>
+            <p>No hay cortes registrados</p>
+          </div>
+        {% endif %}
+      </div>
+
+    </div>{# /panel-cortes #}
+
   </div>{# /panel-left #}
 
   <div class="divider"></div>
 
   {# ══════════ RIGHT: CARRITO ══════════ #}
   <div class="panel-right">
-<div class="tickets-tabs">
-  {% for num, items_ticket in tickets.items() %}
-    <div style="display:flex; align-items:center;">
 
-      <form action="{{ url_for('mostrador.cambiarTicket', num=num) }}"
-            method="POST" style="margin:0;">
+    {# Tabs de tickets #}
+    <div class="tickets-tabs">
+      {% for num, items_ticket in tickets.items() %}
+        <div style="display:flex; align-items:center;">
+          <form action="{{ url_for('mostrador.cambiarTicket', num=num) }}"
+                method="POST" style="margin:0;">
+            {{ vaciar_form.hidden_tag() }}
+            <button type="submit"
+                    class="ticket-tab {% if num == ticket_activo %}active{% endif %}">
+              Ticket {{ num }}
+              <span style="font-size:.65rem; opacity:.7;">
+                ({{ carrito | length if num == ticket_activo else items_ticket | length }})
+              </span>
+            </button>
+          </form>
+
+          {% if tickets | length > 1 %}
+            <form action="{{ url_for('mostrador.cerrarTicket', num=num) }}"
+                  method="POST" style="margin:0;">
+              {{ vaciar_form.hidden_tag() }}
+              <button type="submit" class="ticket-tab-close"
+                      title="Cerrar ticket {{ num }}"
+                      onclick="return confirm('¿Cerrar Ticket {{ num }}? Se perderán sus productos.')">
+                ✕
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <form action="{{ url_for('mostrador.nuevoTicket') }}" method="POST" style="margin:0;">
         {{ vaciar_form.hidden_tag() }}
-        <button type="submit"
-                class="ticket-tab {% if num == ticket_activo %}active{% endif %}">
-          Ticket {{ num }}
-          <span style="font-size:.65rem; opacity:.7;">
-            ({{ carrito | length if num == ticket_activo else items_ticket | length }})
-          </span>
-        </button>
+        <button type="submit" class="btn-nuevo-ticket">+ Nuevo</button>
       </form>
-
-      {% if tickets | length > 1 %}
-        <form action="{{ url_for('mostrador.cerrarTicket', num=num) }}"
-              method="POST" style="margin:0;">
-          {{ vaciar_form.hidden_tag() }}
-          <button type="submit" class="ticket-tab-close"
-                  title="Cerrar ticket {{ num }}"
-                  onclick="return confirm('¿Cerrar Ticket {{ num }}? Se perderán sus productos.')">
-            ✕
-          </button>
-        </form>
-      {% endif %}
-
     </div>
-  {% endfor %}
 
-  <form action="{{ url_for('mostrador.nuevoTicket') }}" method="POST" style="margin:0;">
-    {{ vaciar_form.hidden_tag() }}
-    <button type="submit" class="btn-nuevo-ticket">+ Nuevo</button>
-  </form>
-</div>
-
+    {# Header del carrito #}
     <div class="carrito-header">
       <div class="carrito-header-icon">
         <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="2">
@@ -580,44 +887,51 @@
                m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
         </svg>
       </div>
-       <h2>Ticket {{ ticket_activo }}</h2>
+      <h2>Ticket {{ ticket_activo }}</h2>
 
-    <div class="carrito-badge {% if not carrito %}empty{% endif %}">
-      {{ carrito | length }}
+      <div class="carrito-badge {% if not carrito %}empty{% endif %}">
+        {{ carrito | length }}
+      </div>
+
+      {% if carrito %}
+        <form action="{{ url_for('mostrador.vaciarCarrito') }}" method="POST" style="margin:0;">
+          {{ vaciar_form.hidden_tag() }}
+          <button type="submit" class="btn-vaciar" title="Vaciar ticket"
+                  onclick="return confirm('¿Vaciar el Ticket {{ ticket_activo }}?')">
+            Vaciar
+          </button>
+        </form>
+      {% endif %}
     </div>
-
-    {% if carrito %}
-      <form action="{{ url_for('mostrador.vaciarCarrito') }}" method="POST" style="margin:0;">
-        {{ vaciar_form.hidden_tag() }}
-        <button type="submit" class="btn-vaciar" title="Vaciar ticket"
-                onclick="return confirm('¿Vaciar el Ticket {{ ticket_activo }}?')">
-          Vaciar
-        </button>
-      </form>
-    {% endif %}
-  </div>
 
     {# Lista de ítems del carrito #}
     <div class="carrito-items">
 
       {% if carrito %}
         {% for item in carrito %}
-          <div class="carrito-item">
+          {% set es_corte = item.get('tipo') == 'corte' %}
+          <div class="carrito-item {% if es_corte %}item-corte{% endif %}">
 
             <div class="item-top">
-  <div>
-    <div class="item-nombre">{{ item.nombre }}</div>
-    <div class="item-precio-unit">${{ "%.2f" | format(item.precio) }} c/u</div>
-  </div>
+              <div>
+                <div class="item-nombre">{{ item.nombre }}</div>
+                <div class="item-precio-unit">
+                  ${{ "%.2f" | format(item.precio) }}
+                  {{ '/kg' if es_corte else 'c/u' }}
+                </div>
+              </div>
+              <span class="item-tipo-tag {{ 'tag-corte' if es_corte else 'tag-producto' }}">
+                {{ 'Corte' if es_corte else 'Producto' }}
+              </span>
 
-              {# Formulario eliminar ítem #}
+              {# Eliminar ítem #}
               <form action="{{ url_for('mostrador.eliminarProducto', id_producto=item.id_producto) }}"
                     method="POST" style="margin:0; display:flex;">
                 {{ eliminar_form.hidden_tag() }}
+                <input type="hidden" name="tipo" value="{{ item.get('tipo', 'producto') }}">
                 <button type="submit" class="btn-eliminar-item" title="Eliminar">
                   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M6 18L18 6M6 6l12 12"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                   </svg>
                 </button>
               </form>
@@ -625,19 +939,16 @@
 
             <div class="item-bottom">
 
-              {# Formulario modificar cantidad #}
+              {# Modificar cantidad / peso #}
               <form class="form-modificar"
                     action="{{ url_for('mostrador.modificarCantidad', id_producto=item.id_producto) }}"
                     method="POST">
-                 {{ modificar_form.hidden_tag() }}
+                {{ modificar_form.hidden_tag() }}
+                <input type="hidden" name="tipo" value="{{ item.get('tipo', 'producto') }}">
 
-                {# Botón − (envía cantidad actual - 0.5) #}
                 <button type="submit" class="qty-btn"
-                        name="accion"
-                        value="restar"
-                        title="Reducir">−</button>
+                        name="accion" value="restar" title="Reducir">−</button>
 
-                {# Input directo — al cambiar hace submit #}
                 <input
                   class="qty-input"
                   type="number"
@@ -645,18 +956,16 @@
                   value="{{ item.cantidad }}"
                   min="0"
                   max="{{ item.stock }}"
-                  step="1"
+                  step="{{ '0.1' if es_corte else '1' }}"
                   onchange="this.form.submit()"
                 />
+                {% if es_corte %}
+                  <span class="qty-unit">kg</span>
+                {% endif %}
 
-                {# Botón + (envía cantidad actual + 0.5) #}
                 <button type="submit" class="qty-btn"
-                        name="accion"
-                        value="sumar"
-                        title="Aumentar"
+                        name="accion" value="sumar" title="Aumentar"
                         {% if item.cantidad >= item.stock %}disabled{% endif %}>+</button>
-
-                
               </form>
 
               <div class="item-subtotal">${{ "%.2f" | format(item.subtotal) }}</div>
@@ -674,7 +983,7 @@
                  m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
           <p>El carrito está vacío</p>
-          <p style="font-size:.75rem;color:#e5e7eb;">Agrega productos desde el catálogo</p>
+          <p style="font-size:.75rem;color:#e5e7eb;">Agrega productos o cortes desde el catálogo</p>
         </div>
       {% endif %}
 
@@ -684,11 +993,12 @@
     {% if carrito %}
       <div class="carrito-footer">
 
-        {# Desglose por ítem #}
         <div class="subtotal-rows">
           {% for item in carrito %}
             <div class="subtotal-row">
-              <span class="subtotal-label">{{ item.nombre }} × {{ item.cantidad }}</span>
+              <span class="subtotal-label">
+                {{ item.nombre }} × {{ item.cantidad }}{{ ' kg' if item.get('tipo') == 'corte' else '' }}
+              </span>
               <span class="subtotal-val">${{ "%.2f" | format(item.subtotal) }}</span>
             </div>
           {% endfor %}
@@ -701,13 +1011,10 @@
           <span class="total-monto">${{ "%.2f" | format(total) }}</span>
         </div>
 
-        <form action="{{ url_for('mostrador.cobrar') }}" method="POST" style="margin:0;">
-  {{ cobrar_form.hidden_tag() }}
-  <button class="btn-cobrar" type="submit"
-          onclick="return confirm('¿Confirmar cobro de ${{ '%.2f' | format(total) }}?')">
-    Cobrar
-  </button>
-</form>
+        <button class="btn-cobrar" type="button"
+                onclick="abrirModalPago()">
+          Cobrar ${{ "%.2f" | format(total) }}
+        </button>
 
       </div>
     {% endif %}
@@ -716,9 +1023,128 @@
 
 </div>{# /main #}
 
-{# ─── JS: BÚSQUEDA + FILTROS (solo frontend, sin servidor) ─── #}
+
+{# ─── MODAL DE PAGO ─── #}
+{% if carrito %}
+<div class="modal-overlay" id="modal-pago">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+
+    <div class="modal-header">
+      <span class="modal-title" id="modal-titulo">Procesar pago</span>
+      <button class="modal-close" onclick="cerrarModal()" title="Cerrar">✕</button>
+    </div>
+
+    {# ── PASO 1: Elegir método ── #}
+    <div id="paso-metodos" class="modal-metodos">
+      <div class="modal-total-display">
+        <div class="modal-total-label">Total a cobrar</div>
+        <div class="modal-total-monto">${{ "%.2f" | format(total) }}</div>
+      </div>
+      <p style="font-size:.78rem; color:#6b7280; font-weight:600; text-align:center;">
+        ¿Cómo va a pagar el cliente?
+      </p>
+      <div class="metodo-btns">
+        <button class="btn-metodo" onclick="irAPaso('efectivo')">
+          <span class="metodo-icon">💵</span>
+          <span class="metodo-label">Efectivo</span>
+          <span class="metodo-sub">Calcular cambio</span>
+        </button>
+        <button class="btn-metodo" onclick="irAPaso('tarjeta')">
+          <span class="metodo-icon">💳</span>
+          <span class="metodo-label">Tarjeta</span>
+          <span class="metodo-sub">Terminal bancaria</span>
+        </button>
+      </div>
+    </div>
+
+    {# ── PASO 2A: Efectivo ── #}
+    <div id="paso-efectivo" class="modal-form" style="display:none;">
+      <button class="modal-back" onclick="irAPaso('metodos')">
+        ← Volver
+      </button>
+      <div class="modal-step-title">
+        <span class="modal-step-icon efectivo">💵</span>
+        Pago en efectivo
+      </div>
+      <div class="modal-resumen">
+        <span class="modal-resumen-label">Total a cobrar</span>
+        <span class="modal-resumen-monto">${{ "%.2f" | format(total) }}</span>
+      </div>
+      <div class="form-field">
+        <label for="monto-recibido">Monto recibido del cliente</label>
+        <input type="number" id="monto-recibido" min="0" step="0.01"
+               placeholder="${{ '%.2f' | format(total) }}"
+               oninput="calcularCambio({{ total }})"
+               autocomplete="off"/>
+      </div>
+      <div class="cambio-display" id="cambio-display">
+        <span class="cambio-label">Cambio a entregar</span>
+        <span class="cambio-monto" id="cambio-monto">—</span>
+      </div>
+      <form action="{{ url_for('mostrador.cobrar') }}" method="POST" id="form-efectivo">
+        {{ cobrar_form.hidden_tag() }}
+        <input type="hidden" name="tipo_pago" value="Efectivo">
+        <input type="hidden" name="referencia" value="">
+        <button type="submit" class="btn-confirmar-pago efectivo-confirm"
+                id="btn-confirmar-efectivo" disabled
+                onclick="return validarEfectivo({{ total }})">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+          Confirmar cobro
+        </button>
+      </form>
+    </div>
+
+    {# ── PASO 2B: Tarjeta ── #}
+    <div id="paso-tarjeta" class="modal-form" style="display:none;">
+      <button class="modal-back" onclick="irAPaso('metodos')">
+        ← Volver
+      </button>
+      <div class="modal-step-title">
+        <span class="modal-step-icon tarjeta">💳</span>
+        Pago con tarjeta
+      </div>
+      <div class="modal-resumen">
+        <span class="modal-resumen-label">Total a cobrar</span>
+        <span class="modal-resumen-monto">${{ "%.2f" | format(total) }}</span>
+      </div>
+      <div class="terminal-msg">
+        <span class="terminal-msg-icon">🖥️</span>
+        <span class="terminal-msg-text">
+          Cobra al cliente <strong>${{ "%.2f" | format(total) }}</strong> en la
+          terminal bancaria y luego ingresa el número de autorización o referencia
+          que imprime el voucher.
+        </span>
+      </div>
+      <div class="form-field">
+        <label for="num-referencia">N° de autorización / referencia <span style="color:#9ca3af;">(opcional)</span></label>
+        <input type="text" id="num-referencia" maxlength="40"
+               placeholder="Ej. 123456" class="tarjeta-focus"
+               autocomplete="off"/>
+      </div>
+      <form action="{{ url_for('mostrador.cobrar') }}" method="POST" id="form-tarjeta">
+        {{ cobrar_form.hidden_tag() }}
+        <input type="hidden" name="tipo_pago" value="Tarjeta">
+        <input type="hidden" name="referencia" id="hidden-referencia" value="">
+        <button type="submit" class="btn-confirmar-pago tarjeta-confirm"
+                onclick="syncReferencia()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+          Confirmar cobro
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endif %}
+
 <script>
-  // Auto-cerrar flash después de 4 s
+  // ── Auto-cerrar flash ──
   setTimeout(() => {
     const wrap = document.getElementById('flash-wrap');
     if (wrap) wrap.style.display = 'none';
@@ -727,20 +1153,126 @@
   // ── Búsqueda en tiempo real ──
   document.getElementById('buscar').addEventListener('input', filtrar);
 
-  
   function filtrar() {
-  const q = document.getElementById('buscar').value.toLowerCase().trim();
-  let count = 0;
+    const q = document.getElementById('buscar').value.toLowerCase().trim();
+    let countProd = 0;
+    document.querySelectorAll('#grid-productos .producto-card').forEach(card => {
+      const visible = card.dataset.nombre.includes(q);
+      card.style.display = visible ? '' : 'none';
+      if (visible) countProd++;
+    });
+    document.getElementById('contador-productos').textContent = countProd;
 
-  document.querySelectorAll('.producto-card').forEach(card => {
-    const nombre  = card.dataset.nombre || '';
-    const visible = nombre.includes(q);
-    card.style.display = visible ? '' : 'none';
-    if (visible) count++;
+    let countCorte = 0;
+    document.querySelectorAll('#grid-cortes .producto-card').forEach(card => {
+      const visible = card.dataset.nombre.includes(q);
+      card.style.display = visible ? '' : 'none';
+      if (visible) countCorte++;
+    });
+    document.getElementById('contador-cortes').textContent = countCorte;
+  }
+
+  // ── Switch entre tab Productos / Cortes ──
+  function switchTab(tab) {
+    const panelProd  = document.getElementById('panel-productos');
+    const panelCorte = document.getElementById('panel-cortes');
+    const tabProd    = document.getElementById('tab-productos');
+    const tabCorte   = document.getElementById('tab-cortes');
+    if (tab === 'productos') {
+      panelProd.classList.remove('hidden');
+      panelCorte.classList.add('hidden');
+      tabProd.classList.add('active');
+      tabCorte.classList.remove('active');
+    } else {
+      panelCorte.classList.remove('hidden');
+      panelProd.classList.add('hidden');
+      tabCorte.classList.add('active');
+      tabProd.classList.remove('active');
+    }
+  }
+
+  // ── Modal de pago ──
+  function abrirModalPago() {
+    irAPaso('metodos');
+    document.getElementById('modal-pago').classList.add('open');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-pago').classList.remove('open');
+  }
+
+  // Cerrar al hacer clic fuera del modal
+  document.getElementById('modal-pago')?.addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
   });
 
-  document.getElementById('contador').textContent = count;
-}
+  // Cerrar con Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModal();
+  });
+
+  function irAPaso(paso) {
+    document.getElementById('paso-metodos').style.display  = 'none';
+    document.getElementById('paso-efectivo').style.display = 'none';
+    document.getElementById('paso-tarjeta').style.display  = 'none';
+
+    if (paso === 'metodos')  document.getElementById('paso-metodos').style.display  = '';
+    if (paso === 'efectivo') {
+      document.getElementById('paso-efectivo').style.display = '';
+      // Limpiar campo y cambio al entrar
+      document.getElementById('monto-recibido').value = '';
+      resetCambio();
+    }
+    if (paso === 'tarjeta')  document.getElementById('paso-tarjeta').style.display  = '';
+  }
+
+  // ── Lógica efectivo ──
+  function calcularCambio(total) {
+    const monto   = parseFloat(document.getElementById('monto-recibido').value) || 0;
+    const display = document.getElementById('cambio-display');
+    const montoEl = document.getElementById('cambio-monto');
+    const btnConf = document.getElementById('btn-confirmar-efectivo');
+
+    if (monto <= 0) {
+      resetCambio();
+      return;
+    }
+
+    const cambio = monto - total;
+    if (cambio < 0) {
+      display.classList.add('negativo');
+      montoEl.textContent = `Faltan $${Math.abs(cambio).toFixed(2)}`;
+      btnConf.disabled = true;
+    } else {
+      display.classList.remove('negativo');
+      montoEl.textContent = `$${cambio.toFixed(2)}`;
+      btnConf.disabled = false;
+    }
+  }
+
+  function resetCambio() {
+    const display = document.getElementById('cambio-display');
+    const montoEl = document.getElementById('cambio-monto');
+    const btnConf = document.getElementById('btn-confirmar-efectivo');
+    if (display) { display.classList.remove('negativo'); }
+    if (montoEl) { montoEl.textContent = '—'; }
+    if (btnConf) { btnConf.disabled = true; }
+  }
+
+  function validarEfectivo(total) {
+    const monto = parseFloat(document.getElementById('monto-recibido').value) || 0;
+    if (monto < total) {
+      alert('El monto recibido es menor al total.');
+      return false;
+    }
+    return true;
+  }
+
+  // ── Lógica tarjeta ──
+  function syncReferencia() {
+    const ref = document.getElementById('num-referencia').value.trim();
+    document.getElementById('hidden-referencia').value = ref;
+  }
 </script>
 
 </body>

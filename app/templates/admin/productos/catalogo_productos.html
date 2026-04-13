@@ -9,134 +9,321 @@
     gap: .75rem;
     margin-bottom: 1.5rem;
   }
+
   .kpi-card {
     background: #fff;
     border: 1.5px solid #e5e7eb;
     border-radius: 14px;
     padding: .9rem 1.1rem;
-    display: flex; align-items: center; gap: .75rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
   }
+
   .kpi-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center; shrink-0: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    shrink-0: 0;
   }
-  .kpi-icon.green  { background: #f0fdf4; }
-  .kpi-icon.red    { background: #fef2f2; }
-  .kpi-icon.blue   { background: #eff6ff; }
-  .kpi-icon svg { width: 18px; height: 18px; fill: none; stroke-width: 2; }
-  .kpi-icon.green svg  { stroke: #16a34a; }
-  .kpi-icon.red svg    { stroke: #dc2626; }
-  .kpi-icon.blue svg   { stroke: #2563eb; }
-  .kpi-num  { font-size: 1.35rem; font-weight: 900; color: #111827; line-height: 1; }
-  .kpi-lbl  { font-size: .7rem;  font-weight: 700; color: #6b7280; margin-top: 2px; }
+
+  .kpi-icon.green {
+    background: #f0fdf4;
+  }
+
+  .kpi-icon.red {
+    background: #fef2f2;
+  }
+
+  .kpi-icon.blue {
+    background: #eff6ff;
+  }
+
+  .kpi-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .kpi-icon.green svg {
+    stroke: #16a34a;
+  }
+
+  .kpi-icon.red svg {
+    stroke: #dc2626;
+  }
+
+  .kpi-icon.blue svg {
+    stroke: #2563eb;
+  }
+
+  .kpi-num {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #111827;
+    line-height: 1;
+  }
+
+  .kpi-lbl {
+    font-size: .7rem;
+    font-weight: 700;
+    color: #6b7280;
+    margin-top: 2px;
+  }
 
   /* ── ANIMAL FILTER PILLS ── */
   .animal-pills {
-    display: flex; align-items: center; gap: .5rem;
-    flex-wrap: wrap; margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
   }
+
   .pill {
-    display: inline-flex; align-items: center; gap: 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     padding: .4rem .9rem;
-    font-size: .78rem; font-weight: 800;
-    border-radius: 99px; cursor: pointer;
+    font-size: .78rem;
+    font-weight: 800;
+    border-radius: 99px;
+    cursor: pointer;
     border: 1.5px solid #e5e7eb;
-    background: #fff; color: #6b7280;
+    background: #fff;
+    color: #6b7280;
     transition: all .15s;
     user-select: none;
   }
-  .pill:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
-  .pill.active { background: #16a34a; color: #fff; border-color: #16a34a; }
-  .pill-emoji { font-size: .9rem; }
+
+  .pill:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .pill.active {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+  }
+
+  .pill-emoji {
+    font-size: .9rem;
+  }
 
   /* ── TOOLBAR ── */
   .toolbar {
-    display: flex; align-items: flex-start; gap: 1rem;
-    margin-bottom: 1rem; flex-wrap: wrap;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
   }
+
   .search-wrap {
-    position: relative; flex: 1; min-width: 200px;
+    position: relative;
+    flex: 1;
+    min-width: 200px;
   }
+
   .search-wrap svg {
-    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
-    width: 15px; height: 15px; stroke: #9ca3af; fill: none; pointer-events: none;
+    position: absolute;
+    left: .85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    stroke: #9ca3af;
+    fill: none;
+    pointer-events: none;
   }
+
   .search-input {
     width: 100%;
     padding: .65rem .85rem .65rem 2.4rem;
-    font-size: .85rem; font-family: 'Inter', sans-serif;
-    color: #374151; background: #fff;
-    border: 1.5px solid #e5e7eb; border-radius: 12px;
-    outline: none; transition: all .18s;
+    font-size: .85rem;
+    font-family: 'Inter', sans-serif;
+    color: #374151;
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    outline: none;
+    transition: all .18s;
   }
-  .search-input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
-  .search-input::placeholder { color: #d1d5db; }
+
+  .search-input:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, .1);
+  }
+
+  .search-input::placeholder {
+    color: #d1d5db;
+  }
 
   .filters-panel {
-    background: #fff; border: 1.5px solid #e5e7eb;
-    border-radius: 14px; padding: .75rem 1.1rem;
-    display: flex; align-items: center; gap: 1.25rem;
-    flex-wrap: wrap; min-width: 280px;
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 14px;
+    padding: .75rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    min-width: 280px;
   }
-  .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 120px;
+  }
+
   .filter-label {
-    font-size: .6rem; font-weight: 800;
-    text-transform: uppercase; letter-spacing: .1em; color: #9ca3af;
+    font-size: .6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #9ca3af;
   }
+
   .sort-select {
     padding: .45rem .75rem;
-    font-size: .8rem; font-family: 'Inter', sans-serif;
-    color: #374151; background: #f9fafb;
-    border: 1.5px solid #e5e7eb; border-radius: 9px;
-    outline: none; cursor: pointer; transition: border-color .18s;
+    font-size: .8rem;
+    font-family: 'Inter', sans-serif;
+    color: #374151;
+    background: #f9fafb;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 9px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .18s;
   }
-  .sort-select:focus { border-color: #16a34a; }
 
-  .range-wrap { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
-  .range-labels { display: flex; justify-content: space-between; font-size: .7rem; font-weight: 700; color: #374151; }
+  .sort-select:focus {
+    border-color: #16a34a;
+  }
+
+  .range-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #374151;
+  }
+
   .range-slider {
-    -webkit-appearance: none; width: 100%; height: 4px;
-    border-radius: 2px; outline: none; cursor: pointer;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
     background: linear-gradient(to right,
-      #16a34a 0%, #16a34a var(--pct, 100%),
-      #e5e7eb var(--pct, 100%), #e5e7eb 100%);
+        #16a34a 0%, #16a34a var(--pct, 100%),
+        #e5e7eb var(--pct, 100%), #e5e7eb 100%);
   }
+
   .range-slider::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-    background: #16a34a; border: 2px solid #fff;
-    box-shadow: 0 2px 6px rgba(22,163,74,.35); cursor: pointer;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #16a34a;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, .35);
+    cursor: pointer;
   }
+
   .range-slider::-moz-range-thumb {
-    width: 16px; height: 16px; border-radius: 50%;
-    background: #16a34a; border: 2px solid #fff;
-    box-shadow: 0 2px 6px rgba(22,163,74,.35); cursor: pointer;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #16a34a;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, .35);
+    cursor: pointer;
   }
 
   /* ── RESULTS BAR ── */
   .results-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: .5rem;
   }
-  .results-count { font-size: .78rem; font-weight: 700; color: #6b7280; }
-  .results-count strong { color: #111827; }
+
+  .results-count {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #6b7280;
+  }
+
+  .results-count strong {
+    color: #111827;
+  }
+
   .btn-reset {
-    font-size: .72rem; font-weight: 700; color: #9ca3af;
-    background: none; border: none; cursor: pointer;
-    text-decoration: underline; padding: 0; transition: color .15s;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #9ca3af;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    transition: color .15s;
   }
-  .btn-reset:hover { color: #374151; }
+
+  .btn-reset:hover {
+    color: #374151;
+  }
+
   .btn-nuevo {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: .5rem 1rem;
-    background: #16a34a; color: #fff;
-    font-size: .78rem; font-weight: 800;
-    border: none; border-radius: 10px; cursor: pointer;
-    font-family: 'Inter', sans-serif; text-decoration: none;
-    box-shadow: 0 2px 8px rgba(22,163,74,.25);
+    background: #16a34a;
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 800;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .25);
     transition: all .18s;
   }
-  .btn-nuevo:hover { background: #15803d; transform: translateY(-1px); }
-  .btn-nuevo svg { width: 13px; height: 13px; stroke: #fff; fill: none; }
+
+  .btn-nuevo:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+  }
+
+  .btn-nuevo svg {
+    width: 13px;
+    height: 13px;
+    stroke: #fff;
+    fill: none;
+  }
 
   /* ── GRID ── */
   .products-grid {
@@ -144,89 +331,266 @@
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
   }
+
   .product-card {
-    background: #fff; border-radius: 18px;
+    background: #fff;
+    border-radius: 18px;
     border: 1.5px solid #f0f0f0;
-    box-shadow: 0 2px 12px rgba(0,0,0,.05);
-    overflow: hidden; display: flex; flex-direction: column;
-    transition: all .22s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all .22s cubic-bezier(.4, 0, .2, 1);
   }
+
   .product-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 28px rgba(0,0,0,.09);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .09);
     border-color: #d1fae5;
   }
-  .product-card.sin-stock { border-color: #fee2e2; }
-  .product-card.sin-stock:hover { border-color: #fca5a5; }
+
+  .product-card.sin-stock {
+    border-color: #fee2e2;
+  }
+
+  .product-card.sin-stock:hover {
+    border-color: #fca5a5;
+  }
 
   /* Foto */
   .card-img-wrap {
-    width: 100%; aspect-ratio: 4/3;
+    width: 100%;
+    aspect-ratio: 4/3;
     background: #f8faf8;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden; position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
   }
-  .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
-  .product-card:hover .card-img { transform: scale(1.04); }
-  .card-img-placeholder { font-size: 3.5rem; opacity: .2; user-select: none; }
+
+  .card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .3s ease;
+  }
+
+  .product-card:hover .card-img {
+    transform: scale(1.04);
+  }
+
+  .card-img-placeholder {
+    font-size: 3.5rem;
+    opacity: .2;
+    user-select: none;
+  }
 
   /* Badges en foto */
-  .badge-wrap { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
-  .stock-badge {
-    font-size: .6rem; font-weight: 800; padding: 3px 8px; border-radius: 99px;
+  .badge-wrap {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
   }
-  .stock-badge.ok   { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-  .stock-badge.low  { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
-  .stock-badge.none { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+
+  .stock-badge {
+    font-size: .6rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 99px;
+  }
+
+  .stock-badge.ok {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  .stock-badge.low {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+
+  .stock-badge.none {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+  }
 
   .animal-badge {
-    font-size: .58rem; font-weight: 800; padding: 3px 7px; border-radius: 99px;
+    font-size: .58rem;
+    font-weight: 800;
+    padding: 3px 7px;
+    border-radius: 99px;
   }
-  .badge-red    { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
-  .badge-pink   { background: #fdf2f8; color: #db2777; border: 1px solid #f9a8d4; }
-  .badge-amber  { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
-  .badge-purple { background: #faf5ff; color: #7c3aed; border: 1px solid #ddd6fe; }
-  .badge-gray   { background: #f9fafb; color: #6b7280; border: 1px solid #e5e7eb; }
+
+  .badge-red {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+  }
+
+  .badge-pink {
+    background: #fdf2f8;
+    color: #db2777;
+    border: 1px solid #f9a8d4;
+  }
+
+  .badge-amber {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+
+  .badge-purple {
+    background: #faf5ff;
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+  }
+
+  .badge-gray {
+    background: #f9fafb;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+  }
 
   /* Cuerpo */
-  .card-body { padding: .9rem 1rem; flex: 1; display: flex; flex-direction: column; gap: .4rem; }
+  .card-body {
+    padding: .9rem 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }
+
   .card-name {
-    font-size: .88rem; font-weight: 800; color: #111827; margin: 0; line-height: 1.3;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    font-size: .88rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
+
   .card-desc {
-    font-size: .72rem; color: #9ca3af; font-weight: 500; margin: 0; line-height: 1.5; flex: 1;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+    margin: 0;
+    line-height: 1.5;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .card-prices { display: flex; align-items: baseline; gap: .6rem; margin-top: .3rem; flex-wrap: wrap; }
-  .price-venta { font-size: 1.1rem; font-weight: 900; color: #16a34a; }
-  .price-venta span { font-size: .65rem; color: #9ca3af; font-weight: 600; }
-  .price-compra { font-size: .72rem; font-weight: 700; color: #9ca3af; }
+
+  .card-prices {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    margin-top: .3rem;
+    flex-wrap: wrap;
+  }
+
+  .price-venta {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #16a34a;
+  }
+
+  .price-venta span {
+    font-size: .65rem;
+    color: #9ca3af;
+    font-weight: 600;
+  }
+
+  .price-compra {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #9ca3af;
+  }
 
   /* Pie */
-  .card-footer { padding: 0 1rem .9rem; }
+  .card-footer {
+    padding: 0 1rem .9rem;
+  }
+
   .btn-editar {
-    width: 100%; padding: .6rem;
-    background: #eff6ff; color: #2563eb;
-    font-size: .8rem; font-weight: 800;
-    border: 1.5px solid #bfdbfe; border-radius: 11px; cursor: pointer;
-    font-family: 'Inter', sans-serif; text-decoration: none;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%;
+    padding: .6rem;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: .8rem;
+    font-weight: 800;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 11px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     transition: all .18s;
   }
-  .btn-editar:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
-  .btn-editar svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.5; }
+
+  .btn-editar:hover {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+  }
+
+  .btn-editar svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+  }
 
   /* Empty state */
-  .empty-state { grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: #9ca3af; }
-  .empty-state-icon { font-size: 3rem; margin-bottom: .75rem; }
-  .empty-state p { font-size: .85rem; font-weight: 600; }
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #9ca3af;
+  }
+
+  .empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: .75rem;
+  }
+
+  .empty-state p {
+    font-size: .85rem;
+    font-weight: 600;
+  }
 
   @media (max-width: 640px) {
-    .kpi-grid { grid-template-columns: 1fr 1fr; }
-    .toolbar  { flex-direction: column; }
-    .filters-panel { width: 100%; }
-    .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .kpi-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .toolbar {
+      flex-direction: column;
+    }
+
+    .filters-panel {
+      width: 100%;
+    }
+
+    .products-grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
   }
 </style>
 
@@ -242,7 +606,10 @@
 <div class="kpi-grid">
   <div class="kpi-card">
     <div class="kpi-icon green">
-      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
     </div>
     <div>
       <div class="kpi-num">{{ total_productos }}</div>
@@ -251,7 +618,9 @@
   </div>
   <div class="kpi-card">
     <div class="kpi-icon red">
-      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
     </div>
     <div>
       <div class="kpi-num">{{ sin_stock }}</div>
@@ -260,7 +629,10 @@
   </div>
   <div class="kpi-card">
     <div class="kpi-icon blue">
-      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
     </div>
     <div>
       <div class="kpi-num">{{ con_foto }}</div>
@@ -275,7 +647,7 @@
   {% for cat in categorias_lista %}
   <button class="pill" data-cat="{{ cat.idCategoria }}" onclick="setAnimal(this)">
     {% if emoji_map.get(cat.nombreCategoria) %}
-      <span class="pill-emoji">{{ emoji_map[cat.nombreCategoria] }}</span>
+    <span class="pill-emoji">{{ emoji_map[cat.nombreCategoria] }}</span>
     {% endif %}
     {{ cat.nombreCategoria }}
   </button>
@@ -286,11 +658,10 @@
 <div class="toolbar">
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
     </svg>
-    <input type="text" id="search-input" class="search-input"
-           placeholder="Buscar producto..."
-           oninput="filtrar()" autocomplete="off">
+    <input type="text" id="search-input" class="search-input" placeholder="Buscar producto..." oninput="filtrar()"
+      autocomplete="off">
   </div>
 
   <div class="filters-panel">
@@ -308,9 +679,8 @@
         <span>${{ precio_min }}</span>
         <span id="range-val">${{ precio_max }}</span>
       </div>
-      <input type="range" class="range-slider" id="price-range"
-             min="{{ precio_min }}" max="{{ precio_max }}" value="{{ precio_max }}"
-             oninput="onRange(this)">
+      <input type="range" class="range-slider" id="price-range" min="{{ precio_min }}" max="{{ precio_max }}"
+        value="{{ precio_max }}" oninput="onRange(this)">
     </div>
   </div>
 </div>
@@ -325,9 +695,15 @@
     <button class="btn-reset" onclick="resetFiltros()">Limpiar filtros</button>
     <a href="{{ url_for('productos.productos_nuevo') }}" class="btn-nuevo">
       <svg viewBox="0 0 24 24" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
       </svg>
       Nuevo producto
+    </a>
+    <a href="{{ url_for('mostrador.catalogo_cortes') }}" class="btn-nuevo">
+      <svg viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Ver cortes
     </a>
   </div>
 </div>
@@ -343,33 +719,31 @@
   {% set emoji = emoji_map.get(cat_filtro, '') %}
 
   <div class="product-card {% if p.StockProducto == 0 %}sin-stock{% endif %}"
-       data-nombre="{{ p.NombreProducto | lower }}"
-       data-precio="{{ p.PrecioVentaProducto }}"
-       data-categoria="{{ cat_filtro }}">
+    data-nombre="{{ p.NombreProducto | lower }}" data-precio="{{ p.PrecioVentaProducto }}"
+    data-categoria="{{ cat_filtro }}">
 
     <!-- IMAGEN -->
     <div class="card-img-wrap">
       {% if item.foto_b64 %}
-        <img src="{{ item.foto_b64 }}" alt="{{ p.NombreProducto }}" class="card-img" loading="lazy">
+      <img src="{{ item.foto_b64 }}" alt="{{ p.NombreProducto }}" class="card-img" loading="lazy">
       {% else %}
-        <span class="card-img-placeholder">{{ emoji or '📦' }}</span>
+      <span class="card-img-placeholder">{{ emoji or '📦' }}</span>
       {% endif %}
 
       <div class="badge-wrap">
         <!-- Badge stock -->
         {% if p.StockProducto == 0 %}
-          <span class="stock-badge none">Sin stock</span>
-        {% elif p.StockProducto <= 3 %}
-          <span class="stock-badge low">Últimas {{ p.StockProducto }}</span>
-        {% else %}
+        <span class="stock-badge none">Sin stock</span>
+        {% elif p.StockProducto <= 3 %} <span class="stock-badge low">Últimas {{ p.StockProducto }}</span>
+          {% else %}
           <span class="stock-badge ok">{{ p.StockProducto }} en stock</span>
-        {% endif %}
-        <!-- Badge animal -->
-        {% if cat_nombre != 'Otro' %}
+          {% endif %}
+          <!-- Badge animal -->
+          {% if cat_nombre != 'Otro' %}
           <span class="animal-badge badge-{{ badge_color }}">{{ emoji }} {{ cat_nombre }}</span>
-        {% else %}
+          {% else %}
           <span class="animal-badge badge-gray">{{ cat_nombre }}</span>
-        {% endif %}
+          {% endif %}
       </div>
     </div>
 
@@ -377,14 +751,10 @@
     <div class="card-body">
       <p class="card-name">{{ p.NombreProducto }}</p>
       {% if p.DescripcionProducto %}
-        <p class="card-desc">{{ p.DescripcionProducto }}</p>
+      <p class="card-desc">{{ p.DescripcionProducto }}</p>
       {% else %}
-        <p class="card-desc" style="font-style:italic;">Sin descripción</p>
+      <p class="card-desc" style="font-style:italic;">Sin descripción</p>
       {% endif %}
-      <div class="card-prices">
-        <p class="price-venta">${{ '%.2f'|format(p.PrecioVentaProducto) }}<span> venta</span></p>
-        <p class="price-compra">Costo ${{ '%.2f'|format(p.PrecioCompraProducto) }}</p>
-      </div>
     </div>
 
     <!-- BOTÓN EDITAR -->
@@ -392,7 +762,7 @@
       <a href="{{ url_for('productos.productos_editar', id=p.idProducto) }}" class="btn-editar">
         <svg viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
         </svg>
         Editar producto
       </a>
@@ -409,96 +779,96 @@
 </div>
 
 <script>
-const precioMax = {{ precio_max }};
-const precioMin = {{ precio_min }};
-let animalActivo = 'Todos';
+  const precioMax = {{ precio_max }};
+  const precioMin = {{ precio_min }};
+  let animalActivo = 'Todos';
 
-// ── Filtro animal ────────────────────────────────────────────────────────────
-function setAnimal(btn) {
-  document.querySelectorAll('#animal-pills .pill').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  animalActivo = btn.dataset.cat;
-  filtrar();
-}
-
-// ── Filtrado combinado ───────────────────────────────────────────────────────
-function filtrar() {
-  const query    = document.getElementById('search-input').value.toLowerCase().trim();
-  const sort     = document.getElementById('sort-select').value;
-  const maxPrecio = parseFloat(document.getElementById('price-range').value);
-
-  const grid  = document.getElementById('products-grid');
-  const cards = [...grid.querySelectorAll('.product-card')];
-
-  let visibles = [];
-  cards.forEach(card => {
-    const nombre    = card.dataset.nombre;
-    const precio    = parseFloat(card.dataset.precio);
-    const categoria = card.dataset.categoria;
-
-    const matchAnimal = animalActivo === 'Todos' || categoria === animalActivo;
-    const matchBusq   = nombre.includes(query);
-    const matchPrecio = precio <= maxPrecio;
-
-    const match = matchAnimal && matchBusq && matchPrecio;
-    card.style.display = match ? '' : 'none';
-    if (match) visibles.push(card);
-  });
-
-  // Ordenar
-  if (sort === 'asc') {
-    visibles.sort((a, b) => parseFloat(a.dataset.precio) - parseFloat(b.dataset.precio));
-  } else if (sort === 'desc') {
-    visibles.sort((a, b) => parseFloat(b.dataset.precio) - parseFloat(a.dataset.precio));
+  // ── Filtro animal ────────────────────────────────────────────────────────────
+  function setAnimal(btn) {
+    document.querySelectorAll('#animal-pills .pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    animalActivo = btn.dataset.cat;
+    filtrar();
   }
-  visibles.forEach(card => grid.appendChild(card));
 
-  // Contador
-  document.getElementById('count-visible').textContent = visibles.length;
+  // ── Filtrado combinado ───────────────────────────────────────────────────────
+  function filtrar() {
+    const query = document.getElementById('search-input').value.toLowerCase().trim();
+    const sort = document.getElementById('sort-select').value;
+    const maxPrecio = parseFloat(document.getElementById('price-range').value);
 
-  // Empty state dinámico
-  let emptyEl = grid.querySelector('.empty-state-dynamic');
-  if (visibles.length === 0 && !emptyEl) {
-    emptyEl = document.createElement('div');
-    emptyEl.className = 'empty-state empty-state-dynamic';
-    emptyEl.innerHTML = `<div class="empty-state-icon">🔍</div>
+    const grid = document.getElementById('products-grid');
+    const cards = [...grid.querySelectorAll('.product-card')];
+
+    let visibles = [];
+    cards.forEach(card => {
+      const nombre = card.dataset.nombre;
+      const precio = parseFloat(card.dataset.precio);
+      const categoria = card.dataset.categoria;
+
+      const matchAnimal = animalActivo === 'Todos' || categoria === animalActivo;
+      const matchBusq = nombre.includes(query);
+      const matchPrecio = precio <= maxPrecio;
+
+      const match = matchAnimal && matchBusq && matchPrecio;
+      card.style.display = match ? '' : 'none';
+      if (match) visibles.push(card);
+    });
+
+    // Ordenar
+    if (sort === 'asc') {
+      visibles.sort((a, b) => parseFloat(a.dataset.precio) - parseFloat(b.dataset.precio));
+    } else if (sort === 'desc') {
+      visibles.sort((a, b) => parseFloat(b.dataset.precio) - parseFloat(a.dataset.precio));
+    }
+    visibles.forEach(card => grid.appendChild(card));
+
+    // Contador
+    document.getElementById('count-visible').textContent = visibles.length;
+
+    // Empty state dinámico
+    let emptyEl = grid.querySelector('.empty-state-dynamic');
+    if (visibles.length === 0 && !emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'empty-state empty-state-dynamic';
+      emptyEl.innerHTML = `<div class="empty-state-icon">🔍</div>
       <p>Sin resultados para "<strong>${query || animalActivo}</strong>".</p>`;
-    grid.appendChild(emptyEl);
-  } else if (visibles.length > 0 && emptyEl) {
-    emptyEl.remove();
+      grid.appendChild(emptyEl);
+    } else if (visibles.length > 0 && emptyEl) {
+      emptyEl.remove();
+    }
   }
-}
 
-// ── Slider de precio ─────────────────────────────────────────────────────────
-function onRange(input) {
-  const val = parseFloat(input.value);
-  const pct = ((val - precioMin) / (precioMax - precioMin || 1)) * 100;
-  input.style.setProperty('--pct', pct + '%');
-  document.getElementById('range-val').textContent = '$' + val.toFixed(0);
-  filtrar();
-}
+  // ── Slider de precio ─────────────────────────────────────────────────────────
+  function onRange(input) {
+    const val = parseFloat(input.value);
+    const pct = ((val - precioMin) / (precioMax - precioMin || 1)) * 100;
+    input.style.setProperty('--pct', pct + '%');
+    document.getElementById('range-val').textContent = '$' + val.toFixed(0);
+    filtrar();
+  }
 
-(function () {
-  const slider = document.getElementById('price-range');
-  const pct = ((precioMax - precioMin) / (precioMax - precioMin || 1)) * 100;
-  slider.style.setProperty('--pct', pct + '%');
-})();
+  (function () {
+    const slider = document.getElementById('price-range');
+    const pct = ((precioMax - precioMin) / (precioMax - precioMin || 1)) * 100;
+    slider.style.setProperty('--pct', pct + '%');
+  })();
 
-// ── Reset ─────────────────────────────────────────────────────────────────────
-function resetFiltros() {
-  document.getElementById('search-input').value = '';
-  document.getElementById('sort-select').value  = '';
+  // ── Reset ─────────────────────────────────────────────────────────────────────
+  function resetFiltros() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('sort-select').value = '';
 
-  const slider = document.getElementById('price-range');
-  slider.value = precioMax;
-  onRange(slider);
+    const slider = document.getElementById('price-range');
+    slider.value = precioMax;
+    onRange(slider);
 
-  // Reset pill animal
-  document.querySelectorAll('#animal-pills .pill').forEach(p => p.classList.remove('active'));
-  document.querySelector('#animal-pills .pill[data-cat="Todos"]').classList.add('active');
-  animalActivo = 'Todos';
+    // Reset pill animal
+    document.querySelectorAll('#animal-pills .pill').forEach(p => p.classList.remove('active'));
+    document.querySelector('#animal-pills .pill[data-cat="Todos"]').classList.add('active');
+    animalActivo = 'Todos';
 
-  filtrar();
-}
+    filtrar();
+  }
 </script>
 {% endblock %}
