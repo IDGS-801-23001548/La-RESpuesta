@@ -109,7 +109,7 @@ VentaOnline
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 14px;
+    padding: 6px 12px;
     font-size: .78rem;
     font-weight: 700;
     color: var(--gray-muted);
@@ -127,6 +127,16 @@ VentaOnline
   .vo-nav__link.active {
     color: var(--green-primary);
     background: var(--green-light);
+  }
+
+  /* Link de cortes — acento ámbar */
+  .vo-nav__link--amber:hover {
+    color: var(--amber-primary);
+    background: var(--amber-light);
+  }
+  .vo-nav__link--amber.active {
+    color: var(--amber-primary);
+    background: var(--amber-light);
   }
 
   /* Botón logout */
@@ -156,6 +166,14 @@ VentaOnline
     height: 20px;
     background: var(--gray-border);
     margin: 0 4px;
+  }
+
+  /* Separador visual entre catálogos */
+  .vo-nav__sep {
+    width: 1px;
+    height: 14px;
+    background: #e5e7eb;
+    margin: 0 2px;
   }
 
   .vo-avatar {
@@ -299,13 +317,28 @@ VentaOnline
     <!-- LINKS -->
     <div class="vo-nav__links">
 
-      <a href="{{ url_for('venta.catalogo_cortes') }}" class="vo-nav__link">
+      <!-- Catálogo productos (verde) -->
+      <a href="{{ url_for('venta.catalogo') }}" class="vo-nav__link">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 6h11M10 19a1 1 0 100 2 1 1 0 000-2zm7 0a1 1 0 100 2 1 1 0 000-2z"/>
+        </svg>
+        Productos
+      </a>
+
+      <!-- Separador visual entre los dos catálogos -->
+      <div class="vo-nav__sep"></div>
+
+      <!-- Catálogo cortes (ámbar) -->
+      <a href="{{ url_for('venta.catalogo_cortes') }}" class="vo-nav__link vo-nav__link--amber">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
         </svg>
-        Cortes
+        Cortes / kg
       </a>
+
+      <div class="vo-nav__divider"></div>
 
       <a href="{{ url_for('venta.carrito') }}" class="vo-nav__link">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
@@ -313,6 +346,14 @@ VentaOnline
             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
         Carrito
+        {% if carrito_count and carrito_count > 0 %}
+        <span style="
+          background: #16a34a; color: #fff;
+          font-size: .58rem; font-weight: 900;
+          padding: 1px 6px; border-radius: 99px;
+          min-width: 18px; text-align: center; line-height: 1.4;
+        ">{{ carrito_count }}</span>
+        {% endif %}
       </a>
 
       <a href="{{ url_for('venta.pedidos') }}" class="vo-nav__link">

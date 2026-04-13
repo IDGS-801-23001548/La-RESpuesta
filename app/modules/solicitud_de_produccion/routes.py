@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from . import solicitud_de_produccion
 from app.extensions import db, mongo_fotos
 from app.models import (
@@ -317,6 +317,14 @@ def _solicitud_nueva_personalizada():
                 ))
 
             db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Solicitud de produccion creada (Personalizada) | receta={receta_obj.nombreReceta} "
+                f"| cantidad={cantidad_producir} uds | solicitud=#{nueva.idSolicitud} "
+                f"| usuario={email_usuario} | ip={request.remote_addr}"
+            )
+
             flash(
                 f'Solicitud de produccion creada como Pendiente para '
                 f'"{receta_obj.nombreReceta}" ({cantidad_producir} unidades). '
@@ -326,6 +334,9 @@ def _solicitud_nueva_personalizada():
             return redirect(url_for('solicitud_de_produccion.solicitudes'))
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(
+                f"Error al crear solicitud (Personalizada) | receta={receta_obj.nombreReceta} | error={e}"
+            )
             flash(f'Error al crear la solicitud: {e}', 'danger')
             return redirect(url_for(
                 'solicitud_de_produccion.solicitudes_nueva',
@@ -470,6 +481,14 @@ def _solicitud_nueva_corte():
             db.session.commit()
             cat_nombre = corte.categoria.nombreCategoria if (corte and corte.categoria) else ''
             nombre_corte = f'{corte.nombreCorte} ({cat_nombre})' if (corte and cat_nombre) else (corte.nombreCorte if corte else '—')
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Solicitud de produccion creada (Corte) | corte={nombre_corte} "
+                f"| canal=#{canal_corte.idCanal} | solicitud=#{nueva.idSolicitud} "
+                f"| usuario={email_usuario} | ip={request.remote_addr}"
+            )
+
             flash(
                 f'Solicitud de corte "{nombre_corte}" creada como Pendiente. '
                 f'Complétala en el modulo de Produccion.',
@@ -479,6 +498,9 @@ def _solicitud_nueva_corte():
 
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(
+                f"Error al crear solicitud (Corte) | canal_corte=#{id_canal_corte} | error={e}"
+            )
             flash(f'Error al crear la solicitud: {e}', 'danger')
             return redirect(url_for('solicitud_de_produccion.solicitudes_nueva', tipo='Corte', idCanal=canal_id_get))
 
@@ -541,5 +563,13 @@ def solicitudes_cancelar(id):
     else:
         sol.estatus = 'Cancelada'
         db.session.commit()
+
+        email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+        current_app.logger.info(
+            f"Solicitud de produccion cancelada | solicitud=#{sol.idSolicitud} "
+            f"| tipo={sol.tipoReceta} | nombre={sol.nombreReceta or '—'} "
+            f"| usuario={email_usuario} | ip={request.remote_addr}"
+        )
+
         flash('Solicitud cancelada.', 'success')
     return redirect(url_for('solicitud_de_produccion.solicitudes'))

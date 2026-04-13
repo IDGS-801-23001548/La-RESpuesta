@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from . import produccion
 from app.extensions import db, mongo_fotos
 from app.models import (
@@ -120,15 +120,21 @@ def index():
     for sol in completadas:
         detalle = sol.detalles.first()
         lote_prod = Lote.query.get(detalle.idLoteProducido) if detalle and detalle.idLoteProducido else None
-        cc = CanalCorte.query.get(detalle.idCanalCorte) if detalle and detalle.idCanalCorte else None
-        corte = sol.corte
+
+        if sol.tipoReceta == 'Corte':
+            cc = CanalCorte.query.get(detalle.idCanalCorte) if detalle and detalle.idCanalCorte else None
+            merma = cc.Merma if cc else 0
+        else:
+            # Personalizada: la merma no aplica (se consume lo exacto de la receta)
+            merma = None
 
         items_completadas.append({
             'solicitud':     sol,
+            'tipo':          sol.tipoReceta or 'Corte',
             'nombre':        sol.nombreReceta,
             'lote_numero':   lote_prod.numeroLote if lote_prod else '—',
             'kg_producidos': lote_prod.totalMateria if lote_prod else 0,
-            'merma':         cc.Merma if cc else 0,
+            'merma':         merma,
             'usuario':       sol.usuario.email if sol.usuario else '—',
         })
 
@@ -232,6 +238,15 @@ def _completar_corte(sol):
 
             cat_nombre = cat.nombreCategoria if cat else ''
             nombre_corte = f'{corte.nombreCorte} ({cat_nombre})' if (corte and cat_nombre) else (corte.nombreCorte if corte else '—')
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Produccion completada (Corte) | corte={nombre_corte} "
+                f"| lote={numero_lote} | obtenido={cantidad_obtenida:g}kg | merma={merma:g}kg "
+                f"| solicitud=#{sol.idSolicitud} | autorizo={email_usuario} "
+                f"| ip={request.remote_addr}"
+            )
+
             flash(
                 f'Produccion completada: "{nombre_corte}". '
                 f'Lote {numero_lote} creado con {cantidad_obtenida:g} kg '
@@ -242,6 +257,9 @@ def _completar_corte(sol):
 
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(
+                f"Error al completar produccion (Corte) | solicitud=#{sol.idSolicitud} | error={e}"
+            )
             flash(f'Error al completar la produccion: {e}', 'danger')
             return redirect(url_for('produccion.completar', id=sol.idSolicitud))
 
@@ -308,12 +326,44 @@ def _completar_personalizada(sol):
             return redirect(url_for('produccion.completar', id=sol.idSolicitud))
 
         try:
-            # Consumir stock de cada lote
+            # Consumir stock de cada lote y calcular totales
+            total_consumido = 0
+            fecha_cad_proxima = None
             for det, lote in consumos:
+                total_consumido += det.cantidadConsumida
                 lote.totalMateria = (lote.totalMateria or 0) - det.cantidadConsumida
                 if lote.totalMateria <= 0:
                     lote.totalMateria = 0
                     lote.estatus      = 'Agotado'
+                # Fecha de caducidad mas proxima de los lotes consumidos
+                if lote.fechaCaducidad:
+                    if fecha_cad_proxima is None or lote.fechaCaducidad < fecha_cad_proxima:
+                        fecha_cad_proxima = lote.fechaCaducidad
+
+            total_consumido = round(total_consumido, 3)
+
+            # Crear lote de produccion para trazabilidad
+            numero_lote = _generar_numero_lote_produccion()
+            lote_producido = Lote(
+                idCanalCorte      = None,
+                idMateriaProveida = None,
+                idOrdenCompra     = None,
+                numeroLote        = numero_lote,
+                cantidadDeUnidad  = sol.cantidadProducir,
+                cantidadPorUnidad = round(total_consumido / sol.cantidadProducir, 3) if sol.cantidadProducir else total_consumido,
+                totalMateria      = total_consumido,
+                precioPorUnidad   = 0.0,
+                totalCosto        = 0.0,
+                fechaCaducidad    = fecha_cad_proxima,
+                estatus           = 'Disponible',
+                idUsuario         = current_user.id,
+            )
+            db.session.add(lote_producido)
+            db.session.flush()
+
+            # Vincular todos los detalles al lote producido
+            for det, _ in consumos:
+                det.idLoteProducido = lote_producido.idLote
 
             # Incrementar stock del producto
             if producto is not None:
@@ -323,15 +373,30 @@ def _completar_personalizada(sol):
             sol.fechaCompletada = datetime.now()
 
             db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Produccion autorizada (Personalizada) | receta={sol.nombreReceta} "
+                f"| cantidad={sol.cantidadProducir} uds | lote={numero_lote} "
+                f"| consumido={total_consumido:g}kg "
+                f"| producto={producto.NombreProducto if producto else '—'} "
+                f"| solicitud=#{sol.idSolicitud} | autorizo={email_usuario} "
+                f"| ip={request.remote_addr}"
+            )
+
             flash(
                 f'Produccion autorizada: se produjeron {sol.cantidadProducir} unidad(es) '
-                f'de "{sol.nombreReceta}".',
+                f'de "{sol.nombreReceta}". '
+                f'Lote {numero_lote} creado con {total_consumido:g} kg consumidos.',
                 'success'
             )
             return redirect(url_for('produccion.index'))
 
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(
+                f"Error al completar produccion (Personalizada) | solicitud=#{sol.idSolicitud} | error={e}"
+            )
             flash(f'Error al completar la produccion: {e}', 'danger')
             return redirect(url_for('produccion.completar', id=sol.idSolicitud))
 

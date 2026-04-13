@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from . import receta
 from .forms import RecetaForm
 from app.extensions import db, mongo_fotos
@@ -7,7 +7,7 @@ from app.models import (
     Producto, MateriaPrima, MateriaProveida,
     Corte, CanalCorte, Lote, Categoria,
 )
-from flask_login import login_required
+from flask_login import login_required, current_user
 from flask_security import roles_required
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
@@ -233,6 +233,14 @@ def recetas_nueva():
             db.session.flush()
             _guardar_ingredientes(nueva.idReceta, ingredientes)
             db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Receta creada | nombre={nueva.nombreReceta} | receta=#{nueva.idReceta} "
+                f"| producto={producto.NombreProducto} | ingredientes={len(ingredientes)} "
+                f"| usuario={email_usuario} | ip={request.remote_addr}"
+            )
+
             flash(f'Receta "{nueva.nombreReceta}" creada correctamente.', 'success')
             return redirect(url_for('receta.recetas'))
         except IntegrityError:
@@ -286,6 +294,14 @@ def recetas_editar(id):
             _guardar_ingredientes(receta_obj.idReceta, ingredientes)
             try:
                 db.session.commit()
+
+                email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+                current_app.logger.info(
+                    f"Receta actualizada | nombre={receta_obj.nombreReceta} | receta=#{receta_obj.idReceta} "
+                    f"| producto={producto.NombreProducto} | ingredientes={len(ingredientes)} "
+                    f"| usuario={email_usuario} | ip={request.remote_addr}"
+                )
+
                 flash('Receta actualizada correctamente.', 'success')
                 return redirect(url_for('receta.recetas'))
             except IntegrityError:
@@ -321,9 +337,17 @@ def recetas_editar(id):
 def recetas_eliminar(id):
     receta_obj = Receta.query.get_or_404(id)
     nombre     = receta_obj.nombreReceta
+    receta_id  = receta_obj.idReceta
     try:
         db.session.delete(receta_obj)
         db.session.commit()
+
+        email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+        current_app.logger.warning(
+            f"Receta eliminada | nombre={nombre} | receta=#{receta_id} "
+            f"| usuario={email_usuario} | ip={request.remote_addr}"
+        )
+
         flash(f'Receta "{nombre}" eliminada.', 'success')
     except IntegrityError:
         db.session.rollback()
