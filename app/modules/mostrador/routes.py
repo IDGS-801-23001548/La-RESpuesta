@@ -154,6 +154,17 @@ def _get_cortes_con_stock():
     return [{'corte': corte, 'stock_kg': round(float(stock_kg), 3)} for corte, stock_kg in rows]
 
 
+# ─── CATÁLOGO DE CORTES (solo lectura) ──────────────────────
+
+@mostrador.route("/catalogo-cortes", methods=['GET'])
+@login_required
+@roles_required('admin')
+def catalogo_cortes():
+    cortes_raw  = _get_cortes_con_stock()
+    items_cortes = _enrich_cortes_con_fotos(cortes_raw)
+    return render_template("mostrador/cortes_catalogo.html", items_cortes=items_cortes)
+
+
 # ─── VISTA PRINCIPAL ────────────────────────────────────────
 
 @mostrador.route("/venta", methods=['GET'])
