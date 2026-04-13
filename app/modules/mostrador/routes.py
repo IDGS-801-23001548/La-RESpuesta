@@ -561,8 +561,8 @@ def cobrar():
         db.session.commit()
 
         current_app.logger.info(
-            f"Venta mostrador registrada | pedido_id={pedido.idPedido} "
-            f"| total=${total:.2f} | tipo_pago={tipo_pago} "
+            f"venta_mostrador | pedido_id={pedido.idPedido} "
+            f"| total={total:.2f} | tipo_pago={tipo_pago} "
             f"| productos={len(items_productos)} | cortes={len(items_cortes)} "
             f"| estatus={pedido.Estatus} "
             f"| usuario={current_user.email} "
@@ -778,8 +778,8 @@ def entregarPedido(id_pedido):
         db.session.commit()
 
         current_app.logger.info(
-            f"Pedido entregado | pedido_id={pedido.idPedido} "
-            f"| total=${pedido.Total:.2f} | tipo_pago={pedido.Tipo} "
+            f"pedido_entregado | pedido_id={pedido.idPedido} "
+            f"| total={pedido.Total:.2f} | tipo_pago={pedido.Tipo} "
             f"| estatus={pedido.Estatus} "
             f"| usuario={current_user.email} "
             f"| ip={request.remote_addr}"
