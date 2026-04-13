@@ -674,7 +674,22 @@ def _completar_corte(sol):
             db.session.rollback()
             flash(str(e), 'danger')
 
-    return render_template('admin/produccion/completar_corte.html', solicitud=sol)
+    info = {
+        'foto_b64': _foto_b64_de(corte.idFoto) if corte else None,
+        'corte_nombre': corte.nombreCorte if corte else '—',
+        'categoria': corte.categoria.nombreCategoria if (corte and corte.categoria) else '—',
+        'canal_id': canal.idCanal if canal else '—',
+        'canal_peso': canal.Peso if canal else 0,
+        'fecha_sacrificio': canal.fechaSacrificio.strftime('%d/%m/%Y') if (canal and canal.fechaSacrificio) else '—',
+        'cantidad_esperada': cc.CantidadEsperada if cc else 0,
+    }
+
+    return render_template(
+        'admin/produccion/produccion_completar.html',  # 👈 mismo template
+        solicitud=sol,
+        info=info,
+        tipo='Corte'
+    )
 
 def _completar_personalizada(sol):
     detalles = sol.detalles.all()
