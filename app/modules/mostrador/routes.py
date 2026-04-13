@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, session, jsonify
+from flask import render_template, redirect, url_for, flash, request, session, jsonify, current_app
 from flask_login import login_required, current_user
 from flask_security.decorators import roles_required
 from . import mostrador
@@ -560,6 +560,15 @@ def cobrar():
         # ── 4. Guardar todo ───────────────────────────────────
         db.session.commit()
 
+        current_app.logger.info(
+            f"Venta mostrador registrada | pedido_id={pedido.idPedido} "
+            f"| total=${total:.2f} | tipo_pago={tipo_pago} "
+            f"| productos={len(items_productos)} | cortes={len(items_cortes)} "
+            f"| estatus={pedido.Estatus} "
+            f"| usuario={current_user.email} "
+            f"| ip={request.remote_addr}"
+        )
+
         # ── 5. Limpiar carrito ────────────────────────────────
         _save_carrito_activo([])
 
@@ -570,6 +579,12 @@ def cobrar():
 
     except Exception as e:
         db.session.rollback()
+
+        current_app.logger.error(
+            f"Error en venta mostrador | usuario={current_user.email} "
+            f"| error={str(e)} | total=${total:.2f} "
+            f"| ip={request.remote_addr}"
+        )
         flash(f'Error al registrar la venta: {str(e)}', 'error')
 
     return redirect(url_for('mostrador.mostradorVenta'))
@@ -761,9 +776,19 @@ def entregarPedido(id_pedido):
 
         pedido.Estatus = 'Finalizado'
         db.session.commit()
+
+        current_app.logger.info(
+            f"Pedido entregado | pedido_id={pedido.idPedido} "
+            f"| total=${pedido.Total:.2f} | tipo_pago={pedido.Tipo} "
+            f"| estatus={pedido.Estatus} "
+            f"| usuario={current_user.email} "
+            f"| ip={request.remote_addr}"
+        )
+        
         flash(f'Pedido #{id_pedido:04d} marcado como entregado.', 'success')
     except Exception as e:
         db.session.rollback()
+        
         flash(f'Error al actualizar el pedido: {str(e)}', 'error')
 
     return redirect(url_for('mostrador.mostradorPedido'))
