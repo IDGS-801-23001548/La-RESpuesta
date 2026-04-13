@@ -67,13 +67,13 @@ class Lote(db.Model):
     )
     # canalCorte se define via backref desde CanalCorte.lotes
 
-    # idUsuario = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('user.id'),
-    #     nullable=True
-    # )
+    idUsuario = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id'),
+        nullable=True
+    )
 
-    # usuario = db.relationship(
-    #     'User',
-    #     backref=db.backref('lotes_producidos', lazy='dynamic')
-    # )
+    usuario = db.relationship(
+        'User',
+        backref=db.backref('lotes_producidos', lazy='dynamic')
+    )

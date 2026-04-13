@@ -1,10 +1,10 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from . import proveedor
 from .forms import ProveedorForm
 from app.extensions import db
 from app.models.proveedor import Proveedor
 from app.models.orden_compra import OrdenCompra
-from flask_login import login_required
+from flask_login import login_required, current_user
 from flask_security import roles_required
 from datetime import date
 from sqlalchemy.exc import IntegrityError
@@ -39,6 +39,14 @@ def proveedores_nuevo():
         db.session.add(nuevo)
         try:
             db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Proveedor creado | nombre={nuevo.nombre} | rfc={nuevo.rfc} "
+                f"| condicion={nuevo.condicion_pago} | usuario={email_usuario} "
+                f"| ip={request.remote_addr}"
+            )
+
             flash('Proveedor registrado correctamente.', 'success')
             return redirect(url_for('proveedor.proveedores'))
         except IntegrityError:
@@ -110,6 +118,13 @@ def proveedores_editar(id):
         prov.notas          = form.notas.data.strip() or None
         try:
             db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Proveedor actualizado | nombre={prov.nombre} | rfc={prov.rfc} "
+                f"| id={prov.id} | usuario={email_usuario} | ip={request.remote_addr}"
+            )
+
             flash('Proveedor actualizado correctamente.', 'success')
             return redirect(url_for('proveedor.proveedores_detalle', id=prov.id))
         except IntegrityError:
@@ -124,6 +139,15 @@ def proveedores_editar(id):
 @roles_required('admin')
 def proveedores_eliminar(id):
     prov = Proveedor.query.get_or_404(id)
+    nombre_prov = prov.nombre
+    rfc_prov = prov.rfc
+
+    email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+    current_app.logger.warning(
+        f"Proveedor eliminado | nombre={nombre_prov} | rfc={rfc_prov} "
+        f"| id={prov.id} | usuario={email_usuario} | ip={request.remote_addr}"
+    )
+
     db.session.delete(prov)
     db.session.commit()
     flash('Proveedor eliminado.', 'info')
@@ -139,8 +163,16 @@ def proveedores_toggle(id):
     debe verificarse en las rutas de compras usando proveedor.es_activo.
     """
     prov = Proveedor.query.get_or_404(id)
+    estatus_anterior = prov.estatus
     prov.estatus = 'inactivo' if prov.es_activo else 'activo'
     db.session.commit()
+
+    email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+    current_app.logger.info(
+        f"Proveedor estado: {estatus_anterior} -> {prov.estatus} | nombre={prov.nombre} "
+        f"| id={prov.id} | usuario={email_usuario} | ip={request.remote_addr}"
+    )
+
     return redirect(url_for('proveedor.proveedores'))
 
 

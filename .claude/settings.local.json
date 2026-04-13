@@ -16,7 +16,12 @@
       "Bash(ls */Scripts/)",
       "Bash(venv/Scripts/python.exe -c ':*)",
       "Bash(\"env/Scripts/python.exe\" -m flask db current)",
-      "Bash(\"env/Scripts/python.exe\" -m flask db heads)"
+      "Bash(\"env/Scripts/python.exe\" -m flask db heads)",
+      "Bash(\"env/Scripts/python.exe\" -m flask db upgrade)",
+      "Bash(\"env/Scripts/python.exe\" -m flask db migrate -m \"corte_unitario y precioPorKilo\")",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"log\\\\|audit\\\\|bitacora\\\\|registro\" /c/Users/Fernf/Documents/coding/La-RESpuesta/app/models/*.py)",
+      "Bash(grep -l \"app.logger\\\\|current_app.logger\" /c/Users/Fernf/Documents/coding/La-RESpuesta/app/modules/*/*.py)"
     ]
   }
 }

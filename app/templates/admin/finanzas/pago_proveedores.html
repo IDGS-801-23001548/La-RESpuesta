@@ -156,6 +156,7 @@
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Proveedor</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Fecha pago</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Método</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Pagado por</th>
                     <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Total</th>
                 </tr>
             </thead>
@@ -185,13 +186,16 @@
                         <span class="text-[10px] text-gray-400">—</span>
                         {% endif %}
                     </td>
+                    <td class="px-4 py-3">
+                        <p class="text-xs text-gray-600">{{ o.usuarioPago.email if o.usuarioPago else '—' }}</p>
+                    </td>
                     <td class="px-4 py-3 text-right">
                         <p class="text-xs font-bold text-gray-800">${{ "%.2f"|format(o.totalOrden or 0) }}</p>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="px-4 py-8 text-center">
+                    <td colspan="6" class="px-4 py-8 text-center">
                         <p class="text-xs text-gray-400">Sin pagos registrados aún</p>
                     </td>
                 </tr>

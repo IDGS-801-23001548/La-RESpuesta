@@ -22,18 +22,3 @@ def index():
 @roles_required('admin')
 def dashboard():
     return render_template("admin/dashboard.html")
-
-
-# ── RUTAS A DESARROLLAR ──────────────────────────────────────────
-
-@admin.route("/utilidad", methods=['GET', 'POST'])
-def utilidad():
-    return render_template("admin/utilidad.html")
-
-@admin.route("/reportes", methods=['GET', 'POST'])
-def reportes():
-    return render_template("admin/reportes.html")
-
-@admin.route("/ventas")
-def ventas():
-    return f"ventas"

@@ -1,6 +1,6 @@
 from datetime import datetime, date, timedelta
 
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_security import login_required, current_user
 from sqlalchemy import func, extract
 
@@ -171,6 +171,14 @@ def movimiento_nuevo():
     )
     db.session.add(mov)
     db.session.commit()
+
+    email_usuario = current_user.email if current_user.is_authenticated else 'sistema'
+    current_app.logger.info(
+        f"Movimiento financiero registrado | tipo={tipo} | monto=${monto:.2f} "
+        f"| origen={origen} | motivo={motivo or '—'} "
+        f"| usuario={email_usuario} | ip={request.remote_addr}"
+    )
+
     flash(f'{tipo} de ${monto:.2f} registrado ({origen}).', 'success')
     return redirect(request.referrer or url_for('finanzas.corte_diario'))
 
@@ -179,6 +187,14 @@ def movimiento_nuevo():
 @login_required
 def movimiento_eliminar(id):
     mov = Retiro.query.get_or_404(id)
+
+    email_usuario = current_user.email if current_user.is_authenticated else 'sistema'
+    current_app.logger.info(
+        f"Movimiento financiero eliminado | tipo={mov.tipo} | monto=${mov.monto:.2f} "
+        f"| origen={mov.origen} | motivo={mov.motivo or '—'} "
+        f"| usuario={email_usuario} | ip={request.remote_addr}"
+    )
+
     db.session.delete(mov)
     db.session.commit()
     flash('Movimiento eliminado.', 'success')
@@ -241,7 +257,16 @@ def pagar_orden(id):
     orden.PagoProveedor = 'Pagado'
     orden.metodoPago    = metodo
     orden.fechaPago     = datetime.now()
+    orden.idUsuarioPago = current_user.id if current_user.is_authenticated else None
     db.session.commit()
+
+    proveedor_nombre = orden.proveedor.nombre if orden.proveedor else '—'
+    email_usuario = current_user.email if current_user.is_authenticated else 'sistema'
+    current_app.logger.info(
+        f"Pago a proveedor registrado | orden={orden.numeroLote} "
+        f"| proveedor={proveedor_nombre} | total=${orden.totalOrden:.2f} "
+        f"| metodo={metodo} | usuario={email_usuario} | ip={request.remote_addr}"
+    )
 
     flash(f'Orden {orden.numeroLote} pagada por {metodo}.', 'success')
     return redirect(url_for('finanzas.pago_proveedores'))
