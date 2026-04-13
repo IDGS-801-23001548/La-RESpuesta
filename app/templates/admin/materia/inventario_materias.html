@@ -1,0 +1,408 @@
+{% extends "_sidebar.html" %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="flex items-start justify-between mb-6">
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Inventario de Materias Primas</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Stock disponible calculado desde lotes recibidos</p>
+    </div>
+    <a href="{{ url_for('materia.materias') }}"
+        class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-500
+               hover:text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50
+               transition-all duration-150">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+        </svg>
+        Gestión de materias
+    </a>
+</div>
+
+
+<!-- KPI CARDS -->
+{% set con_stock = materias | selectattr('idMateriaPrima', 'in', stock_map.keys()) | list %}
+{% set sin_stock = materias | rejectattr('idMateriaPrima', 'in', stock_map.keys()) | list %}
+
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Materias registradas</span>
+            <div class="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+            </div>
+        </div>
+        <p class="text-2xl font-bold text-gray-800">{{ materias | length }}</p>
+        <p class="text-[10px] text-gray-400 mt-0.5">{{ con_stock | length }} con stock disponible</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Sin stock</span>
+            <div class="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                </svg>
+            </div>
+        </div>
+        <p class="text-2xl font-bold text-red-500">{{ sin_stock | length }}</p>
+        <p class="text-[10px] text-gray-400 mt-0.5">materias sin lotes disponibles</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Valor inventario</span>
+            <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+        </div>
+        <p class="text-2xl font-bold text-gray-800">${{ "%.2f" | format(total_valor) }}</p>
+        <p class="text-[10px] text-gray-400 mt-0.5">costo total de lotes disponibles</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Lotes activos</span>
+            <div class="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/>
+                </svg>
+            </div>
+        </div>
+        <p class="text-2xl font-bold text-gray-800">{{ total_lotes }}</p>
+        <p class="text-[10px] text-gray-400 mt-0.5">lotes con estatus Disponible</p>
+    </div>
+
+</div>
+
+
+<!-- FILTROS -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm mb-4 p-3">
+    <div class="flex flex-wrap items-center gap-2">
+
+        <div class="relative flex-1 min-w-48">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/>
+            </svg>
+            <input type="text" id="filtro-busqueda" placeholder="Buscar materia prima..."
+                class="w-full pl-9 pr-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                       rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
+                       transition-all placeholder-gray-300">
+        </div>
+
+        <select id="filtro-categoria"
+            class="px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+            <option value="">Todas las categorías</option>
+            {% for cat in categorias %}
+            <option value="{{ cat.nombreCategoria }}">{{ cat.nombreCategoria }}</option>
+            {% endfor %}
+        </select>
+
+        <select id="filtro-tipo"
+            class="px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+            <option value="">Todos los tipos</option>
+            <option value="Canal">Canal</option>
+            <option value="Materia">Materia</option>
+            <option value="Producto">Producto</option>
+        </select>
+
+        <select id="filtro-stock"
+            class="px-3 py-2 text-sm text-gray-700 bg-gray-50 border border-gray-200
+                   rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all">
+            <option value="">Todo el stock</option>
+            <option value="con-stock">Con stock</option>
+            <option value="sin-stock">Sin stock</option>
+        </select>
+
+        <button id="btn-reset"
+            class="px-3 py-2 text-xs font-semibold text-gray-400 hover:text-gray-600
+                   bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-all">
+            Limpiar
+        </button>
+
+        <span id="contador" class="text-[10px] font-semibold text-gray-400 ml-auto"></span>
+    </div>
+</div>
+
+
+<!-- TABLA -->
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left border-b border-gray-100 bg-gray-50/50">
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Materia Prima</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Categoría</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Tipo</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Stock disponible</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Costo promedio</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Valor total</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center">Lotes</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Proveedores</th>
+                    <th class="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Estado</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50" id="tbody-inventario">
+
+                {% for m in materias %}
+                {% set s = stock_map.get(m.idMateriaPrima, {}) %}
+                {% set stock_total    = s.get('stock_total', 0) %}
+                {% set costo_total    = s.get('costo_total', 0.0) %}
+                {% set costo_promedio = s.get('costo_promedio', 0.0) %}
+                {% set n_lotes        = s.get('n_lotes', 0) %}
+                {% set tiene_stock    = stock_total > 0 %}
+                {% set provs          = m.materiasProveidas.all() %}
+
+                <tr class="hover:bg-gray-50/70 transition-colors group inventario-fila"
+                    data-nombre="{{ m.nombreMateriaPrima | lower }}"
+                    data-categoria="{{ m.categoria.nombreCategoria if m.categoria else '' }}"
+                    data-tipo="{{ m.tipo if m.tipo else '' }}"
+                    data-stock="{{ 'con-stock' if tiene_stock else 'sin-stock' }}">
+
+                    <td class="px-4 py-3">
+                        <span class="text-xs font-semibold text-gray-800">{{ m.nombreMateriaPrima }}</span>
+                        {% if m.tipo == 'Producto' and m.idProducto %}
+                        <p class="text-[10px] text-blue-400 mt-0.5">vinculado a producto</p>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        {% if m.categoria %}
+                        <span class="text-[10px] font-semibold px-2 py-1 rounded-full border
+                            {% if m.categoria.nombreCategoria == 'Res' %}bg-red-50 text-red-600 border-red-200
+                            {% elif m.categoria.nombreCategoria == 'Pollo' %}bg-amber-50 text-amber-600 border-amber-200
+                            {% elif m.categoria.nombreCategoria == 'Cerdo' %}bg-pink-50 text-pink-600 border-pink-200
+                            {% elif m.categoria.nombreCategoria == 'Borrego' %}bg-purple-50 text-purple-600 border-purple-200
+                            {% else %}bg-gray-50 text-gray-600 border-gray-200{% endif %}">
+                            {{ m.categoria.nombreCategoria }}
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-gray-300">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        {% if m.tipo %}
+                        <span class="text-[10px] font-semibold px-2 py-1 rounded-full border
+                            {% if m.tipo == 'Canal' %}bg-green-50 text-green-700 border-green-200
+                            {% elif m.tipo == 'Producto' %}bg-blue-50 text-blue-600 border-blue-200
+                            {% else %}bg-gray-50 text-gray-600 border-gray-200{% endif %}">
+                            {{ m.tipo }}
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-gray-300">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3 text-right">
+                        {% if tiene_stock %}
+                        <span class="text-xs font-bold text-gray-800">{{ stock_total }}</span>
+                        <span class="text-[10px] text-gray-400 ml-0.5">uds.</span>
+                        {% else %}
+                        <span class="text-xs text-gray-300">0</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3 text-right">
+                        {% if costo_promedio > 0 %}
+                        <span class="text-xs font-semibold text-gray-700">${{ "%.2f" | format(costo_promedio) }}</span>
+                        <span class="text-[10px] text-gray-400">/ud.</span>
+                        {% else %}
+                        <span class="text-xs text-gray-300">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3 text-right">
+                        {% if costo_total > 0 %}
+                        <span class="text-xs font-semibold text-green-700">${{ "%.2f" | format(costo_total) }}</span>
+                        {% else %}
+                        <span class="text-xs text-gray-300">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3 text-center">
+                        {% if n_lotes > 0 %}
+                        <span class="text-[10px] font-semibold px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-full">
+                            {{ n_lotes }}
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-gray-300">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <div class="flex flex-wrap gap-1">
+                            {% for mp in provs[:2] %}
+                            <span class="text-[10px] font-medium px-1.5 py-0.5 bg-gray-50 text-gray-600
+                                         border border-gray-200 rounded-md whitespace-nowrap">
+                                {{ mp.proveedor.nombre[:14] }}{% if mp.proveedor.nombre|length > 14 %}…{% endif %}
+                            </span>
+                            {% endfor %}
+                            {% if provs | length > 2 %}
+                            <span class="text-[10px] font-medium px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md">
+                                +{{ provs | length - 2 }}
+                            </span>
+                            {% endif %}
+                            {% if not provs %}
+                            <span class="text-xs text-gray-300">—</span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td class="px-4 py-3">
+                        {% if tiene_stock %}
+                        <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1
+                                     rounded-full bg-green-50 text-green-700 border border-green-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            Disponible
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1
+                                     rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                            Sin stock
+                        </span>
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="px-4 py-16 text-center">
+                        <div class="flex flex-col items-center gap-2">
+                            <svg class="w-8 h-8 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                            <p class="text-xs text-gray-400 font-medium">Sin materias primas registradas</p>
+                            <a href="{{ url_for('materia.materias') }}"
+                                class="mt-1 text-[10px] font-semibold text-green-600 hover:text-green-700 underline underline-offset-2">
+                                Ir a gestión de materias primas →
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+    <div id="no-resultados" class="hidden px-4 py-12 text-center">
+        <p class="text-xs text-gray-400">Sin coincidencias con los filtros aplicados.</p>
+        <button onclick="resetFiltros()"
+            class="mt-2 text-[10px] font-semibold text-green-600 hover:text-green-700 underline underline-offset-2">
+            Limpiar filtros
+        </button>
+    </div>
+
+    <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        <span class="text-xs text-gray-400" id="pag-info"></span>
+        <div class="flex items-center gap-1" id="pag-btns"></div>
+    </div>
+</div>
+
+
+<script>
+const POR_PAGINA = 10;
+let pagina = 1;
+
+const filtroBusqueda  = document.getElementById('filtro-busqueda');
+const filtroCategoria = document.getElementById('filtro-categoria');
+const filtroTipo      = document.getElementById('filtro-tipo');
+const filtroStock     = document.getElementById('filtro-stock');
+const noResultados    = document.getElementById('no-resultados');
+const contador        = document.getElementById('contador');
+
+function getFilas() {
+    return [...document.querySelectorAll('.inventario-fila')];
+}
+
+function aplicarFiltros() {
+    const busq = filtroBusqueda.value.toLowerCase().trim();
+    const cat  = filtroCategoria.value;
+    const tipo = filtroTipo.value;
+    const stk  = filtroStock.value;
+
+    let visibles = 0;
+    getFilas().forEach(f => {
+        const ok = (!busq || f.dataset.nombre.includes(busq))
+                && (!cat  || f.dataset.categoria === cat)
+                && (!tipo || f.dataset.tipo === tipo)
+                && (!stk  || f.dataset.stock === stk);
+        f.dataset.visible = ok ? '1' : '0';
+        if (ok) visibles++;
+    });
+
+    noResultados.classList.toggle('hidden', visibles > 0);
+    pagina = 1;
+    renderPaginacion();
+}
+
+function resetFiltros() {
+    filtroBusqueda.value = filtroCategoria.value = filtroTipo.value = filtroStock.value = '';
+    aplicarFiltros();
+}
+
+[filtroBusqueda, filtroCategoria, filtroTipo, filtroStock].forEach(el => {
+    el.addEventListener('input', aplicarFiltros);
+    el.addEventListener('change', aplicarFiltros);
+});
+document.getElementById('btn-reset').addEventListener('click', resetFiltros);
+
+function renderPaginacion() {
+    const filas  = getFilas().filter(f => f.dataset.visible !== '0');
+    const total  = Math.ceil(filas.length / POR_PAGINA) || 1;
+    if (pagina > total) pagina = total;
+
+    getFilas().forEach(f => f.style.display = 'none');
+    const inicio = (pagina - 1) * POR_PAGINA;
+    filas.forEach((f, i) => { f.style.display = (i >= inicio && i < inicio + POR_PAGINA) ? '' : 'none'; });
+
+    const infoEl = document.getElementById('pag-info');
+    const btnsEl = document.getElementById('pag-btns');
+    const n      = filas.length;
+    const desde  = n === 0 ? 0 : inicio + 1;
+    const hasta  = Math.min(inicio + POR_PAGINA, n);
+
+    infoEl.textContent   = n ? `Mostrando ${desde}–${hasta} de ${n}` : '';
+    contador.textContent = (n !== getFilas().length && n > 0) ? `${n} resultado${n !== 1 ? 's' : ''}` : '';
+
+    if (n <= POR_PAGINA) { btnsEl.innerHTML = ''; return; }
+
+    const cls = 'w-7 h-7 flex items-center justify-center rounded-md text-xs font-semibold transition-colors';
+    btnsEl.innerHTML = '';
+
+    const prev = document.createElement('button');
+    prev.className = `${cls} ${pagina === 1 ? 'opacity-30 cursor-default' : 'text-gray-500 hover:bg-gray-100'}`;
+    prev.innerHTML = '‹'; prev.disabled = pagina === 1;
+    prev.onclick = () => { pagina--; renderPaginacion(); };
+    btnsEl.appendChild(prev);
+
+    for (let p = 1; p <= total; p++) {
+        const btn = document.createElement('button');
+        btn.className = `${cls} ${p === pagina ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`;
+        btn.textContent = p;
+        btn.onclick = () => { pagina = p; renderPaginacion(); };
+        btnsEl.appendChild(btn);
+    }
+
+    const next = document.createElement('button');
+    next.className = `${cls} ${pagina === total ? 'opacity-30 cursor-default' : 'text-gray-500 hover:bg-gray-100'}`;
+    next.innerHTML = '›'; next.disabled = pagina === total;
+    next.onclick = () => { pagina++; renderPaginacion(); };
+    btnsEl.appendChild(next);
+}
+
+getFilas().forEach(f => f.dataset.visible = '1');
+renderPaginacion();
+</script>
+
+{% endblock %}

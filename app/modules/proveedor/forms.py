@@ -49,20 +49,6 @@ class ProveedorForm(FlaskForm):
         validators=[Optional(), Length(max=250)]
     )
 
-    productos = SelectMultipleField(
-        'Productos que provee',
-        choices=[
-            ('Res',     'Res'),
-            ('Cerdo',   'Cerdo'),
-            ('Pollo',   'Pollo'),
-            ('Borrego', 'Borrego'),
-            ('Otro',    'Otro'),
-        ],
-        validators=[DataRequired(message='Selecciona al menos un producto.')],
-        widget=widgets.ListWidget(prefix_label=False),
-        option_widget=widgets.CheckboxInput()
-    )
-
     condicion_pago = SelectField(
         'Condicion de pago',
         choices=[

@@ -77,15 +77,15 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><circle cx="12" cy="12" r="3" />
+    <div class="bg-white rounded-xl border border-red-100 shadow-sm px-4 py-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
         </div>
         <div>
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Debug</p>
-            <p class="text-xl font-bold text-gray-600">{{ conteo.debug }}</p>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-red-500">Error</p>
+            <p class="text-xl font-bold text-red-700">{{ conteo.error }}</p>
         </div>
     </div>
 
@@ -118,6 +118,7 @@
             <option value="">Todos los niveles</option>
             <option value="INFO"    {{ 'selected' if filtros.nivel == 'INFO' }}>INFO</option>
             <option value="WARNING" {{ 'selected' if filtros.nivel == 'WARNING' }}>WARNING</option>
+            <option value="ERROR"   {{ 'selected' if filtros.nivel == 'ERROR' }}>ERROR</option>
             <option value="DEBUG"   {{ 'selected' if filtros.nivel == 'DEBUG' }}>DEBUG</option>
         </select>
 
@@ -126,15 +127,28 @@
             class="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg
                    outline-none focus:border-green-400 transition-all">
             <option value="">Todos los eventos</option>
-            <option value="login_ok"  {{ 'selected' if filtros.tipo == 'login_ok' }}>Login exitoso</option>
-            <option value="login_fail"{{ 'selected' if filtros.tipo == 'login_fail' }}>Intento fallido</option>
-            <option value="bloqueado" {{ 'selected' if filtros.tipo == 'bloqueado' }}>Cuenta bloqueada</option>
-            <option value="creacion"  {{ 'selected' if filtros.tipo == 'creacion' }}>Creación de usuario</option>
-            <option value="edicion"   {{ 'selected' if filtros.tipo == 'edicion' }}>Edición de usuario</option>
-            <option value="estado"    {{ 'selected' if filtros.tipo == 'estado' }}>Cambio de estado</option>
-            <option value="eliminado" {{ 'selected' if filtros.tipo == 'eliminado' }}>Eliminación</option>
-            <option value="sesion"    {{ 'selected' if filtros.tipo == 'sesion' }}>Sesión inválida</option>
-            <option value="sistema"   {{ 'selected' if filtros.tipo == 'sistema' }}>Sistema</option>
+            <optgroup label="Autenticación">
+                <option value="login_ok"   {{ 'selected' if filtros.tipo == 'login_ok' }}>Login exitoso</option>
+                <option value="login_fail" {{ 'selected' if filtros.tipo == 'login_fail' }}>Intento fallido</option>
+                <option value="bloqueado"  {{ 'selected' if filtros.tipo == 'bloqueado' }}>Cuenta bloqueada</option>
+                <option value="sesion"     {{ 'selected' if filtros.tipo == 'sesion' }}>Sesión inválida</option>
+            </optgroup>
+            <optgroup label="Operaciones">
+                <option value="compra"     {{ 'selected' if filtros.tipo == 'compra' }}>Compras</option>
+                <option value="pago"       {{ 'selected' if filtros.tipo == 'pago' }}>Pagos a proveedores</option>
+                <option value="produccion" {{ 'selected' if filtros.tipo == 'produccion' }}>Producción</option>
+                <option value="solicitud"  {{ 'selected' if filtros.tipo == 'solicitud' }}>Solicitudes</option>
+                <option value="receta"     {{ 'selected' if filtros.tipo == 'receta' }}>Recetas</option>
+                <option value="proveedor"  {{ 'selected' if filtros.tipo == 'proveedor' }}>Proveedores</option>
+                <option value="finanzas"   {{ 'selected' if filtros.tipo == 'finanzas' }}>Finanzas</option>
+            </optgroup>
+            <optgroup label="General">
+                <option value="creacion"   {{ 'selected' if filtros.tipo == 'creacion' }}>Creación</option>
+                <option value="edicion"    {{ 'selected' if filtros.tipo == 'edicion' }}>Edición</option>
+                <option value="estado"     {{ 'selected' if filtros.tipo == 'estado' }}>Cambio de estado</option>
+                <option value="eliminado"  {{ 'selected' if filtros.tipo == 'eliminado' }}>Eliminación</option>
+                <option value="sistema"    {{ 'selected' if filtros.tipo == 'sistema' }}>Sistema</option>
+            </optgroup>
         </select>
 
         <!-- Fecha desde -->
@@ -198,6 +212,9 @@
                         {% elif entry.nivel == 'WARNING' %}
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium
                                      bg-amber-50 text-amber-700 border border-amber-200">WARNING</span>
+                        {% elif entry.nivel == 'ERROR' %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium
+                                     bg-red-50 text-red-700 border border-red-200">ERROR</span>
                         {% else %}
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium
                                      bg-gray-100 text-gray-500 border border-gray-200">DEBUG</span>
@@ -247,6 +264,48 @@
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>Eliminación
+                        </span>
+                        {% elif entry.tipo == 'compra' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-cyan-600">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                            </svg>Compra
+                        </span>
+                        {% elif entry.tipo == 'pago' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>Pago
+                        </span>
+                        {% elif entry.tipo == 'produccion' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>Producción
+                        </span>
+                        {% elif entry.tipo == 'solicitud' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-violet-600">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>Solicitud
+                        </span>
+                        {% elif entry.tipo == 'receta' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-pink-600">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>Receta
+                        </span>
+                        {% elif entry.tipo == 'proveedor' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-sky-600">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>Proveedor
+                        </span>
+                        {% elif entry.tipo == 'finanzas' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-lime-600">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>Finanzas
                         </span>
                         {% elif entry.tipo == 'sesion' %}
                         <span class="inline-flex items-center gap-1 text-[11px] font-medium text-orange-500">

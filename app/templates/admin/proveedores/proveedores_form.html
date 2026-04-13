@@ -142,10 +142,10 @@
 
                     <!-- Teléfono -->
                     <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                        <label type="number" class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Teléfono <span class="text-red-400">*</span>
                         </label>
-                        <input type="tel" name="telefono" required placeholder="Ej. 477-123-4567"
+                        <input type="number" name="telefono" required placeholder="Ej. 477-123-4567" pattern="[0-9]{10}"
                             value="{{ proveedor.telefono if proveedor else '' }}"
                             class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
                                    rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
@@ -160,7 +160,7 @@
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Correo electrónico
                         </label>
-                        <input type="email" name="correo" placeholder="Ej. contacto@rastro.com"
+                        <input type="email" name="correo" placeholder="Ej. contacto@rastro.com" required
                             value="{{ proveedor.correo if proveedor else '' }}"
                             class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
                                    rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
@@ -175,7 +175,7 @@
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
                             Dirección
                         </label>
-                        <input type="text" name="direccion" placeholder="Calle, Colonia, Ciudad, CP"
+                        <input type="text" name="direccion" placeholder="Calle, Colonia, Ciudad, CP" required
                             value="{{ proveedor.direccion if proveedor else '' }}"
                             class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200
                                    rounded-lg outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100
@@ -196,36 +196,6 @@
                     <h3 class="text-sm font-semibold text-gray-700">Oferta y condiciones</h3>
                 </div>
                 <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    <!-- Productos que provee -->
-                    <div class="sm:col-span-2">
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
-                            Productos / Canales que provee <span class="text-red-400">*</span>
-                        </label>
-                        <div class="flex flex-wrap gap-2">
-                            {% for opcion, color in [('Res','red'), ('Cerdo','pink'), ('Pollo','amber'), ('Borrego','purple'), ('Otro','gray')] %}
-                            <label
-                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 cursor-pointer
-                                          hover:border-green-300 hover:bg-green-50 transition-all text-xs font-medium text-gray-600
-                                          has-[:checked]:border-green-400 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
-                                <input type="checkbox" name="productos" value="{{ opcion }}"
-                                    {% if proveedor and opcion in proveedor.productos_lista %}checked{% endif %}
-                                    class="accent-green-600 w-3.5 h-3.5">
-                                <span class="w-2 h-2 rounded-full inline-block
-                                    {% if color == 'red' %}bg-red-400
-                                    {% elif color == 'pink' %}bg-pink-400
-                                    {% elif color == 'amber' %}bg-amber-400
-                                    {% elif color == 'purple' %}bg-purple-400
-                                    {% else %}bg-gray-400{% endif %}">
-                                </span>
-                                {{ opcion }}
-                            </label>
-                            {% endfor %}
-                        </div>
-                        {% if form.productos.errors %}
-                        <p class="mt-1 text-[11px] text-red-500">{{ form.productos.errors[0] }}</p>
-                        {% endif %}
-                    </div>
 
                     <!-- Condición de pago -->
                     <div>

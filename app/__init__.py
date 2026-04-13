@@ -2,16 +2,15 @@ import os
 import logging
 from datetime import timedelta
 
-from flask import Flask, session, render_template
+from flask import Flask, session, render_template, request, redirect, render_template
 from flask_security import Security, SQLAlchemyUserDatastore
-from flask_security.utils import hash_password
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from app.extensions import mail
 
-from .models import User, Role, Categoria
+from .models import User, Role
 from app.extensions import db, limiter, _init_mongo
 
 load_dotenv()
@@ -30,6 +29,7 @@ def create_app():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
+    
 
     # ==============================
     # LOGIN MANAGER
@@ -52,6 +52,16 @@ def create_app():
     app.config['SECRET_KEY']                     = os.getenv('SECRET_KEY')  # ← clave fija desde .env
     app.config['SECURITY_PASSWORD_HASH']         = 'pbkdf2_sha512'
     app.config['SECURITY_PASSWORD_SALT']         = 'thisissecretsalt'
+
+    # ==============================
+    # MAIL
+    # ==============================
+    app.config['MAIL_SERVER']         = os.getenv('MAIL_SERVER')
+    app.config['MAIL_PORT']           = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS']        = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+    app.config['MAIL_USERNAME']       = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD']       = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 
     # ==============================
     # CSRF
@@ -80,6 +90,7 @@ def create_app():
     # ==============================
     db.init_app(app)
     limiter.init_app(app)
+    mail.init_app(app)
     migrate = Migrate(app, db)
     security = Security(app, user_datastore)
     _init_mongo(app)
@@ -104,6 +115,21 @@ def create_app():
     from .modules.proveedor import proveedor
     from .modules.materia   import materia
     from .modules.repartidor import repartidor_bp
+    from .modules.auth                      import auth
+    from .modules.admin                     import admin
+    from .modules.user                      import user
+    from .modules.compras                   import compras
+    from .modules.venta                     import venta
+    from .modules.logs                      import log
+    from .modules.proveedor                 import proveedor
+    from .modules.materia                   import materia
+    from .modules.recetas                   import receta
+    from .modules.solicitud_de_produccion   import solicitud_de_produccion
+    from .modules.produccion                import produccion
+    from .modules.productos                 import productos
+    from .modules.finanzas                  import finanzas
+    from .modules.ajustes                   import ajustes
+    from .modules.mostrador                 import mostrador
 
     app.register_blueprint(auth)
     app.register_blueprint(admin)
@@ -114,12 +140,22 @@ def create_app():
     app.register_blueprint(proveedor)
     app.register_blueprint(materia)
     app.register_blueprint(repartidor_bp)
+    app.register_blueprint(receta)
+    app.register_blueprint(solicitud_de_produccion)
+    app.register_blueprint(produccion)
+    app.register_blueprint(productos)
+    app.register_blueprint(finanzas)
+    app.register_blueprint(ajustes)  
+    app.register_blueprint(mostrador)
 
     # ==============================
     # MANEJO DE ERRORES
     # ==============================
+
     @app.errorhandler(404)
     def page_not_found(e):
+        if request.referrer:
+            return redirect(request.referrer)
         return render_template("404.html"), 404
 
     @app.route("/")

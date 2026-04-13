@@ -13,10 +13,19 @@ class Pedido(db.Model):
     Entrega          = db.Column(db.String(50),  nullable=True)    # Domicilio | Mostrador
     Direccion        = db.Column(db.String(500), nullable=True)    # Dirección exclusiva de este pedido
     Notas            = db.Column(db.String(500), nullable=True)    # Notas/instrucciones del cliente
-    fechaCreacion    = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    fechaCreacion    = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     unidadesPedido   = db.relationship(
         'ProductoUnitario',
         backref='pedido',
         lazy='dynamic'
     )
+
+    cortesPedido = db.relationship(
+        'CorteUnitario',
+        backref='pedido',
+        lazy='dynamic'
+    )
+
+    user = db.relationship('User', backref='pedidos')
+

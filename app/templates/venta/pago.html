@@ -213,11 +213,22 @@
           <div class="mini-item">
             <div class="mini-item-left">
               <span>🥩</span>
-              <span class="mini-item-name">{{ item.producto.NombreProducto }} ×{{ item.cantidad }}</span>
+              <span class="mini-item-name">{{ item.producto.NombreProducto }} x{{ item.cantidad }}</span>
             </div>
             <span class="mini-item-price">${{ '%.2f'|format(item.subtotal) }}</span>
           </div>
           {% endfor %}
+          {% if items_cortes %}
+          {% for ic in items_cortes %}
+          <div class="mini-item" style="border-left:3px solid #fbbf24;">
+            <div class="mini-item-left">
+              <span>🥩</span>
+              <span class="mini-item-name">{{ ic.nombre }} · {{ '%.2f'|format(ic.peso) }} kg</span>
+            </div>
+            <span class="mini-item-price">${{ '%.2f'|format(ic.costo) }}</span>
+          </div>
+          {% endfor %}
+          {% endif %}
         </div>
         <div class="panel-body" style="border-top:1px solid #f5f5f5;">
           <div class="summary-row">

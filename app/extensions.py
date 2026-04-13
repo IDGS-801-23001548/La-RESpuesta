@@ -4,14 +4,17 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from flask_mail import Mail
 
 load_dotenv()
 
+mail = Mail()
 mongo_client = None
 mongo_fotos  = None
 
 db = SQLAlchemy()
 
+# Sin app=current_app — se inicializa después con init_app
 limiter = Limiter(get_remote_address)
 
 def limit_by_email():
@@ -26,5 +29,6 @@ def _init_mongo(app):
         db_mongo    = mongo_client['La_Respuesta']
         mongo_fotos = db_mongo['La_Respuesta_fotos']
         app.logger.info(" MongoDB conectado correctamente")
+        app.logger.info("MongoDB conectado correctamente")
     except Exception as e:
-        app.logger.error(f"❌ MongoDB ERROR: {e}")
+        app.logger.error(f"MongoDB ERROR: {e}")

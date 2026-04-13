@@ -4,7 +4,7 @@ class Categoria(db.Model):
 
     __tablename__   = 'categoria'
     idCategoria     = db.Column(db.Integer, primary_key=True)
-    nombreCategoria = db.Column(db.String(25), nullable=False)
+    nombreCategoria = db.Column(db.String(25), nullable=False, unique=True)
 
     materiasPrimas  = db.relationship(
         'MateriaPrima',
@@ -14,6 +14,12 @@ class Categoria(db.Model):
 
     productos       = db.relationship(
         'Producto',
+        backref='categoria',
+        lazy='dynamic'
+    )
+
+    cortes = db.relationship(
+        'Corte',
         backref='categoria',
         lazy='dynamic'
     )

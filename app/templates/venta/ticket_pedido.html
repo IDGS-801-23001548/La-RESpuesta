@@ -295,6 +295,18 @@
           <span class="t-product-price">${{ '%.2f'|format(item.subtotal) }}</span>
         </div>
         {% endfor %}
+        {% if items_cortes %}
+        <p style="font-size:.55rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.1em;margin:.6rem 0 .3rem;border-top:1px dashed #fde68a;padding-top:.4rem;">Cortes por peso</p>
+        {% for ic in items_cortes %}
+        <div class="t-product-row">
+          <div>
+            <p class="t-product-name">{{ ic.nombre }}</p>
+            <p class="t-product-qty">{{ '%.2f'|format(ic.peso) }} kg ({{ ic.categoria }})</p>
+          </div>
+          <span class="t-product-price">${{ '%.2f'|format(ic.costo) }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
       </div>
 
       <!-- Totales -->

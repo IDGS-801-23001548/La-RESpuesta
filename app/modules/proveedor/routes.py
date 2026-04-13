@@ -1,10 +1,13 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from . import proveedor
 from .forms import ProveedorForm
 from app.extensions import db
 from app.models.proveedor import Proveedor
-from flask_login import login_required
+from app.models.orden_compra import OrdenCompra
+from flask_login import login_required, current_user
 from flask_security import roles_required
+from datetime import date
+from sqlalchemy.exc import IntegrityError
 
 
 @proveedor.route('/proveedores')
@@ -29,15 +32,26 @@ def proveedores_nuevo():
             telefono       = form.telefono.data.strip(),
             correo         = form.correo.data.strip() or None,
             direccion      = form.direccion.data.strip() or None,
-            productos      = ','.join(form.productos.data),
             condicion_pago = form.condicion_pago.data,
             dias_entrega   = ','.join(form.dias_entrega.data) if form.dias_entrega.data else None,
             notas          = form.notas.data.strip() or None,
         )
         db.session.add(nuevo)
-        db.session.commit()
-        flash('Proveedor registrado correctamente.', 'success')
-        return redirect(url_for('proveedor.proveedores'))
+        try:
+            db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Proveedor creado | nombre={nuevo.nombre} | rfc={nuevo.rfc} "
+                f"| condicion={nuevo.condicion_pago} | usuario={email_usuario} "
+                f"| ip={request.remote_addr}"
+            )
+
+            flash('Proveedor registrado correctamente.', 'success')
+            return redirect(url_for('proveedor.proveedores'))
+        except IntegrityError:
+            db.session.rollback()
+            flash(f'Ya existe un proveedor con el RFC "{form.rfc.data.strip().upper()}".', 'danger')
     return render_template('admin/proveedores/proveedores_form.html', proveedor=None, form=form)
 
 
@@ -46,7 +60,39 @@ def proveedores_nuevo():
 @roles_required('admin')
 def proveedores_detalle(id):
     prov = Proveedor.query.get_or_404(id)
-    return render_template('admin/proveedores/proveedores_detalle.html', proveedor=prov)
+
+    # Historial de órdenes de compra del proveedor (más recientes primero)
+    ordenes = (
+        OrdenCompra.query
+        .filter_by(idProveedor=prov.id)
+        .order_by(OrdenCompra.fechaDeOrden.desc(), OrdenCompra.idOrdenCompra.desc())
+        .all()
+    )
+
+    # Estadísticas calculadas
+    total_ordenes   = len(ordenes)
+    total_comprado  = sum(o.totalOrden for o in ordenes if o.estatus != 'Cancelada')
+    ultima_compra   = ordenes[0].fechaDeOrden if ordenes else None
+
+    hoy = date.today()
+    compras_mes     = sum(
+        1 for o in ordenes
+        if o.estatus != 'Cancelada'
+        and o.fechaDeOrden.month == hoy.month
+        and o.fechaDeOrden.year  == hoy.year
+    )
+
+    return render_template(
+        'admin/proveedores/proveedores_detalle.html',
+        proveedor=prov,
+        ordenes=ordenes,
+        stats={
+            'total_ordenes':  total_ordenes,
+            'total_comprado': total_comprado,
+            'ultima_compra':  ultima_compra,
+            'compras_mes':    compras_mes,
+        },
+    )
 
 
 @proveedor.route('/proveedores/<int:id>/editar', methods=['GET', 'POST'])
@@ -57,8 +103,6 @@ def proveedores_editar(id):
     form = ProveedorForm(obj=prov)
 
     if request.method == 'GET':
-        # Convertir las cadenas almacenadas a listas para preseleccionar checkboxes
-        form.productos.data    = prov.productos_lista
         form.dias_entrega.data = prov.dias_entrega_lista
 
     if form.validate_on_submit():
@@ -69,13 +113,23 @@ def proveedores_editar(id):
         prov.telefono       = form.telefono.data.strip()
         prov.correo         = form.correo.data.strip() or None
         prov.direccion      = form.direccion.data.strip() or None
-        prov.productos      = ','.join(form.productos.data)
         prov.condicion_pago = form.condicion_pago.data
         prov.dias_entrega   = ','.join(form.dias_entrega.data) if form.dias_entrega.data else None
         prov.notas          = form.notas.data.strip() or None
-        db.session.commit()
-        flash('Proveedor actualizado correctamente.', 'success')
-        return redirect(url_for('proveedor.proveedores_detalle', id=prov.id))
+        try:
+            db.session.commit()
+
+            email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+            current_app.logger.info(
+                f"Proveedor actualizado | nombre={prov.nombre} | rfc={prov.rfc} "
+                f"| id={prov.id} | usuario={email_usuario} | ip={request.remote_addr}"
+            )
+
+            flash('Proveedor actualizado correctamente.', 'success')
+            return redirect(url_for('proveedor.proveedores_detalle', id=prov.id))
+        except IntegrityError:
+            db.session.rollback()
+            flash(f'Ya existe un proveedor con el RFC "{form.rfc.data.strip().upper()}".', 'danger')
 
     return render_template('admin/proveedores/proveedores_form.html', proveedor=prov, form=form)
 
@@ -85,6 +139,15 @@ def proveedores_editar(id):
 @roles_required('admin')
 def proveedores_eliminar(id):
     prov = Proveedor.query.get_or_404(id)
+    nombre_prov = prov.nombre
+    rfc_prov = prov.rfc
+
+    email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+    current_app.logger.warning(
+        f"Proveedor eliminado | nombre={nombre_prov} | rfc={rfc_prov} "
+        f"| id={prov.id} | usuario={email_usuario} | ip={request.remote_addr}"
+    )
+
     db.session.delete(prov)
     db.session.commit()
     flash('Proveedor eliminado.', 'info')
@@ -100,8 +163,16 @@ def proveedores_toggle(id):
     debe verificarse en las rutas de compras usando proveedor.es_activo.
     """
     prov = Proveedor.query.get_or_404(id)
+    estatus_anterior = prov.estatus
     prov.estatus = 'inactivo' if prov.es_activo else 'activo'
     db.session.commit()
+
+    email_usuario = current_user.email if current_user and current_user.is_authenticated else 'sistema'
+    current_app.logger.info(
+        f"Proveedor estado: {estatus_anterior} -> {prov.estatus} | nombre={prov.nombre} "
+        f"| id={prov.id} | usuario={email_usuario} | ip={request.remote_addr}"
+    )
+
     return redirect(url_for('proveedor.proveedores'))
 
 
