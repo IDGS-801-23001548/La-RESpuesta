@@ -19,13 +19,6 @@ class ProductoForm(FlaskForm):
             Length(max=500, message='Máximo 500 caracteres.')
         ]
     )
-    PrecioCompraProducto = FloatField(
-        'Precio de compra',
-        validators=[
-            DataRequired(message='Ingresa el precio de compra.'),
-            NumberRange(min=0, message='El precio no puede ser negativo.')
-        ]
-    )
     PrecioVentaProducto = FloatField(
         'Precio de venta',
         validators=[

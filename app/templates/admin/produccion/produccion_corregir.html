@@ -1,0 +1,188 @@
+{% extends "_sidebar.html" %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('produccion.index') }}"
+        class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200
+               text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Corregir produccion</h2>
+        <p class="text-xs text-gray-400 mt-0.5">
+            Solicitud #{{ solicitud.idSolicitud }} — Ajusta el peso registrado del corte
+        </p>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('produccion.corregir', id=solicitud.idSolicitud) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+
+        <!-- Columna principal -->
+        <div class="xl:col-span-2 space-y-5">
+
+            <!-- Info del corte -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Datos del corte</h3>
+                </div>
+                <div class="p-5">
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                        <div>
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Corte</p>
+                            <p class="text-sm font-bold text-gray-800">{{ info.corte_nombre }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Categoria</p>
+                            <p class="text-sm text-gray-700">{{ info.categoria }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Canal</p>
+                            <p class="text-sm text-gray-700">#{{ info.canal_id }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Lote producido</p>
+                            <p class="text-sm font-mono text-gray-700">{{ info.lote_numero }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Cantidad esperada</p>
+                            <p class="text-sm font-bold text-amber-700">{{ '%.3f'|format(info.cantidad_esperada) }} kg</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Valores actuales -->
+            <div class="bg-white rounded-xl border border-amber-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-amber-100 bg-amber-50/30">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Valores actuales registrados</h3>
+                </div>
+                <div class="p-5">
+                    <div class="flex items-center gap-4 p-4 bg-amber-50/50 rounded-lg border border-amber-100">
+                        <div class="flex-1">
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Peso registrado</p>
+                            <p class="text-sm font-bold text-gray-800">{{ '%.3f'|format(info.peso_actual) }} kg</p>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Merma actual</p>
+                            <p class="text-sm font-bold text-amber-700">{{ '%.3f'|format(info.merma_actual) }} kg</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input cantidad corregida -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-700">Nuevo peso</h3>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                            Cantidad corregida (kg) <span class="text-red-400">*</span>
+                        </label>
+                        <input type="number" name="cantidadCorregida" id="cantidadCorregida"
+                            min="0.001" step="0.001" required autofocus
+                            value="{{ '%.3f'|format(info.peso_actual) }}"
+                            oninput="actualizarMerma()"
+                            class="w-full px-4 py-3 text-lg text-gray-700 bg-gray-50 border border-gray-200
+                                   rounded-lg outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100
+                                   transition-all text-right font-bold">
+                    </div>
+
+                    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <div class="flex-1">
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Esperado</p>
+                            <p class="text-sm font-bold text-gray-700">{{ '%.3f'|format(info.cantidad_esperada) }} kg</p>
+                        </div>
+                        <div class="text-gray-300 text-lg">&minus;</div>
+                        <div class="flex-1">
+                            <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Corregido</p>
+                            <p class="text-sm font-bold text-gray-700" id="lbl-corregido">{{ '%.3f'|format(info.peso_actual) }} kg</p>
+                        </div>
+                        <div class="text-gray-300 text-lg">=</div>
+                        <div class="flex-1">
+                            <p class="text-[10px] text-amber-500 uppercase font-semibold tracking-widest">Nueva merma</p>
+                            <p class="text-sm font-bold text-amber-700" id="lbl-merma">{{ '%.3f'|format(info.merma_actual) }} kg</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Columna lateral: resumen y boton -->
+        <div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
+                <div class="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-sm font-semibold text-gray-700">Resumen de correccion</h3>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Solicitud</p>
+                        <p class="text-sm font-bold text-gray-800">#{{ solicitud.idSolicitud }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Corte</p>
+                        <p class="text-sm font-bold text-gray-800">{{ info.corte_nombre }} ({{ info.categoria }})</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold tracking-widest">Lote</p>
+                        <p class="text-sm font-mono text-gray-800">{{ info.lote_numero }}</p>
+                    </div>
+
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[11px] text-amber-700">
+                        <strong>Atencion:</strong> esta accion modifica el peso del lote producido y recalcula la merma.
+                        Quedara registrada en el log de auditoria.
+                    </div>
+                </div>
+
+                <div class="px-5 pb-5 space-y-2">
+                    <button type="submit"
+                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold
+                               rounded-lg shadow-sm shadow-blue-200 transition-all hover:-translate-y-px">
+                        Guardar correccion
+                    </button>
+                    <a href="{{ url_for('produccion.index') }}"
+                        class="block w-full py-2.5 text-center text-sm text-gray-500 hover:text-gray-700
+                               bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+<script>
+    const esperada = {{ info.cantidad_esperada or 0 }};
+
+    function actualizarMerma() {
+        const corregido = parseFloat(document.getElementById('cantidadCorregida').value) || 0;
+        const merma = esperada - corregido;
+        document.getElementById('lbl-corregido').textContent =
+            corregido.toLocaleString('es-MX', {maximumFractionDigits: 3}) + ' kg';
+        document.getElementById('lbl-merma').textContent =
+            merma.toLocaleString('es-MX', {maximumFractionDigits: 3}) + ' kg';
+    }
+
+    actualizarMerma();
+</script>
+
+{% endblock %}

@@ -227,7 +227,6 @@ def productos_nuevo():
         nuevo = Producto(
             NombreProducto       = form.NombreProducto.data.strip(),
             DescripcionProducto  = form.DescripcionProducto.data.strip() or None,
-            PrecioCompraProducto = form.PrecioCompraProducto.data,
             PrecioVentaProducto  = form.PrecioVentaProducto.data,
             StockProducto        = 0,
             idCategoria          = id_categoria,
@@ -272,7 +271,6 @@ def productos_editar(id):
 
         producto.NombreProducto       = form.NombreProducto.data.strip()
         producto.DescripcionProducto  = form.DescripcionProducto.data.strip() or None
-        producto.PrecioCompraProducto = form.PrecioCompraProducto.data
         producto.PrecioVentaProducto  = form.PrecioVentaProducto.data
         producto.idCategoria          = id_categoria
         producto.idFoto               = nuevo_id_foto
