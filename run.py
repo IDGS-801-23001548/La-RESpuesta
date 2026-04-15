@@ -14,7 +14,7 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         #Primer log de la aplicación en ejecución
-        app.logger.debug("La aplicación ha iniciado correctamente")
+        #app.logger.debug("La aplicación ha iniciado correctamente")
 
         expired_users = User.query.filter(
             User.session_expiration < datetime.now()

@@ -7,3 +7,5 @@ FPS = 120
 GRAFIKS = HAIG
 
 DINERO = MUCHO
+
+VSYNC = True
